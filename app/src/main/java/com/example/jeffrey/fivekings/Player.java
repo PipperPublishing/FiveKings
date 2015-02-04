@@ -5,6 +5,7 @@ import java.util.ArrayList;
 /**
  * Created by Jeffrey on 1/22/2015.
 * 2/3/2015 If DiscardPile reduces score, then use it, otherwise use drawPile
+ * TODO:A In "final" turn, should clean up the overlaps showing in Unmelded
 */
 class Player {
     private String name;
@@ -32,6 +33,7 @@ class Player {
         //this will also avoid loops where we do not draw because it doesn't improve hand
         //TODO:C eventually should be able to track what is left in drawpile
         int score = hand.meldAndScore(roundOf,usePermutations ,isFinalScore, discardPileCard, wrapper);
+        //TODO:A Once we move to Heuristics, these scores are calculated differently and are not comparable
         if (score < hand.getScore(roundOf, isFinalScore))
             return Game.USE_DISCARD_PILE;
         else {

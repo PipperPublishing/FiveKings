@@ -17,6 +17,7 @@ import java.util.Iterator;
  * 2/1/2015 Make melds, unMelded ArrayList<CardList> so we can separate melds visually
  * TODO:B Extend for how many rounds we can use permutations by combining all wild cards (one combination)
  * TODO:C Discard strategy: Don't discard what others want (wild cards, or cards they picked up)
+ * TODO:A Also have 9 cards showing up for Round of 7 sometimes
  */
 class Hand {
     //all your cards, excluding what you picked up
@@ -48,6 +49,7 @@ Score using
 In the final scoring, calculate partialMelds and unMelded value
 TODO:B Account for the overlap between partialMelds and partialSequences
 TODO:B Add in more than one sequence, and also broken sequences
+TODO:B Loop over fullMeld and fullSequence alternatives (use perms?)
  */
     int meldAndScoreUsingHeuristics(Rank wildCardRank, boolean isFinalScore, Card addedCard, EvaluationWrapper cardWrapper) {
         //cards.size()+1 because we add the addedCard (discardPile or drawPile)
@@ -214,6 +216,8 @@ TODO:B Add in more than one sequence, and also broken sequences
     Consider all permutations (shouldn't be too expensive) and return -ve value of unmelded
     This is the sledgehammer approach (rather than trying to heuristically meld)
     Everything melded gives the maximum evaluation of 0
+    TODO:B Look at descending sequences so we can throw them out sooner
+    TODO:B Eliminate looking at other perms that are equivalent score (e.g. (K* KS KH) = (KS K* KH)) - use a hash?
      */
     private int meldAndScoreUsingPermutations(Rank wildCardRank, boolean isFinalScore, Card addedCard, EvaluationWrapper cardWrapper) {
         //numCards = cards.size()+1 because we add the addedCard (discardPile or drawPile)
@@ -264,11 +268,8 @@ TODO:B Add in more than one sequence, and also broken sequences
 
 /*           note *this* loop is over the cards in the permutation to see whether they can be melded and excludes the [numCards-1] card which will be discarded
             We only look for melds in order (including ascending sequences) because at least one permutation will have that if it exists
-            and require that the first card not be a wildcard (because such a permutation will turn up later
-            and this eliminates the possibility of Wild-3-4
 */
             lastMeldedCard = cardLists[0].get(cardListIdx[0]);
-            if (lastMeldedCard.isWildCard(wildCardRank)) continue;
             testMeld.clear();
             testMeld.add(lastMeldedCard);
             for (int iCard = 1; iCard < numCards - 1; iCard++) {
@@ -298,19 +299,20 @@ TODO:B Add in more than one sequence, and also broken sequences
                     if (testCard.isWildCard(wildCardRank))
                         testIsMelding = true; //any wildcard is fine for a Rank meld
                     else if (rankMeldRank == null) testIsMelding = true;
-                    else if (testCard.getRank() == rankMeldRank) { //same Rank (e.g. Queens)
+                    else if (testCard.isSameRank(rankMeldRank)) { //same Rank (e.g. Queens)
                         testIsMelding = true;
                         isSequenceMeld = false; //now we know it's a Rank meld
                     } else isRankMeld = false;
                 }
                 if (isSequenceMeld) {
                     if (sequenceMeldLastRank == null) testIsMelding = true;
-                        //can't be a sequenceMeld if the lastRank is a King (nothing greater)
-                    else if (sequenceMeldLastRank.getRankValue() >= Rank.KING.getRankValue())
-                        isSequenceMeld = false;
-                        //for a sequence meld, wildcard is fine *provided* sequenceMeldLastRank isn't at the K rank
+                    //can't be a sequenceMeld if the lastRank is a King (nothing greater)
+                    else if (sequenceMeldLastRank.isHighestRank()) isSequenceMeld = false;
                     else if (testCard.isWildCard(wildCardRank)) testIsMelding = true;
-                    else if ((testCard.getSuit() == sequenceMeldSuit) && (testCard.getRank() == sequenceMeldLastRank.getNext())) {//same Suit and next in sequence
+                    // can't be a sequenceMeld if this is a 3 and the previous card was wild
+                    else if (testCard.getRank().isLowestRank() && lastMeldedCard.isWildCard(wildCardRank)) isSequenceMeld = false;
+                    //same Suit and next in sequence
+                    else if (testCard.isSameSuit(sequenceMeldSuit) && testCard.isSameRank(sequenceMeldLastRank.getNext())) {
                         testIsMelding = true;
                         isRankMeld = false; //now we know it's a sequence meld
                     } else isSequenceMeld = false;

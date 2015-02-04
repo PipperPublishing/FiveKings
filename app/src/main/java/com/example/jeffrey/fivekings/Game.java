@@ -9,6 +9,7 @@ import java.util.List;
  * Created by Jeffrey on 1/22/2015.
  *  * 2/2/2015 Test how long each v1 (using permutations) is taking and switch to heuristic approach once over the threshold
  *  2/3/2015    Push draw-pile/discard-pile decision into Player so that we can replace with human - no longer peeks at DrawPile
+ *  TODO:A Don't pass the drawPile to the player decision ; do as a separate call (including scoring)
  */
 public class Game {
     private static final boolean DEBUG=false;
@@ -50,7 +51,6 @@ public class Game {
         boolean usePermutations=true;
 
         for (Rank roundOf : Rank.values()){
-            if (roundOf == Rank.JOKER) break;
             Log.i(APP_TAG,"------------");
             Log.i(APP_TAG,"Round of "+roundOf.getRankString()+"'s:");
             roundStartTime = System.currentTimeMillis();
