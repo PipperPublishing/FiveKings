@@ -4,6 +4,7 @@ import java.util.ArrayList;
 
 /**
  * Created by Jeffrey on 1/24/2015.
+ * 2/5/2015 No longer used (intermediate results are stored in Hand member variables)
  */
 //Hack to contain evaluation result and card to discard
 class EvaluationWrapper {
@@ -11,6 +12,21 @@ class EvaluationWrapper {
     private ArrayList<CardList> bestMelds = new ArrayList<>();
     private ArrayList<CardList> bestUnMelded = new ArrayList<>();
     private int score;
+
+    EvaluationWrapper() {
+        this.cardToDiscard = null;
+        this.bestMelds = new ArrayList<>();
+        this.bestUnMelded = new ArrayList<>();
+        this.score = 0;
+    }
+
+    //this is a shallow copy with all the dangers of that
+    EvaluationWrapper(EvaluationWrapper wrapper) {
+        this.cardToDiscard = wrapper.cardToDiscard;
+        this.bestMelds = wrapper.bestMelds;
+        this.bestUnMelded = wrapper.bestUnMelded;
+        this.score = wrapper.score;
+    }
 
     void copy(EvaluationWrapper wrapper) {
         this.cardToDiscard = wrapper.cardToDiscard;

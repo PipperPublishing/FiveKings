@@ -1,11 +1,10 @@
 package com.example.jeffrey.fivekings;
 
-import java.util.ArrayList;
-
 /**
  * Created by Jeffrey on 1/22/2015.
 * 2/3/2015 If DiscardPile reduces score, then use it, otherwise use drawPile
- * TODO:A In "final" turn, should clean up the overlaps showing in Unmelded
+ * 2/4/2015 Remove drawPileCard from useDiscardPile decision (may later add back % decisions) and changes to separate meld/score with drawCard
+ * 2/4/2015 Split discard/draw, meld&score, and discard into separate steps to make it easier to include human players
 */
 class Player {
     private String name;
@@ -13,6 +12,7 @@ class Player {
     private int relativePosition;
     private int cumulativeScore;
     private Hand hand;
+    private boolean useDiscardPile=false;
 
 
     Player(String name, int relativePosition) {
@@ -23,32 +23,41 @@ class Player {
 
     boolean init() {
         cumulativeScore = 0;
+        initRound();
+        return true;
+    }
+    boolean initRound() {
         hand = new Hand();
         return true;
     }
 
 
-    boolean useDrawOrDiscard(Rank roundOf, boolean usePermutations, boolean isFinalScore, Card drawPileCard, Card discardPileCard, EvaluationWrapper wrapper) {
-        //if DiscardPile lowers current score, then use it - otherwise DrawPile (so we no longer peek)
+    boolean useDiscardPile(Rank roundOf, boolean usePermutations, boolean isFinalScore, Card discardPileCard) {
+        //if DiscardPile lowers current evaluation, then use it - otherwise DrawPile (so we no longer peek)
         //this will also avoid loops where we do not draw because it doesn't improve hand
+        //TODO:A First evaluation of the round is faulty, because we haven't actually melded and scored
+        //the hand we picked up
+        int beforeEvaluation = hand.getHandValueOrScore(isFinalScore);
+        int afterEvaluation = hand.meldAndEvaluate(roundOf, usePermutations, isFinalScore, discardPileCard);
         //TODO:C eventually should be able to track what is left in drawpile
-        int score = hand.meldAndScore(roundOf,usePermutations ,isFinalScore, discardPileCard, wrapper);
-        //TODO:A Once we move to Heuristics, these scores are calculated differently and are not comparable
-        if (score < hand.getScore(roundOf, isFinalScore))
-            return Game.USE_DISCARD_PILE;
-        else {
-            score = hand.meldAndScore(roundOf, usePermutations, isFinalScore, drawPileCard, wrapper);
-            return Game.USE_DRAW_PILE;
-        }
+        this.useDiscardPile = (afterEvaluation < beforeEvaluation);
+        return useDiscardPile;
+    }
+
+    //callback to meld and evaluate or just return existing results
+    void meldAndEvaluate(Rank roundOf, boolean usePermutations, boolean isFinalScore, Card addedCard) {
+        //already evaluated what to do for discard if this is automated player
+        if (!this.useDiscardPile) hand.meldAndEvaluate(roundOf, usePermutations, isFinalScore, addedCard);
     }
 
     boolean isOut(Rank wildCardRank) {
-        return (hand.getScore(wildCardRank, true) == 0);
+        return (hand.getHandValueOrScore(true) == 0);
     }
 
-    boolean discardFromHand(Card cardToDiscard) {
-        if (cardToDiscard == null) return false;
-        else return (hand.discardFrom(cardToDiscard) != null);
+    Card discardFromHand(Card cardToDiscard) {
+        if (cardToDiscard == null) return null;
+        hand.discardFrom(cardToDiscard);
+        return cardToDiscard;
     }
 
     boolean addCardToHand(Card card) {
@@ -57,7 +66,8 @@ class Player {
         return true;
     }
 
-    boolean dealNewHand(CardList cards, int numberToDeal) {
+    boolean initAndDealNewHand(CardList cards, int numberToDeal) {
+        initRound();
         return hand.dealNew(cards,numberToDeal);
     }
 
@@ -65,17 +75,28 @@ class Player {
         return name;
     }
 
-    String getMeldedString(){ return hand.getMeldedString();}
-
-    String getUnMeldedString() { return hand.getUnMeldedString();}
-
-    void setHandMelds(ArrayList<CardList> melds, ArrayList<CardList> unMelded){
-        if (melds != null) hand.setMelds(melds);
-        if (unMelded != null) hand.setUnMelded(unMelded);
+    String getMeldedString(){
+        return "Melds{"+hand.getMeldedString()+"} ";
     }
 
-    void addToCumulativeScore(Rank wildCardRank, boolean isFinalScore) {
-        cumulativeScore += hand.getScore(wildCardRank, isFinalScore);
+    String getPartialAndSingles() {
+        String unMelded = hand.getUnMeldedString();
+        String singles = hand.getSingles();
+        StringBuffer partialAndSingles = new StringBuffer();
+        if (!unMelded.isEmpty()) partialAndSingles.append("Potential melds{"+unMelded+"} ");
+        if (!singles.isEmpty()) partialAndSingles.append("Unmelded{"+singles+"}");
+        return partialAndSingles.toString();
+    }
+    Card getDiscard() {
+        return hand.getLastDiscard();
+    }
+
+    int getHandValueOrScore(boolean isFinalScore) {
+        return hand.getHandValueOrScore(isFinalScore);
+    }
+
+    void addToCumulativeScore() {
+        cumulativeScore += hand.getHandValueOrScore(true);
     }
 
     int getCumulativeScore() {

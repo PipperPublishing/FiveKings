@@ -1,6 +1,9 @@
 package com.example.jeffrey.fivekings;
 
+import android.util.Log;
+
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.Iterator;
 
 /**
@@ -15,233 +18,287 @@ import java.util.Iterator;
  * 1/29/2015 Implement Johnson-Trotter algorithm which can act as an iterator (so storage is less of a problem)
  * 1/30/2015 move to a different evaluation method which counts pairs and possible sequences
  * 2/1/2015 Make melds, unMelded ArrayList<CardList> so we can separate melds visually
- * TODO:B Extend for how many rounds we can use permutations by combining all wild cards (one combination)
+ * 2/5/2015 Eliminate using wrapper, switch to unified hand evaluation
+ * TODO:B Extend for how many rounds we can use permutations by eliminating equivalent permutations (e.g. K*-KS = KS=K*)
  * TODO:C Discard strategy: Don't discard what others want (wild cards, or cards they picked up)
- * TODO:A Also have 9 cards showing up for Round of 7 sometimes
- */
+ * TODO:C Should be able to merge large chunks of Heuristics and Permutations
+ * TODO: Current problems:- need to check that partial and full melds don't overlap
+  */
 class Hand {
     //all your cards, excluding what you picked up
     private CardList cards;
+    // these following values are the LATEST meld/evaluate attempt and so are mutable
+    // Player saves key values before trying different strategies
     // the cards melded onto the table
     private ArrayList<CardList> melds;
-    // and those left over (which count against the score)
-    private ArrayList<CardList> unMelded;
+    // and those unmelded (which count against the score)
+    private ArrayList<CardList> partialMelds;
+    private CardList singles;
+    private int intermediateHandValue; //looks at partial melds and sequences at 1/2 value
+    private int finalHandScore; //looks at full value of cards not in melds
+    private Card lastDiscard;
 
     //Default constructor is from CardList
     Hand() {
         cards = new CardList();
         melds = new ArrayList<>();
-        unMelded = new ArrayList<>();
+        partialMelds = new ArrayList<>();
+        singles = new CardList(); //set to cards in dealNew
+        intermediateHandValue = 0;
+        finalHandScore=0;
+        lastDiscard=null;
     }
 
-    int meldAndScore(Rank wildCardRank, boolean usePermutations, boolean isFinalScore, Card addedCard, EvaluationWrapper cardWrapper) {
-        int score=0;
-        if (usePermutations) score = meldAndScoreUsingPermutations(wildCardRank, isFinalScore, addedCard, cardWrapper);
-        else score = meldAndScoreUsingHeuristics(wildCardRank, isFinalScore, addedCard, cardWrapper);
-        return score;
+    int meldAndEvaluate(Rank wildCardRank, boolean usePermutations, boolean isFinalScore, Card addedCard) {
+        int valuation;
+        if (usePermutations) valuation = meldAndEvaluateUsingPermutations(wildCardRank, isFinalScore, addedCard);
+        else valuation = meldAndEvaluateUsingHeuristics(wildCardRank, isFinalScore, addedCard);
+        return valuation;
     }
 
     /* v2 values keeping pairs and potential sequences, because otherwise we'll throw away a King from a pair of Kings
-Score using
+Evaluate using
     1. Maximize melds: 3 or more rank or sequence melds - maximize this
     2. Maximize partialMelds: pairs and broken sequences (for now just +/-1) - want to maximize number of cards in this
     3. Minimize unMelded: remaining singles - minimize the score of this by throwing away the
 In the final scoring, calculate partialMelds and unMelded value
+Evaluation accounts for hand potential, but Scoring is just what's left after melding
 TODO:B Account for the overlap between partialMelds and partialSequences
-TODO:B Add in more than one sequence, and also broken sequences
+TODO:B Add in more than one sequence
 TODO:B Loop over fullMeld and fullSequence alternatives (use perms?)
  */
-    int meldAndScoreUsingHeuristics(Rank wildCardRank, boolean isFinalScore, Card addedCard, EvaluationWrapper cardWrapper) {
+    int meldAndEvaluateUsingHeuristics(Rank wildCardRank, boolean isFinalScore, Card addedCard) {
         //cards.size()+1 because we add the addedCard (discardPile or drawPile)
-        if (addedCard == null) throw new RuntimeException("Hand.useDrawOrDiscard: addedCard is null");
-        //Log.d(Game.APP_TAG,"Entering meldAndScoreUsingHeuristics");
+        if (addedCard == null) throw new RuntimeException("Hand.useDiscardPile: addedCard is null");
+        //Log.d(Game.APP_TAG,"Entering meldAndEvaluateUsingHeuristics");
         CardList cardsWithAdded = new CardList(cards);
         cardsWithAdded.add(addedCard);
         final int numCards = cardsWithAdded.size();
 
         //list of potential melds (pairs and broken sequences) - could be many of these
         //because a card can be in the list multiple times
-        ArrayList<CardList> partialMelds = new ArrayList<>(numCards);
-        ArrayList<CardList> fullMelds = new ArrayList<>(numCards);
-        ArrayList<CardList> partialSequences = new ArrayList<>(numCards);
+        ArrayList<CardList> fullRankMelds = new ArrayList<>(numCards);
         ArrayList<CardList> fullSequences = new ArrayList<>(numCards);
-
+        ArrayList<CardList> partialRankMelds = new ArrayList<>(numCards);
+        ArrayList<CardList> partialSequences = new ArrayList<>(numCards);
 
         //separate out any wildcards
+        //TODO:B create separate list without wildcards - would remove the checks we have to do
         //Log.d(Game.APP_TAG,"---Separate out wildcards");
         CardList wildCards = new CardList(numCards);
         for (Card card : cardsWithAdded) {
             if (card.isWildCard(wildCardRank)) wildCards.add(card);
         }
 
-        //find matches in each rank
-        //Log.d(Game.APP_TAG,"---find matches in each rank");
-        CardList rankMatch = new CardList(numCards);
-        for (Rank rank:Rank.values()) {
-            rankMatch.clear();
-            for (Card card : cardsWithAdded) {
-                if (!card.isWildCard(wildCardRank) && card.isSameRank(rank)) rankMatch.add(card);
-            }
-            //add pairs or better to lists
-            if (rankMatch.size()>=3) fullMelds.add((CardList)rankMatch.clone());
-            else if (2 == rankMatch.size()) partialMelds.add((CardList)rankMatch.clone());
-        }//end-for Ranks
 
-        //for now just one sequence in each suit with no break (ascending only)
-        //TODO:A handle sequence in any order, and put broken sequences into partialSequences list (can be filled by wild cards)
+
+        //Rank Matches - loop from highest to lowest rank
+        //Log.d(Game.APP_TAG,"---find matches in each rank");
+        CardList sortedCards = new CardList(cardsWithAdded);
+        Collections.sort(sortedCards, Card.cardComparatorRankFirstDesc);
+        CardList rankMatch = new CardList(numCards);
+        rankMatch.clear();
+        //will meld larger cards first because of the comparator above
+        for (Card card : sortedCards) {
+            //if the card is already in a full meld, then skip it
+            if (!card.isWildCard(wildCardRank) && !contains(fullRankMelds,card)) {
+                if (rankMatch.isEmpty() || (card.isSameRank(rankMatch.get(rankMatch.size()-1)))) {
+                    rankMatch.add(card);
+                }
+                else {
+                    //not same rank; record and restart the sequence
+                    addWildcardsAndRecord(fullRankMelds,partialRankMelds,rankMatch,wildCards,isFinalScore);
+                    rankMatch.clear();
+                    rankMatch.add(card);
+                }//end-if same rank
+            }
+        }
+        addWildcardsAndRecord(fullRankMelds,partialRankMelds,rankMatch,wildCards,isFinalScore);
+
+        //Sequences - for now full sequences (3*-4*-5*) or broken pairs (e.g. 3*-5*) in partialSequences list
         //Log.d(Game.APP_TAG,"---find matches in each sequence");
+        Collections.sort(sortedCards, Card.cardComparatorSuitFirst);
         CardList sequenceMatch = new CardList(numCards);
-        Card lastCard=null;
         for (Suit suit:Suit.values()) {
             sequenceMatch.clear();
-            lastCard = null;
-            for (Card card : cardsWithAdded) {
-                //if the card is already in a full meld, then skip it
-                if (!card.isWildCard(wildCardRank) && card.isSameSuit(suit) && !contains(fullMelds,card)) {
-                    if ((0 == sequenceMatch.size()) || (1 == card.getRankDifference(lastCard))) {
+            for (Card card : sortedCards) {
+                //if the card is already in a full meld or sequence, then skip it
+                if (!card.isWildCard(wildCardRank) && card.isSameSuit(suit) && !contains(fullRankMelds,card) && !contains(fullSequences,card)) {
+                    if (sequenceMatch.isEmpty() || (1 == card.getRankDifference(sequenceMatch.get(sequenceMatch.size()-1)))) {
                         sequenceMatch.add(card);
-                        lastCard = card;
+                    }
+                        //broken sequence; record but put into partial sequences AND into next sequence (unless we used aa wildcard to make it full)
+                    else if ((1 == sequenceMatch.size()) && (2== card.getRankDifference(sequenceMatch.get(sequenceMatch.size()-1)))) {
+                        sequenceMatch.add(card);
+                        boolean madePartialIntoFull = addWildcardsAndRecord(fullSequences,partialSequences,sequenceMatch,wildCards,isFinalScore);
+                        sequenceMatch.clear();
+                        if (!madePartialIntoFull) sequenceMatch.add(card);
+                    }
+                    else{
+                        //not adjacent; record and restart the sequence
+                        addWildcardsAndRecord(fullSequences,partialSequences,sequenceMatch,wildCards,isFinalScore);
+                        sequenceMatch.clear();
+                        sequenceMatch.add(card);
                     }
                 }//end-if same suit
             }
-            if (sequenceMatch.size()>=3) fullSequences.add((CardList)sequenceMatch.clone());
-            else if (sequenceMatch.size()>1) partialSequences.add((CardList)sequenceMatch.clone());
+            addWildcardsAndRecord(fullSequences,partialSequences,sequenceMatch,wildCards,isFinalScore);
         }//end for Suits
 
-        // Use extra wildcards to turn partial melds into full etc.
-        //Log.d(Game.APP_TAG,"---see if we can expand partial melds");
-        if (!wildCards.isEmpty()) {
-            for (Iterator<CardList> iterator = partialMelds.iterator(); iterator.hasNext(); ) {
+        //Go back and check if partial rank melds overlap with full sequences; if so, drop the partial rank meld
+        for (Iterator<CardList> iterator = partialRankMelds.iterator(); iterator.hasNext(); ) {
+            CardList rankMeld = iterator.next();
+            if (contains(fullSequences, rankMeld)) iterator.remove();
+        }
+
+
+        //TODO:A if we had two wildcards + a single card, meld them
+
+        //if there are remaining wildcards, keep adding them to existing melds until we run out
+        while (!wildCards.isEmpty() && (!fullRankMelds.isEmpty() || !fullSequences.isEmpty())) {
+            //Log.d(Game.APP_TAG, "---extend existing melds/sequence");
+            for (Iterator<CardList> iterator = fullRankMelds.iterator(); iterator.hasNext(); ) {
                 CardList rankMeld = iterator.next();
-                if (2 == rankMeld.size()) {
-                    rankMeld.add(wildCards.get(0));
-                    //move rankMeld from partial to fullMelds
-                    fullMelds.add((CardList) rankMeld.clone());
-                    iterator.remove();
-                    wildCards.remove(0);
-                    if (wildCards.isEmpty()) break;
-                }
+                rankMeld.add(wildCards.get(0));
+                wildCards.remove(0);
+                if (wildCards.isEmpty()) break;
             }
-        }
-        if (!wildCards.isEmpty()) {
-            //See if we can turn partialSequences into full by adding wild cards
-            //Log.d(Game.APP_TAG, "---see if we can expand partial sequences");
-            for (Iterator<CardList> iterator = partialSequences.iterator(); iterator.hasNext(); ) {
-                CardList sequenceMeld = iterator.next();
-                if (2 == sequenceMeld.size()) {
+            if (!wildCards.isEmpty()) {
+                for (Iterator<CardList> iterator = fullSequences.iterator(); iterator.hasNext(); ) {
+                    CardList sequenceMeld = iterator.next();
                     sequenceMeld.add(wildCards.get(0));
-                    fullSequences.add((CardList) sequenceMeld.clone());
-                    iterator.remove();
                     wildCards.remove(0);
                     if (wildCards.isEmpty()) break;
                 }
             }
-        }
-
-        //TODO:A If we have excess wildcards, use them up with singles or with extending existing melds
-        //TODO:A Also have problem with an excess card left
-
-        //Score and sort cardsWithAdded - valuing partial melds and sequences
-        //Intermediate scoring:
-        // cardScore = face value if not in full-meld, full-sequence, or wildcard
-        //              x 1/2 if in partialMeld x1/2 if in partialSequence (so x1/4 if in both)
-        //Final scoring: Discard all partial melds/sequences and convert to singles
-        //Log.d(Game.APP_TAG,"---scoring");
-        CardList singles = new CardList(numCards);
-        int cardScore=0;
-        int intermediateScore=0;
-        for (Card card:cardsWithAdded) {
-            singles.add(card);
-            cardScore = card.getScore(wildCardRank, isFinalScore);
-            if (wildCards.contains(card)) singles.remove(card);
-            if (contains(fullMelds,card) || contains(fullSequences,card)) {
-                cardScore = 0;
-                singles.remove(card);
-            }
-            if (!isFinalScore) {
-                if (contains(partialMelds, card)) {
-                    cardScore *= 0.5;
-                    singles.remove(card);
-                }
-                if (contains(partialSequences, card)) {
-                    cardScore *= 0.5;
-                    singles.remove(card);
-                }
-            }
-            intermediateScore += cardScore;
-        }
-        //Now find most expensive card to discard - if there aren't any cardsWithAdded then pick highest value card
-        //Log.d(Game.APP_TAG,"---find discard");
-        Card bestDiscard = null;
-        if (0 == singles.size()) bestDiscard = addedCard; //TODO: Will have to adjust any melds using this
-        else {
-            bestDiscard = singles.getHighestScoreCard(wildCardRank, isFinalScore);
-            singles.remove(bestDiscard);
         }
 
         //ArrayList of CardLists (so we can separate melds from each other)
-        ArrayList<CardList> bestMelds = new ArrayList<>(fullMelds);
-        bestMelds.addAll(fullSequences);
-        ArrayList<CardList> bestUnMelded = new ArrayList<>();
-        //for intermediate scoring, we show partial melds and sequences
-        bestUnMelded.add(singles);
-        bestUnMelded.add(wildCards);
-        if (!isFinalScore) {
-           bestUnMelded.addAll(partialMelds);
-           bestUnMelded.addAll(partialSequences);
+        melds = new ArrayList<>(fullRankMelds);
+        melds.addAll(fullSequences);
+
+        // For final scoring (last licks) we don't show partial melds (they all go into singles)
+        // For intermediate scoring they count reduced and we don't show in singles
+        if (isFinalScore) {
+            //partialMelds should always already be clear (because checked earlier)
+            if (!partialRankMelds.isEmpty() || !partialSequences.isEmpty())
+                Log.e(Game.APP_TAG, "meldAndEvaluateUsingHeuristics: partialMelds not empty in final scoring");
+            partialMelds.clear();
+        }else {
+            partialMelds = new ArrayList<>(partialRankMelds);
+            partialMelds.addAll(partialSequences);
         }
-        cardWrapper.setCardToDiscard(bestDiscard);
-        cardWrapper.setBestMelds(bestMelds);
-        cardWrapper.setBestUnMelded(bestUnMelded);
-        cardWrapper.setScore(intermediateScore);
-        //Log.d(Game.APP_TAG,"---exiting meldAndScoreUsingHeuristics");
-        return intermediateScore;
-    }//end int meldAndScoreUsingHeuristics
+        //Clean up what is now left in singles  - for final scoring we put wildcards and partial melds/sequences into singles
+        //TODO:A SHouldn't be any wildcards left - but possible they will not get included here (if there wen't any melds)
+        singles = new CardList(cardsWithAdded);
+        for (Card card:cardsWithAdded) {
+            if (contains(melds,card)) singles.remove(card);
+            if (!isFinalScore && contains(partialMelds,card)) singles.remove(card);
+        }
 
-    //delegate method to look for card in ArrayList<CardList> (otherwise we'd have to override ArrayList)
-    private static boolean contains (ArrayList<CardList> cardLists, Card card) {
-        for (CardList cardList : cardLists)
-            if (cardList.contains(card)) return true;
-        return false;
+        //Now find most expensive single card to discard - if there aren't any singles then pick highest value partialMeld
+        //Log.d(Game.APP_TAG,"---find discard");
+        lastDiscard=null;
+        Collections.sort(sortedCards, Card.cardComparatorRankFirstDesc);
+        if (!singles.isEmpty()) {
+            lastDiscard = singles.getHighestScoreCard(wildCardRank, isFinalScore);
+            singles.remove(lastDiscard);
+        }//end if singles are not empty
+        else if (!partialMelds.isEmpty()) {
+            //eliminate a partialMeld containing the first high value card (sorted descending)
+            for (Card card : sortedCards) {
+                if (!card.isWildCard(wildCardRank) && contains(partialMelds, card)) {
+                    lastDiscard = card;
+                    break;
+                }
+            }
+            if (null == lastDiscard)
+                throw new RuntimeException("meldAndEvaluateUsingHeuristics: no discard found in partialMelds");
+            for (Iterator<CardList> iterator = partialMelds.iterator(); iterator.hasNext(); ) {
+                CardList partialMeld = iterator.next();
+                if (partialMeld.contains(lastDiscard)) {
+                    singles.addAll(partialMeld);
+                    singles.remove(lastDiscard);
+                    iterator.remove();
+                    break;
+                }
+            }
+        }//end-else partialMelds is not empty
+        else {//have to eliminate a fullMeld - here you want to sort ascending
+            Collections.sort(sortedCards, Card.cardComparatorRankFirstAsc);
+            for (Card card : sortedCards) {
+                if (!card.isWildCard(wildCardRank) && contains(melds, card)) {
+                    lastDiscard = card;
+                    break;
+                }
+            }
+            if (null == lastDiscard)
+                throw new RuntimeException("meldAndEvaluateUsingHeuristics: no discard found in melds");
+            for (Iterator<CardList> iterator = melds.iterator(); iterator.hasNext(); ) {
+                CardList rankMeldSeq = iterator.next();
+                if (rankMeldSeq.contains(lastDiscard)) {
+                    singles.addAll(rankMeldSeq);
+                    singles.remove(lastDiscard);
+                    iterator.remove();
+                    break;
+                }
+            }
+        }
+
+
+        //Evaluate this; don't pass full melds/sequences because they don't count in scoring
+        intermediateHandValue = calculateHandValue(wildCardRank, isFinalScore, cardsWithAdded, partialMelds, singles);
+
+        //Log.d(Game.APP_TAG,"---exiting meldAndEvaluateUsingHeuristics");
+        return intermediateHandValue;
+    }//end int meldAndEvaluateUsingHeuristics
+
+    //save test if full; see if you can pad it to a full with wildcards and keep/discard if not
+    private boolean addWildcardsAndRecord(ArrayList<CardList> fulls, ArrayList<CardList> partials, CardList test, CardList wildCards, boolean isFinalScore) {
+        boolean madePartialIntoFull=false;
+        if (test.size()>=3) fulls.add((CardList)test.clone());
+        else if (2 == test.size()) {
+            if (wildCards.isEmpty()) {
+                if (!isFinalScore) partials.add((CardList) test.clone());
+            }
+            else {
+                test.add(wildCards.get(0));
+                wildCards.remove(0);
+                fulls.add((CardList) test.clone());
+                madePartialIntoFull = true;
+            }
+        }
+        return madePartialIntoFull;
     }
 
-    private static int getScore(ArrayList<CardList> cardLists, Rank wildCardRank, boolean isFinalScore) {
-        if (null == cardLists) return 0;
-        int score=0;
-        for (CardList cardList : cardLists) score += cardList.getScore(wildCardRank, isFinalScore);
-        return score;
-    }
 
     /* Hand evaluation - v1
-    Consider all permutations (shouldn't be too expensive) and return -ve value of unmelded
-    This is the sledgehammer approach (rather than trying to heuristically meld)
-    Everything melded gives the maximum evaluation of 0
-    TODO:B Look at descending sequences so we can throw them out sooner
-    TODO:B Eliminate looking at other perms that are equivalent score (e.g. (K* KS KH) = (KS K* KH)) - use a hash?
-     */
-    private int meldAndScoreUsingPermutations(Rank wildCardRank, boolean isFinalScore, Card addedCard, EvaluationWrapper cardWrapper) {
+        Consider all permutations (shouldn't be too expensive) and return -ve value of unmelded
+        This is the sledgehammer approach (rather than trying to heuristically meld)
+        Everything melded gives the maximum evaluation of 0
+        TODO:B Look at descending sequences so we can throw them out sooner
+        TODO:B Eliminate looking at other perms that are equivalent score (e.g. (K* KS KH) = (KS K* KH)) - use a hash?
+         */
+    private int meldAndEvaluateUsingPermutations(Rank wildCardRank, boolean isFinalScore, Card addedCard) {
+        if (addedCard == null) throw new RuntimeException("Hand.useDiscardPile: addedCard is null");
+
+        CardList cardsWithAdded = new CardList(cards);
+        cardsWithAdded.add(addedCard);
         //numCards = cards.size()+1 because we add the addedCard (discardPile or drawPile)
-        final int numCards = cards.size()+1;
+        final int numCards = cardsWithAdded.size();
 
         //new copy of best found so far
         ArrayList<CardList> bestPermutationMelded=null;
         ArrayList<CardList> bestPermutationUnMelded=null;
+        CardList bestPermutationSingles=null;
         Card bestPermutationDiscard=null;
-        int minUnMeldedScore=-1;
+        int bestValuation=-1;
 
-        if (addedCard == null) throw new RuntimeException("Hand.useDrawOrDiscard: addedCard is null");
-
-        //v1: Consider all permutations and use early pruning (based on unMelded score)
-        //Generate permutations - because all permutations are tested, we can just look for melds and sequences in order
-        //Create a permuter for each available card slot - a copy of the hand + the added card being tested
-        CardList[] cardLists = new CardList[numCards];
-
-        for (int i = 0; i < numCards; i++) {
-            cardLists[i] = new CardList(numCards);
-            cardLists[i].addAll(this.cards);
-            cardLists[i].add(addedCard); //this is the card we are testing (from the Discard or Draw pile)
-        }
-        //v2: generate the next permutation on each call to getNext
+/*        v1: Consider all permutations and use early pruning (based on unMelded score)
+        Generate permutations - because all permutations are tested, we can just look for melds and sequences in order
+        Create a permuter index for each available card slot
+        v2: generate the next permutation on each call to getNext
+*/
         int allPermutations=0;
         Permuter indexes = new Permuter(numCards);
         int[] cardListIdx = null;
@@ -250,12 +307,14 @@ TODO:B Loop over fullMeld and fullSequence alternatives (use perms?)
         Card testCard = null;
         ArrayList<CardList> permutationUnMelded = new ArrayList<>();
         ArrayList<CardList> permutationMelded = new ArrayList<>();
+        CardList permutationSingles = new CardList();
 
         //Loop over all valid permutations; the card at numCards is considered to be what we will discard
         for (cardListIdx = indexes.getNext(); cardListIdx != null; cardListIdx = indexes.getNext()) {
             allPermutations++;
             permutationUnMelded.clear();
             permutationMelded.clear();
+            permutationSingles.clear();
 
             //if lastMelded was a non-wild card, then these are just that card's Rank and Suit
             //if it was a wild card, then they are the "substitute" value(s) the wild card plays
@@ -269,13 +328,13 @@ TODO:B Loop over fullMeld and fullSequence alternatives (use perms?)
 /*           note *this* loop is over the cards in the permutation to see whether they can be melded and excludes the [numCards-1] card which will be discarded
             We only look for melds in order (including ascending sequences) because at least one permutation will have that if it exists
 */
-            lastMeldedCard = cardLists[0].get(cardListIdx[0]);
+            lastMeldedCard = cardsWithAdded.get(cardListIdx[0]);
             testMeld.clear();
             testMeld.add(lastMeldedCard);
             for (int iCard = 1; iCard < numCards - 1; iCard++) {
                 /*
                 * if this is a wildcard or lastMeldedCard is a wildcard
-                * or cardLists[iCard].cards.get(cardListIdx[iCard]) melds in rank (any suit) or seq (same suit)
+                * or cardsWithAdded[cardListIdx[iCard] melds in rank (any suit) or seq (same suit)
                 * But have to deal with several tricky problems:
                 * 1. After we get the first real match (not a wildcard) need to record that this is a sequence or rank-meld
                 * 2. We have to give wild cards a "substitute" value that they are playing in the meld (and that might be sequence and/or rank meld or unknown)
@@ -292,7 +351,7 @@ TODO:B Loop over fullMeld and fullSequence alternatives (use perms?)
                     sequenceMeldLastRank = lastMeldedCard.getRank();
                 }
 
-                testCard = cardLists[iCard].get(cardListIdx[iCard]);
+                testCard = cardsWithAdded.get(cardListIdx[iCard]);
                 //this convoluted logic is because BOTH isRankMeld and isSequenceMeld could be true in a permutation like Q-Wild-Wild
                 boolean testIsMelding = false;
                 if (isRankMeld) {
@@ -322,45 +381,102 @@ TODO:B Loop over fullMeld and fullSequence alternatives (use perms?)
                 else {// testCard doesn't fit the testMeld - now check if testMeld has fewer than 3 cards then we can move it to unMelded
                     if (testMeld.size() >= 3)
                         permutationMelded.add((CardList)testMeld.clone());
-                    else permutationUnMelded.add((CardList)testMeld.clone());
+                    else if (2 == testMeld.size())
+                        permutationUnMelded.add((CardList)testMeld.clone());
+                    else
+                        permutationSingles.add(testMeld.get(0));
                     testMeld.clear();
                     testMeld.add(testCard);
                     isRankMeld = true;
                     isSequenceMeld = true;
                     //if the unmelded score is already bigger than previous minimum, we can move to next permutation
-                    if ((minUnMeldedScore != -1) && (getScore(permutationUnMelded,wildCardRank, isFinalScore) >= minUnMeldedScore))
+                    if ((bestValuation != -1) && (calculateHandValue(wildCardRank, isFinalScore, cardsWithAdded, permutationUnMelded, permutationSingles) >= bestValuation))
                         break;
                 }
             }//for iCard=1..numCards (testing permutation)
             //anything left over in testMeld needs to be added to unMelded or Melded appropriately
-            if (testMeld.size() < 3) permutationUnMelded.add((CardList)testMeld.clone());
-            else permutationMelded.add((CardList)testMeld.clone());
+            if (testMeld.size() >= 3)
+                permutationMelded.add((CardList)testMeld.clone());
+            else if (2 == testMeld.size())
+                permutationUnMelded.add((CardList)testMeld.clone());
+            else
+                permutationSingles.add(testMeld.get(0));
+
             //reset the bestPermutation if this is a lower score
             //on normal round, Jokers and wild cards are evaluated as 0; in the last licks round they count full value
-            if ((minUnMeldedScore == -1) || (getScore(permutationUnMelded,wildCardRank, isFinalScore) < minUnMeldedScore)) {
-                minUnMeldedScore = getScore(permutationUnMelded,wildCardRank, isFinalScore);
+            if ((bestValuation == -1) || (calculateHandValue(wildCardRank, isFinalScore, cardsWithAdded, permutationUnMelded, permutationSingles) < bestValuation)) {
+                bestValuation = calculateHandValue(wildCardRank, isFinalScore,cardsWithAdded, permutationUnMelded, permutationSingles);
                 //use copy constructor because permutationMelded etc will continue to change on subsequent permutations
                 bestPermutationMelded = new ArrayList<>(permutationMelded);
                 bestPermutationUnMelded  = new ArrayList<>(permutationUnMelded);
+                bestPermutationSingles = new CardList(permutationSingles);
                 //discard is the right-most card in the permutations - needs to be a pointer to the actual card for later discarding
-                bestPermutationDiscard = cardLists[numCards - 1].get(cardListIdx[numCards - 1]);
+                bestPermutationDiscard = cardsWithAdded.get(cardListIdx[numCards - 1]);
             }
         }//end for cardListIdx in all permutations of cards
 
-        cardWrapper.setCardToDiscard(bestPermutationDiscard);
-        cardWrapper.setBestMelds(bestPermutationMelded);
-        cardWrapper.setBestUnMelded(bestPermutationUnMelded);
-        int score = getScore(bestPermutationUnMelded,wildCardRank, isFinalScore);
-        cardWrapper.setScore(score);
+        //set member variables
+        melds = bestPermutationMelded;
+        partialMelds = bestPermutationUnMelded;
+        lastDiscard = bestPermutationDiscard;
+
+        //Clean up what is now left in singles  - for final scoring we put wildcards and partial melds/sequences into singles
+        singles = new CardList(cardsWithAdded);
+        for (Card card:cardsWithAdded) {
+            if ((contains(bestPermutationMelded,card) || (card == lastDiscard)) || (!isFinalScore && contains(partialMelds,card))){
+                singles.remove(card);
+            } else if (card.isWildCard(wildCardRank)) Log.e(Game.APP_TAG,"meldAndEvaluateUsingPermutations: Unmelded wildcards remaining");
+        }
+        if (isFinalScore) partialMelds.clear();
+
+        intermediateHandValue = calculateHandValue(wildCardRank, isFinalScore,cardsWithAdded, partialMelds, singles);
+
         //Log.d(Game.APP_TAG, "Examined "+allPermutations+" permutations");
-        return score;
-    }//end int meldAndScore
+        return intermediateHandValue;
+    }//end int meldAndEvaluateUsingPermutations
 
 
-    protected int getScore(Rank wildCardRank, boolean isFinalScore){
-        //should never be null, but if it is then score = 0
-        if (unMelded == null) return 0;
-        return getScore(unMelded, wildCardRank, isFinalScore);
+    /*    Score and sort cardsWithAdded - valuing partial melds and sequences
+        Intermediate scoring:
+        cardValue = face value if not in full-meld, full-sequence, or wildcard
+                      x 1/2  face value if in partialMeld
+        Final scoring: Discard all partial melds/sequences and convert to singles (already done)
+                        But also record this at all times for final round scoring
+        */
+    private int calculateHandValue(Rank wildCardRank, boolean isFinalScore,  CardList cardsWithAdded, ArrayList<CardList> partialMelds, CardList singles) {
+        float handValue = 0.0f;
+        finalHandScore=0;
+        for (Card card : cardsWithAdded) {
+            float cardValue = card.getScore(wildCardRank, isFinalScore);
+            //if Final, then singles contains everything in partialMelds at full value
+            //otherwise reduce it by 1/2 if partially melded
+            if (contains(partialMelds,card) || singles.contains(card)) {
+                finalHandScore += cardValue;
+                if (!isFinalScore && contains(partialMelds, card)) handValue += 0.5 * cardValue;
+                else handValue += cardValue;
+            }
+        }
+        return (int)handValue;
+    }
+
+
+    //delegate method to look for card in ArrayList<CardList> (otherwise we'd have to override ArrayList)
+    private static boolean contains (ArrayList<CardList> cardLists, Card card) {
+        if (null == cardLists) return false;
+        for (CardList cardList : cardLists)
+            if (cardList.contains(card)) return true;
+        return false;
+    }
+    private static boolean contains (ArrayList<CardList> containingCardLists, CardList cardList) {
+        if (null == containingCardLists) return false;
+        for (Card card:cardList) if (contains(containingCardLists,card)) return true;
+        return false;
+    }
+
+
+    protected int getHandValueOrScore(boolean isFinalScore){
+        if (isFinalScore) return this.finalHandScore;
+        else return this.intermediateHandValue;
     }
 
 
@@ -376,35 +492,39 @@ TODO:B Loop over fullMeld and fullSequence alternatives (use perms?)
     boolean dealNew(CardList cardsToDeal, int numberToDeal) {
         if ((cardsToDeal == null) || (numberToDeal <= 0)) return false;
         cards.clear();
-        for (int iCard=0; iCard < numberToDeal; iCard++)
-            cards.add(cardsToDeal.deal());
+        for (int iCard=0; iCard < numberToDeal; iCard++) cards.add(cardsToDeal.deal());
+        singles = (CardList)cards.clone();
         return true;
     }
 
+    //GETTERS and SETTERS
     //TODO: Combine these two methods depending on which is calling them
     String getUnMeldedString() {
         StringBuffer unMeldedString = new StringBuffer();
-        for (CardList unMelds:unMelded) {
-            unMeldedString.append(unMelds.getString());
+        if (null != partialMelds) {
+            for (CardList unMelds : partialMelds) {
+                unMeldedString.append(unMelds.getString());
+            }
         }
         return unMeldedString.toString();
+    }
+    String getSingles() {
+        return singles.getString();
     }
 
     String getMeldedString() {
         StringBuffer meldedString = new StringBuffer();
-        for (CardList melds:this.melds) {
-            meldedString.append(melds.getString());
+        if (null != melds) {
+            for (CardList melds : this.melds) {
+                meldedString.append(melds.getString());
+            }
         }
         return meldedString.toString();
     }
 
 
-
-    void setMelds(ArrayList<CardList> melds) {
-        this.melds = new ArrayList<>(melds);
+    public Card getLastDiscard() {
+        return lastDiscard;
     }
 
-    void setUnMelded(ArrayList<CardList> unMelded) {
-        this.unMelded = new ArrayList<>(unMelded);
-    }
 }//class Hand

@@ -1,5 +1,7 @@
 package com.example.jeffrey.fivekings;
 
+import java.util.Comparator;
+
 /**
  * Created by Jeffrey on 1/22/2015.
  * 2/2/2015 Changed cards to be final - no setters because you cannot change values
@@ -14,6 +16,43 @@ class Card {
     static final int FINAL_WILD_CARD_VALUE =20;
     static final int FINAL_JOKER_VALUE=50;
     static final String JOKER_STRING="Jok";
+
+    //sorting for sequences (within the same suit)
+    static final Comparator<Card> cardComparatorSuitFirst = new Comparator<Card>() {
+        @Override
+        public int compare(Card card1, Card card2) {
+            if (card1.isJoker && card2.isJoker) return 0;
+            if (card1.isJoker) return card2.getRankValue();
+            if (card2.isJoker) return -card1.getRankValue();
+            int suitCmp = card1.suit.compareTo(card2.suit);
+            if (suitCmp != 0) return suitCmp;
+            return card1.rank.compareTo(card2.rank);
+        }
+    };
+    //sorting for rank melds (so we meld higher value cards first)
+    static final Comparator<Card> cardComparatorRankFirstDesc = new Comparator<Card>() {
+        @Override
+        public int compare(Card card1, Card card2) {
+            if (card1.isJoker && card2.isJoker) return 0;
+            if (card1.isJoker) return card2.getRankValue();
+            if (card2.isJoker) return -card1.getRankValue();
+            int rankCmp = -card1.rank.compareTo(card2.rank);
+            if (rankCmp != 0) return rankCmp;
+            return card1.suit.compareTo(card2.suit);
+        }
+    };
+
+    static final Comparator<Card> cardComparatorRankFirstAsc = new Comparator<Card>() {
+        @Override
+        public int compare(Card card1, Card card2) {
+            if (card1.isJoker && card2.isJoker) return 0;
+            if (card1.isJoker) return -card2.getRankValue();
+            if (card2.isJoker) return card1.getRankValue();
+            int rankCmp = card1.rank.compareTo(card2.rank);
+            if (rankCmp != 0) return rankCmp;
+            return card1.suit.compareTo(card2.suit);
+        }
+    };
 
     private final Suit suit;
     private final Rank rank;
@@ -71,7 +110,8 @@ class Card {
     boolean isSameSuit(Card card) {return this.suit == card.suit;}
     boolean isSameSuit(Suit suit) {return this.suit == suit;}
 
-    int getRankDifference(Card card) {return card.cardValue - this.cardValue;}
+    //TODO:C use compare method instead
+    int getRankDifference(Card card) {return this.cardValue - card.cardValue;}
 
     Rank getRank() {
         return this.rank;

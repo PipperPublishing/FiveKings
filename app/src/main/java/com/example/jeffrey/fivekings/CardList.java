@@ -1,6 +1,7 @@
 package com.example.jeffrey.fivekings;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.Random;
 
@@ -10,6 +11,7 @@ import java.util.Random;
  * Provides basic functions like shuffling, removing, adding
  * 2/1/2015 replaced "cards" member variable with this and commented out unnecessary Overrides
  * 2/3/2015 pushed card scoring down into Card
+ * 2/5/2015 Call Collections.shuffle()
  */
 class CardList extends ArrayList<Card> {
 
@@ -25,8 +27,13 @@ class CardList extends ArrayList<Card> {
         super(cards);
     }
 
-    //shuffle by randomly picking a card and moving it to the end of the list
     protected boolean shuffle() {
+        Collections.shuffle(this);
+        return true;
+    }
+
+    //shuffle by randomly picking a card and moving it to the end of the list
+    protected boolean myShuffle() {
         Card shuffledCard;
         Random randGenerator = new Random();
         for (int curlenOrigCards = this.size() - 1; curlenOrigCards >= 0; curlenOrigCards--) {
