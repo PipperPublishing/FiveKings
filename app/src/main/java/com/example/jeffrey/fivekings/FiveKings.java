@@ -2,14 +2,24 @@ package com.example.jeffrey.fivekings;
 
 import android.annotation.TargetApi;
 import android.app.Activity;
+import android.content.Context;
+import android.graphics.Typeface;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
+import android.view.LayoutInflater;
 import android.view.MotionEvent;
 import android.view.View;
 import android.widget.Button;
+import android.widget.TableLayout;
+import android.widget.TableRow;
+import android.widget.TextView;
 
 import com.example.jeffrey.fivekings.util.SystemUiHider;
+
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
 
 
 /**
@@ -17,6 +27,9 @@ import com.example.jeffrey.fivekings.util.SystemUiHider;
  * status bar and navigation/system bar) with user interaction.
  *
  * @see SystemUiHider
+ */
+/* HISTORY
+    2/10/2015   Display each round every time Play button is pressed
  */
 public class FiveKings extends Activity {
     /**
@@ -46,6 +59,16 @@ public class FiveKings extends Activity {
      * The instance of the {@link SystemUiHider} for this activity.
      */
     private SystemUiHider mSystemUiHider;
+    // Dynamic elements of the interface
+    private Game mGame=null;
+    private Button mPlayButton;
+    private TextView mRoundNumber;
+    private TableLayout mScoreDetail;
+    private View mScoreDetailView;
+    private TableRow[] mScoreDetailRow = new TableRow[Game.MAX_PLAYERS];
+    private TextView[] mPlayerNametv = new TextView[Game.MAX_PLAYERS];
+    private TextView[] mPlayerScoretv = new TextView[Game.MAX_PLAYERS];
+    private TextView[] mPlayerCumScoretv = new TextView[Game.MAX_PLAYERS];
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -55,6 +78,8 @@ public class FiveKings extends Activity {
 
         final View controlsView = findViewById(R.id.fullscreen_content_controls);
         final View contentView = findViewById(R.id.fullscreen_content);
+
+        mPlayButton= (Button)findViewById(R.id.Play);
 
         // Set up an instance of SystemUiHider to control the system UI for
         // this activity.
@@ -113,11 +138,11 @@ public class FiveKings extends Activity {
         // Upon interacting with UI controls, delay any scheduled hide()
         // operations to prevent the jarring behavior of controls going away
         // while interacting with the UI.
-        findViewById(R.id.play_button).setOnTouchListener(mDelayHideTouchListener);
+        findViewById(R.id.Play).setOnTouchListener(mDelayHideTouchListener);
 
         //set up the playGame handler for the Button
         //set the OnClickListener for the button - for some reason this doesn't reliably work from XML
-        final Button playButton = (Button)findViewById(R.id.play_button);
+        final Button playButton = (Button)findViewById(R.id.Play);
         playButton.setOnClickListener(new View.OnClickListener() {
             public void onClick(View v) {
                 playGame(v);
@@ -170,7 +195,73 @@ public class FiveKings extends Activity {
     }
 
     void playGame(View v){
-        Game game = new Game();
-        game.play();
+        Rank nextRound;
+        if (null== mGame) {
+            mPlayButton= (Button)findViewById(R.id.Play);
+            mRoundNumber = (TextView)findViewById(R.id.round_number);
+            mGame = new Game(this);
+            showPlayerScores(mGame.getPlayers());
+            mPlayButton.setText(getText(R.string.nextRound)+" "+mGame.getRoundOf().getRankString()+"'s");
+        } else if (null==mGame.getRoundOf()) {
+            mGame.showFinalScores();
+        } else {
+            mRoundNumber.setText(mGame.getRoundOf().getRankString()+"'s");
+            nextRound = mGame.nextRound();
+            showPlayerScores(mGame.getPlayers());
+            if (nextRound != null) mPlayButton.setText(getText(R.string.nextRound)+" "+mGame.getRoundOf().getRankString()+"'s");
+            else mPlayButton.setText(getText(R.string.Exit));
+        }
+    }
+
+    //for now just display players in order; eventually sort them by who is winning
+    //TODO:A Look at switching to ListView, especially since all Table Rows are the same
+    void showPlayerScores(List<Player> players) {
+        final int BASE_ID=10000;
+
+        if (null == mScoreDetail) {
+            mScoreDetail = (TableLayout) findViewById(R.id.scoreDetail);
+            LayoutInflater  inflater = (LayoutInflater) this.getSystemService(Context.LAYOUT_INFLATER_SERVICE);
+            //provides the layout params for each row
+            mScoreDetailView = inflater.inflate(R.layout.score_detail,null);
+            TableRow mScoreDetailRowBase = (TableRow) mScoreDetailView.findViewById(R.id.score_detail_row);
+            TextView mPlayerNametvBase = (TextView) mScoreDetailView.findViewById(R.id.player_name);
+            TextView mPlayerScoretvBase = (TextView) mScoreDetailView.findViewById(R.id.round_score);
+            TextView mPlayerCumScoretvBase = (TextView) mScoreDetailView.findViewById(R.id.cum_score);
+            //set up the names and scores - then update each round
+            for (int iPlayer=0; iPlayer<players.size(); iPlayer++) {
+                mScoreDetailRow[iPlayer] = new TableRow(this);
+                mPlayerNametv[iPlayer] = clone(mPlayerNametvBase);
+                mPlayerScoretv[iPlayer] = clone(mPlayerScoretvBase);
+                mPlayerCumScoretv[iPlayer] = clone(mPlayerCumScoretvBase);
+
+                //add the detail row view into the table layout
+                mScoreDetail.addView(mScoreDetailRow[iPlayer]);
+                //add the element unless this is the default (template) row
+                mScoreDetailRow[iPlayer].addView(mPlayerNametv[iPlayer], 0);
+                mScoreDetailRow[iPlayer].addView(mPlayerScoretv[iPlayer], 1);
+                mScoreDetailRow[iPlayer].addView(mPlayerCumScoretv[iPlayer], 2);
+            }
+        }//end if mScoreDetail not initialized
+
+        List<Player> sortedPlayers = new ArrayList<Player>(players);
+        Collections.sort(sortedPlayers, Player.playerComparatorByScoreDesc);
+        for (int iPlayer=0; iPlayer<sortedPlayers.size(); iPlayer++) {
+            mPlayerNametv[iPlayer].setText(String.valueOf(sortedPlayers.get(iPlayer).getName()));
+            mPlayerScoretv[iPlayer].setText(String.valueOf(sortedPlayers.get(iPlayer).getRoundScore()));
+            mPlayerCumScoretv[iPlayer].setText(String.valueOf(sortedPlayers.get(iPlayer).getCumulativeScore()));
+        }//end for players
+        mPlayerNametv[0].setTypeface(null, Typeface.BOLD);
+        mPlayerCumScoretv[0].setTypeface(null, Typeface.BOLD);
+    }//end showPlayerScores
+
+    private TextView clone(TextView vFrom) {
+        final TextView vTo = new TextView(this);
+        cloneLayout(vFrom,vTo);
+        return vTo;
+    }
+
+    static private void cloneLayout(TextView vFrom, TextView vTo) {
+        vTo.setLayoutParams(vFrom.getLayoutParams());
+        vTo.setPadding(vFrom.getPaddingLeft(),vFrom.getPaddingTop(),vFrom.getPaddingRight(),vFrom.getPaddingBottom());
     }
 }

@@ -1,48 +1,113 @@
-<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
              xmlns:tools="http://schemas.android.com/tools"
              android:layout_width="match_parent"
              android:layout_height="match_parent"
              android:background="#0099cc"
-             tools:context=".FiveKings">
+             android:id="@+id/fullscreen_content"
+             tools:context=".FiveKings"
+             android:paddingTop="@dimen/abc_action_bar_stacked_max_height"
+             android:paddingBottom="48dp">
 
     <!-- The primary full-screen view. This can be replaced with whatever view
          is needed to present your content, e.g. VideoView, SurfaceView,
          TextureView, etc. -->
-    <TextView android:id="@+id/fullscreen_content"
-              android:layout_width="match_parent"
-              android:layout_height="match_parent"
-              android:keepScreenOn="true"
-              android:textColor="#33b5e5"
-              android:textStyle="bold"
-              android:textSize="50sp"
-              android:gravity="center"
-              android:text="@string/card_display"/>
 
-    <!-- This FrameLayout insets its children based on system windows using
-         android:fitsSystemWindows. -->
-    <FrameLayout android:layout_width="match_parent"
-                 android:layout_height="match_parent"
-                 android:fitsSystemWindows="true"
-                 android:id="@+id/cards_area">
+    <LinearLayout
+        android:id="@+id/fullscreen_content_controls"
+        style="?buttonBarStyle"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_gravity="bottom|center_horizontal"
+        android:background="@color/black_overlay"
+        android:orientation="horizontal"
+        tools:ignore="UselessParent" >
+    </LinearLayout>
 
-        <LinearLayout android:id="@+id/fullscreen_content_controls"
-                      style="?metaButtonBarStyle"
-                      android:layout_width="match_parent"
-                      android:layout_height="wrap_content"
-                      android:layout_gravity="bottom|center_horizontal"
-                      android:background="@color/black_overlay"
-                      android:orientation="horizontal"
-                      tools:ignore="UselessParent">
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:textAppearance="?android:attr/textAppearanceMedium"
+        android:id="@+id/round_number"
+        android:text=""
+        android:paddingLeft="10dp"
+        android:layout_alignTop="@+id/fullscreen_content_controls"
+        android:layout_toRightOf="@+id/score_heading"
+        android:layout_toEndOf="@+id/score_heading"/>
 
-            <Button android:id="@+id/play_button"
-                    style="?metaButtonBarButtonStyle"
-                    android:layout_width="0dp"
-                    android:layout_height="wrap_content"
-                    android:layout_weight="1"
-                    android:onClick="playGame"
-                    android:text="@string/play_button"/>
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:textAppearance="?android:attr/textAppearanceMedium"
+        android:text="@string/Score"
+        android:id="@+id/score_heading"
+        android:layout_alignParentTop="true"
+        android:layout_alignParentLeft="true"
+        android:layout_alignParentStart="true"/>
 
-        </LinearLayout>
-    </FrameLayout>
+    <TableLayout
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:id="@+id/scoreDetail"
+        android:layout_alignParentEnd="false"
+        android:layout_alignParentStart="false"
+        android:layout_below="@id/score_heading"
+        android:layout_alignLeft="@id/score_heading">
+    </TableLayout>
 
-</FrameLayout>
+
+    <LinearLayout
+        android:orientation="horizontal"
+        android:layout_width="fill_parent"
+        android:layout_height="wrap_content"
+        android:gravity="center_vertical|center_horizontal"
+        android:id="@+id/draw_and_discard_piles"
+        android:layout_above="@+id/Play"
+        android:layout_below="@+id/scoreDetail"
+        android:layout_alignParentRight="true"
+        android:layout_alignParentEnd="true">
+
+        <Button
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:id="@+id/drawPile"
+            android:contentDescription="@string/Draw"
+            android:layout_below="@+id/name4"
+            android:layout_toRightOf="@+id/name4"
+            android:text="@string/Draw"/>
+
+        <Button
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:id="@+id/discardPile"
+            android:contentDescription="@string/Discard"
+            android:layout_alignTop="@+id/drawPile"
+            android:layout_alignRight="@+id/cumscore4"
+            android:layout_alignEnd="@+id/cumscore4"
+            android:text="@string/Discard"/>
+    </LinearLayout>
+
+    <LinearLayout
+        android:orientation="horizontal"
+        android:layout_width="fill_parent"
+        android:layout_height="wrap_content"
+        android:gravity="center_horizontal|bottom"
+        android:id="@+id/current_cards"
+        android:layout_alignParentBottom="true"
+        android:layout_alignStart="@id/draw_and_discard_piles"
+        android:layout_marginBottom="126dp"
+        android:layout_centerHorizontal="true"
+        android:layout_below="@+id/draw_and_discard_piles"
+        android:layout_above="@+id/Play">
+    </LinearLayout>
+
+    <Button
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="@string/Play"
+        android:id="@+id/Play"
+        android:gravity="center_horizontal|bottom"
+        android:layout_gravity="bottom"
+        android:layout_alignParentBottom="true"
+        android:layout_centerHorizontal="true"/>
+
+</RelativeLayout>

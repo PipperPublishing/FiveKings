@@ -1,5 +1,7 @@
 package com.example.jeffrey.fivekings;
 
+import java.util.Comparator;
+
 /**
  * Created by Jeffrey on 1/22/2015.
 * 2/3/2015 If DiscardPile reduces score, then use it, otherwise use drawPile
@@ -10,6 +12,7 @@ class Player {
     private String name;
     //dealer rotates every round, but relativePosition says where this player sits relative to others
     private int relativePosition;
+    private int roundScore;
     private int cumulativeScore;
     private Hand hand;
     private boolean useDiscardPile=false;
@@ -28,9 +31,16 @@ class Player {
     }
     boolean initRound() {
         hand = new Hand();
+        roundScore = 0;
         return true;
     }
 
+    static final Comparator<Player> playerComparatorByScoreDesc = new Comparator<Player>() {
+        @Override
+        public int compare(Player lhs, Player rhs) {
+            return lhs.cumulativeScore - rhs.cumulativeScore;
+        }
+    };
 
     boolean useDiscardPile(Rank roundOf, boolean usePermutations, boolean isFinalScore, Card discardPileCard) {
         //if DiscardPile lowers current evaluation, then use it - otherwise DrawPile (so we no longer peek)
@@ -95,8 +105,14 @@ class Player {
         return hand.getHandValueOrScore(isFinalScore);
     }
 
+    public int getRoundScore() {
+        return roundScore;
+    }
+
     void addToCumulativeScore() {
-        cumulativeScore += hand.getHandValueOrScore(true);
+        roundScore = hand.getHandValueOrScore(true);
+
+        cumulativeScore += roundScore;
     }
 
     int getCumulativeScore() {
