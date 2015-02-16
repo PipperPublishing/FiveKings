@@ -13,6 +13,7 @@ import java.util.List;
  *  2/3/2015    Push draw-pile/discard-pile decision into Player so that we can replace with human - no longer peeks at DrawPile
  *  2/4/2015    Do discard vs draw decision and meld/score/discard as separate steps
  *  2/10/2015   Separate into play, nextRound, takeTurn to interact properly with UI
+ *  2/16/2015   Use BuildConfig rather than hardcoding app name
  */
 public class Game {
     private static final boolean DEBUG=false;
@@ -21,10 +22,9 @@ public class Game {
     private static int PERMUTATION_THRESHOLD=500; //if longer than 0.5s for each player we switch to heuristic approach
     static final boolean USE_DRAW_PILE=false;
     static final boolean USE_DISCARD_PILE=true;
-    static final String APP_TAG = "Five Kings:";
+    static final String APP_TAG = BuildConfig.APPLICATION_ID+":"+BuildConfig.VERSION_NAME;
     static final int MAX_PLAYERS=12;
     static final int MAX_CARDS=14; //Round of Kings + picked up card
-    static final int CARD_STACK_OFFSET=35;
 
     private Deck deck;
     private Context context;

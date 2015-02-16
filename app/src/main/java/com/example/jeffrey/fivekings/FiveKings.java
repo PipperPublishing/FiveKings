@@ -40,6 +40,9 @@ import java.util.List;
 //TODO:B Embed spaces in string resources
 
 public class FiveKings extends Activity {
+    static final int CARD_STACK_OFFSET=35;
+
+
     /**
      * Whether or not the system UI should be auto-hidden after
      * {@link #AUTO_HIDE_DELAY_MILLIS} milliseconds.
@@ -292,8 +295,9 @@ public class FiveKings extends Activity {
                 layers[iDrawable] = meldedLayers.get(iDrawable);
             }
             LayerDrawable meldsDrawable = new LayerDrawable(layers);
+            meldsDrawable.setPaddingMode(LayerDrawable.PADDING_MODE_STACK);
             for (int iLayer = 0; iLayer < meldsDrawable.getNumberOfLayers(); iLayer++) {
-                meldsDrawable.setLayerInset(iLayer, iLayer * Game.CARD_STACK_OFFSET, 0, 0, 0);
+                meldsDrawable.setLayerInset(iLayer, iLayer * CARD_STACK_OFFSET, 0, 0, 0);
             }
             mCurrentMeldsImage.setImageDrawable(meldsDrawable);
         } else {//clear it
@@ -310,8 +314,9 @@ public class FiveKings extends Activity {
                 layers[iDrawable] = unMeldedLayers.get(iDrawable);
             }
             LayerDrawable unMeldedDrawable = new LayerDrawable(layers);
+            unMeldedDrawable.setPaddingMode(LayerDrawable.PADDING_MODE_STACK);
             for (int iLayer = 0; iLayer < unMeldedDrawable.getNumberOfLayers(); iLayer++) {
-                unMeldedDrawable.setLayerInset(iLayer, iLayer * Game.CARD_STACK_OFFSET, 0, 0, 0);
+                unMeldedDrawable.setLayerInset(iLayer, iLayer * CARD_STACK_OFFSET, 0, 0, 0);
             }
             mCurrentCardsImage.setImageDrawable(unMeldedDrawable);
         } else {//clear it
