@@ -21,93 +21,120 @@
         android:background="@color/black_overlay"
         android:orientation="horizontal"
         tools:ignore="UselessParent" >
+
     </LinearLayout>
 
     <TextView
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:textAppearance="?android:attr/textAppearanceMedium"
         android:id="@+id/round_number"
-        android:text=""
-        android:paddingLeft="10dp"
-        android:layout_alignTop="@+id/fullscreen_content_controls"
-        android:layout_toRightOf="@+id/score_heading"
-        android:layout_toEndOf="@+id/score_heading"/>
-
-    <TextView
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:textAppearance="?android:attr/textAppearanceMedium"
         android:text="@string/Score"
-        android:id="@+id/score_heading"
         android:layout_alignParentTop="true"
         android:layout_alignParentLeft="true"
-        android:layout_alignParentStart="true"/>
-
-    <TableLayout
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:id="@+id/scoreDetail"
-        android:layout_alignParentEnd="false"
-        android:layout_alignParentStart="false"
-        android:layout_below="@id/score_heading"
-        android:layout_alignLeft="@id/score_heading">
-    </TableLayout>
-
+        android:layout_alignParentStart="true"
+        android:layout_below="@+id/fullscreen_content_controls"/>
 
     <LinearLayout
+        android:id="@+id/score_and_game"
         android:orientation="horizontal"
         android:layout_width="fill_parent"
         android:layout_height="wrap_content"
-        android:gravity="center_vertical|center_horizontal"
-        android:id="@+id/draw_and_discard_piles"
-        android:layout_above="@+id/Play"
-        android:layout_below="@+id/scoreDetail"
-        android:layout_alignParentRight="true"
-        android:layout_alignParentEnd="true">
+        android:layout_below="@id/round_number"
+        android:layout_alignLeft="@id/round_number"
+        android:weightSum="1">
 
-        <Button
+        <TableLayout
+            android:id="@+id/scoreDetail"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:id="@+id/drawPile"
-            android:contentDescription="@string/Draw"
-            android:layout_below="@+id/name4"
-            android:layout_toRightOf="@+id/name4"
-            android:text="@string/Draw"/>
+            android:layout_weight="0.6">
+        </TableLayout>
 
-        <Button
+        <TextView
+            android:id="@+id/game_info_line"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:id="@+id/discardPile"
-            android:contentDescription="@string/Discard"
-            android:layout_alignTop="@+id/drawPile"
-            android:layout_alignRight="@+id/cumscore4"
-            android:layout_alignEnd="@+id/cumscore4"
-            android:text="@string/Discard"/>
+            android:textAppearance="?android:attr/textAppearanceSmall"
+            android:layout_weight="0.4"/>
     </LinearLayout>
 
     <LinearLayout
-        android:orientation="horizontal"
+        android:layout_above="@+id/Play"
+        android:orientation="vertical"
         android:layout_width="fill_parent"
         android:layout_height="wrap_content"
-        android:gravity="center_horizontal|bottom"
-        android:id="@+id/current_cards"
-        android:layout_alignParentBottom="true"
-        android:layout_alignStart="@id/draw_and_discard_piles"
-        android:layout_marginBottom="126dp"
-        android:layout_centerHorizontal="true"
-        android:layout_below="@+id/draw_and_discard_piles"
-        android:layout_above="@+id/Play">
+        android:layout_below="@+id/score_and_game"
+        android:id="@+id/play_area"
+        android:weightSum="4"
+        >
+
+        <LinearLayout
+            android:id="@+id/draw_and_discard_piles"
+            android:orientation="horizontal"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:layout_gravity="center_horizontal">
+
+            <ImageButton
+                android:id="@+id/drawPile"
+                android:layout_width="72dp"
+                android:layout_height="96dp"
+                android:contentDescription="@string/Draw"
+                android:text="@string/Draw"
+                android:src="@drawable/b2fv"/>
+
+            <ImageButton
+                android:id="@+id/discardPile"
+                android:layout_width="72dp"
+                android:layout_height="96dp"
+                android:contentDescription="@string/Discard"
+                android:text="@string/Discard"
+                android:src="@drawable/b2fv"/>
+        </LinearLayout>
+
+        <TextView
+            android:id="@+id/info_line"
+            android:layout_width="fill_parent"
+            android:layout_height="wrap_content"
+            android:textAppearance="?android:attr/textAppearanceSmall"
+            android:text="@string/blank"
+            android:gravity="center_vertical|center_horizontal"
+            android:layout_weight="1"
+            android:textStyle="normal"/>
+
+        <ImageView
+            android:id="@+id/current_cards"
+            android:layout_width="wrap_content"
+            android:layout_height="72dp"
+            android:gravity="center_horizontal|bottom"
+            android:layout_weight="1"
+            android:contentDescription="@string/current_cards"
+            android:cropToPadding="true"
+            android:layout_gravity="center_horizontal"/>
+
+        <ImageView
+            android:id="@+id/current_melds"
+            android:layout_width="wrap_content"
+            android:layout_height="72dp"
+            android:layout_weight="1"
+            android:gravity="center_horizontal"
+            android:contentDescription="@string/current_melds"
+            android:layout_gravity="center_horizontal"/>
+
     </LinearLayout>
 
     <Button
+        android:id="@+id/Play"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:text="@string/Play"
-        android:id="@+id/Play"
-        android:gravity="center_horizontal|bottom"
-        android:layout_gravity="bottom"
+        android:layout_gravity="center_horizontal|bottom"
         android:layout_alignParentBottom="true"
-        android:layout_centerHorizontal="true"/>
+        android:layout_alignParentRight="false"
+        android:layout_centerHorizontal="true"
+        />
+
 
 </RelativeLayout>

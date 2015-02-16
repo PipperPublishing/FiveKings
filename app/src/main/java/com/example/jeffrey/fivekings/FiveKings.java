@@ -4,6 +4,8 @@ import android.annotation.TargetApi;
 import android.app.Activity;
 import android.content.Context;
 import android.graphics.Typeface;
+import android.graphics.drawable.Drawable;
+import android.graphics.drawable.LayerDrawable;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
@@ -11,6 +13,8 @@ import android.view.LayoutInflater;
 import android.view.MotionEvent;
 import android.view.View;
 import android.widget.Button;
+import android.widget.ImageButton;
+import android.widget.ImageView;
 import android.widget.TableLayout;
 import android.widget.TableRow;
 import android.widget.TextView;
@@ -30,7 +34,11 @@ import java.util.List;
  */
 /* HISTORY
     2/10/2015   Display each round every time Play button is pressed
+    2/12/2015   Display each player's hands and top of Discard Pile
+    2/15/2015   Added GameState to provide State after each button press
  */
+//TODO:B Embed spaces in string resources
+
 public class FiveKings extends Activity {
     /**
      * Whether or not the system UI should be auto-hidden after
@@ -65,10 +73,16 @@ public class FiveKings extends Activity {
     private TextView mRoundNumber;
     private TableLayout mScoreDetail;
     private View mScoreDetailView;
+    private TextView mGameInfoLine;
     private TableRow[] mScoreDetailRow = new TableRow[Game.MAX_PLAYERS];
     private TextView[] mPlayerNametv = new TextView[Game.MAX_PLAYERS];
     private TextView[] mPlayerScoretv = new TextView[Game.MAX_PLAYERS];
     private TextView[] mPlayerCumScoretv = new TextView[Game.MAX_PLAYERS];
+    private TextView mInfoLine;
+    private ImageButton mDiscardButton;
+    private ImageButton mDrawPileButton;
+    private ImageView mCurrentMeldsImage;
+    private ImageView mCurrentCardsImage;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -194,29 +208,122 @@ public class FiveKings extends Activity {
         mHideHandler.postDelayed(mHideRunnable, delayMillis);
     }
 
+    //the Event handler for button presses on [Play]
     void playGame(View v){
         Rank nextRound;
+        Player playerWentOut=null;
+        StringBuffer turnInfo = new StringBuffer(100);
+
+        //Beginning of game
+        //need to allow for mGame!=null but GameState reset to NEW_GAME (rerun)
         if (null== mGame) {
-            mPlayButton= (Button)findViewById(R.id.Play);
-            mRoundNumber = (TextView)findViewById(R.id.round_number);
             mGame = new Game(this);
-            showPlayerScores(mGame.getPlayers());
+            mRoundNumber = (TextView)findViewById(R.id.round_number);
+            mGameInfoLine = (TextView) findViewById(R.id.game_info_line);
+            mGameInfoLine.setTypeface(null, Typeface.BOLD_ITALIC);
+            mInfoLine = (TextView) findViewById(R.id.info_line);
+            mInfoLine.setTypeface(null, Typeface.ITALIC);
+            mDiscardButton = (ImageButton)findViewById(R.id.discardPile);
+            mDrawPileButton = (ImageButton)findViewById(R.id.drawPile);
+            mCurrentMeldsImage = (ImageView) findViewById(R.id.current_melds);
+            mCurrentCardsImage = (ImageView) findViewById(R.id.current_cards);
+            mPlayButton= (Button)findViewById(R.id.Play);
             mPlayButton.setText(getText(R.string.nextRound)+" "+mGame.getRoundOf().getRankString()+"'s");
-        } else if (null==mGame.getRoundOf()) {
-            mGame.showFinalScores();
-        } else {
-            mRoundNumber.setText(mGame.getRoundOf().getRankString()+"'s");
-            nextRound = mGame.nextRound();
             showPlayerScores(mGame.getPlayers());
-            if (nextRound != null) mPlayButton.setText(getText(R.string.nextRound)+" "+mGame.getRoundOf().getRankString()+"'s");
-            else mPlayButton.setText(getText(R.string.Exit));
+        }
+
+        //starting a round
+        else if (GameState.ROUND_START == mGame.getGameState()) {
+            mGame.initRound();
+            mDiscardButton.setImageDrawable(mGame.getDiscardPileDrawable());
+            mGameInfoLine.setText(getText(R.string.now_playing) + " " + mGame.getRoundOf().getRankString() + "'s");
+            mInfoLine.setText(mGame.getDealer().getName() + " " + getText(R.string.deals));
+            mPlayButton.setText(getText(R.string.nextPlayer) + " " + mGame.getPlayer().getName());
+            mCurrentCardsImage.setImageDrawable(null);
+            mCurrentMeldsImage.setImageDrawable(null);
+        }
+
+        else if (GameState.TAKE_TURN == mGame.getGameState()) {
+            playerWentOut = mGame.takeTurn(turnInfo);
+            if (playerWentOut != null) mGameInfoLine.setText(playerWentOut.getName() + " " + getText(R.string.wentOut));
+            //Show card on discard pile (changes because of this player's play)
+            mDiscardButton.setImageDrawable(mGame.getDiscardPileDrawable());
+            showCards();
+            mInfoLine.setText(turnInfo);
+            if (mGame.endTurn()) mPlayButton.setText(getText(R.string.nextPlayer) + " " + mGame.getPlayer().getName());
+        }
+
+        else if (GameState.TURN_START == mGame.getGameState()) {
+            //Show card on discard pile (need to display at beginning of round)
+            mDiscardButton.setImageDrawable(mGame.getDiscardPileDrawable());
+            showCards();
+
+            mInfoLine.setText(mGame.getPlayer().getName()+"'s " + getText(R.string.cards));
+            mPlayButton.setText(getText(R.string.takeTurn) + " " + mGame.getPlayer().getName());
+            mGame.setGameState(GameState.TAKE_TURN);
+        }
+
+        else if (GameState.ROUND_END == mGame.getGameState()) {
+            mRoundNumber.setText(getText(R.string.scores_after) +" " + mGame.getRoundOf().getRankString() + "'s");
+            nextRound = mGame.endRound();
+            mGameInfoLine.setText(getText(R.string.displayScores));
+            showPlayerScores(mGame.getPlayers());
+            if (null == nextRound) mPlayButton.setText(getText(R.string.Exit));
+            else
+                mPlayButton.setText(getText(R.string.nextRound) + " " + mGame.getRoundOf().getRankString() + "'s");
+        }
+
+        else if (GameState.GAME_END == mGame.getGameState()) {
+            mGame.showFinalScores();
         }
     }
 
-    //for now just display players in order; eventually sort them by who is winning
-    //TODO:A Look at switching to ListView, especially since all Table Rows are the same
+    //show melds and unmelded as StackedDrawables
+    //TODO:A left most cards in stack are looking very stretched
+    //TODO:A put a space between each meld
+    private boolean showCards() {
+        ArrayList<Drawable> meldedLayers = new ArrayList<>(Game.MAX_CARDS);
+        for (CardList cardlist : mGame.getPlayer().getHandMelded()) {
+            for (Card card : cardlist.getCards()) meldedLayers.add(card.getDrawable());
+        }
+        if (!meldedLayers.isEmpty()) {
+            Drawable[] layers = new Drawable[meldedLayers.size()];
+            for (int iDrawable = 0; iDrawable < meldedLayers.size(); iDrawable++) {
+                layers[iDrawable] = meldedLayers.get(iDrawable);
+            }
+            LayerDrawable meldsDrawable = new LayerDrawable(layers);
+            for (int iLayer = 0; iLayer < meldsDrawable.getNumberOfLayers(); iLayer++) {
+                meldsDrawable.setLayerInset(iLayer, iLayer * Game.CARD_STACK_OFFSET, 0, 0, 0);
+            }
+            mCurrentMeldsImage.setImageDrawable(meldsDrawable);
+        } else {//clear it
+            mCurrentMeldsImage.setImageDrawable(null);
+        }
+
+        ArrayList<Drawable> unMeldedLayers = new ArrayList<>(Game.MAX_CARDS);
+        for (CardList cardlist : mGame.getPlayer().getHandUnMelded()) {
+            for (Card card : cardlist.getCards()) unMeldedLayers.add(card.getDrawable());
+        }
+        if (!unMeldedLayers.isEmpty()) {
+            Drawable[] layers = new Drawable[unMeldedLayers.size()];
+            for (int iDrawable = 0; iDrawable < unMeldedLayers.size(); iDrawable++) {
+                layers[iDrawable] = unMeldedLayers.get(iDrawable);
+            }
+            LayerDrawable unMeldedDrawable = new LayerDrawable(layers);
+            for (int iLayer = 0; iLayer < unMeldedDrawable.getNumberOfLayers(); iLayer++) {
+                unMeldedDrawable.setLayerInset(iLayer, iLayer * Game.CARD_STACK_OFFSET, 0, 0, 0);
+            }
+            mCurrentCardsImage.setImageDrawable(unMeldedDrawable);
+        } else {//clear it
+            mCurrentCardsImage.setImageDrawable(null);
+        }
+
+        return true;
+    }//end showCards
+
+
+    //TODO:B Look at switching to ListView, especially since all Table Rows are the same
     void showPlayerScores(List<Player> players) {
-        final int BASE_ID=10000;
 
         if (null == mScoreDetail) {
             mScoreDetail = (TableLayout) findViewById(R.id.scoreDetail);
@@ -259,6 +366,8 @@ public class FiveKings extends Activity {
         cloneLayout(vFrom,vTo);
         return vTo;
     }
+
+
 
     static private void cloneLayout(TextView vFrom, TextView vTo) {
         vTo.setLayoutParams(vFrom.getLayoutParams());

@@ -30,6 +30,11 @@ enum Rank {
     int getRankValue() {
         return value;
     }
+
+    int getOrdinal() {
+        return this.ordinal();
+    }
+
     String getRankString() {
         return string;
     }

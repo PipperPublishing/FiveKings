@@ -17,4 +17,9 @@ enum Suit {
     String getSuitString() {
         return suitString;
     }
+    int getOrdinal() {
+        return this.ordinal();
+    }
+
+
 }

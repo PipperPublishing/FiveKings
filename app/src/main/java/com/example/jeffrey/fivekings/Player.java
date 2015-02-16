@@ -1,5 +1,6 @@
 package com.example.jeffrey.fivekings;
 
+import java.util.ArrayList;
 import java.util.Comparator;
 
 /**
@@ -7,12 +8,17 @@ import java.util.Comparator;
 * 2/3/2015 If DiscardPile reduces score, then use it, otherwise use drawPile
  * 2/4/2015 Remove drawPileCard from useDiscardPile decision (may later add back % decisions) and changes to separate meld/score with drawCard
  * 2/4/2015 Split discard/draw, meld&score, and discard into separate steps to make it easier to include human players
+ * 2/15/2015 Sort unmelded cards for easier viewing
+ * 2/15/2015 Initialize isFirstTurn and then check in useDiscardPile to see if we need to do initial melding
+//TODO:B KD sequence is lower frequency, so not preferred over rank melds
+//TODO:B On round of 5's , play to win rather than to minimize
 */
 class Player {
     private String name;
     //dealer rotates every round, but relativePosition says where this player sits relative to others
     private int relativePosition;
     private int roundScore;
+    private boolean isFirstTurn;
     private int cumulativeScore;
     private Hand hand;
     private boolean useDiscardPile=false;
@@ -32,6 +38,7 @@ class Player {
     boolean initRound() {
         hand = new Hand();
         roundScore = 0;
+        isFirstTurn = true;
         return true;
     }
 
@@ -42,11 +49,15 @@ class Player {
         }
     };
 
+    void evaluateIfFirstTurn(Rank roundOf, boolean usePermutations, boolean isFinalScore) {
+        //if roundScore is not set, we haven't melded yet
+        if (isFirstTurn) hand.meldAndEvaluate(roundOf, usePermutations, isFinalScore);
+        isFirstTurn = false;
+    }
+
     boolean useDiscardPile(Rank roundOf, boolean usePermutations, boolean isFinalScore, Card discardPileCard) {
         //if DiscardPile lowers current evaluation, then use it - otherwise DrawPile (so we no longer peek)
         //this will also avoid loops where we do not draw because it doesn't improve hand
-        //TODO:A First evaluation of the round is faulty, because we haven't actually melded and scored
-        //the hand we picked up
         int beforeEvaluation = hand.getHandValueOrScore(isFinalScore);
         int afterEvaluation = hand.meldAndEvaluate(roundOf, usePermutations, isFinalScore, discardPileCard);
         //TODO:C eventually should be able to track what is left in drawpile
@@ -59,6 +70,7 @@ class Player {
         //already evaluated what to do for discard if this is automated player
         if (!this.useDiscardPile) hand.meldAndEvaluate(roundOf, usePermutations, isFinalScore, addedCard);
     }
+
 
     boolean isOut(Rank wildCardRank) {
         return (hand.getHandValueOrScore(true) == 0);
@@ -85,16 +97,30 @@ class Player {
         return name;
     }
 
-    String getMeldedString(){
-        return "Melds{"+hand.getMeldedString()+"} ";
+    String getMeldedString(boolean withBraces){
+        StringBuffer mMelds = new StringBuffer("Melds ");
+        if (withBraces) mMelds.append("{");
+        mMelds.append(hand.getMeldedString());
+        if (withBraces) mMelds.append("} ");
+        return mMelds.toString();
     }
 
-    String getPartialAndSingles() {
+    String getPartialAndSingles(boolean withBraces) {
         String unMelded = hand.getUnMeldedString();
-        String singles = hand.getSingles();
+        String singles = hand.getSinglesString();
         StringBuffer partialAndSingles = new StringBuffer();
-        if (!unMelded.isEmpty()) partialAndSingles.append("Potential melds{"+unMelded+"} ");
-        if (!singles.isEmpty()) partialAndSingles.append("Unmelded{"+singles+"}");
+        if (!unMelded.isEmpty()) {
+            partialAndSingles.append("Potential melds ");
+            if (withBraces) partialAndSingles.append("{");
+            partialAndSingles.append(unMelded);
+            if (withBraces) partialAndSingles.append("} ");
+        }
+        if (!singles.isEmpty()) {
+            partialAndSingles.append("Unmelded");
+            if (withBraces) partialAndSingles.append("{");
+            partialAndSingles.append(singles);
+            if (withBraces) partialAndSingles.append("} ");
+        }
         return partialAndSingles.toString();
     }
     Card getDiscard() {
@@ -105,7 +131,7 @@ class Player {
         return hand.getHandValueOrScore(isFinalScore);
     }
 
-    public int getRoundScore() {
+    int getRoundScore() {
         return roundScore;
     }
 
@@ -113,6 +139,16 @@ class Player {
         roundScore = hand.getHandValueOrScore(true);
 
         cumulativeScore += roundScore;
+    }
+
+    ArrayList<CardList> getHandMelded() {
+        return hand.getMelded();
+    }
+
+    ArrayList<CardList> getHandUnMelded() {
+        ArrayList<CardList> combined = new ArrayList<>(hand.getUnMelded());
+        combined.add(hand.getSingles());
+        return combined;
     }
 
     int getCumulativeScore() {
