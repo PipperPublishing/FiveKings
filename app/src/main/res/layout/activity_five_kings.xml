@@ -7,7 +7,7 @@
              tools:context=".FiveKings"
              android:paddingTop="@dimen/abc_action_bar_stacked_max_height"
              android:paddingBottom="48dp">
-
+<!-- TODO:B Replace nested LinearLayouts with RelativeLayouts -->
     <!-- The primary full-screen view. This can be replaced with whatever view
          is needed to present your content, e.g. VideoView, SurfaceView,
          TextureView, etc. -->
@@ -42,7 +42,8 @@
         android:layout_height="wrap_content"
         android:layout_below="@id/round_number"
         android:layout_alignLeft="@id/round_number"
-        android:weightSum="1">
+        android:weightSum="1"
+        android:baselineAligned="false">
 
         <TableLayout
             android:id="@+id/scoreDetail"
@@ -51,12 +52,35 @@
             android:layout_weight="0.6">
         </TableLayout>
 
-        <TextView
-            android:id="@+id/game_info_line"
+        <LinearLayout
+            android:id="@+id/draw_and_discard_piles"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:textAppearance="?android:attr/textAppearanceSmall"
-            android:layout_weight="0.4"/>
+            android:layout_weight="0.4"
+            android:weightSum="3"
+            android:layout_gravity="center_horizontal"
+            android:orientation="horizontal"
+            android:gravity="center_horizontal">
+
+            <ImageButton
+                android:id="@+id/drawPile"
+                android:layout_width="72dp"
+                android:layout_height="96dp"
+                android:contentDescription="@string/Draw"
+                android:text="@string/Draw"
+                android:src="@drawable/b2fv"
+                />
+
+            <ImageButton
+                android:id="@+id/discardPile"
+                android:layout_width="72dp"
+                android:layout_height="96dp"
+                android:contentDescription="@string/Discard"
+                android:text="@string/Discard"
+                android:src="@drawable/b2fv"
+                />
+        </LinearLayout>
+
     </LinearLayout>
 
     <LinearLayout
@@ -69,30 +93,13 @@
         android:weightSum="4"
         >
 
-        <LinearLayout
-            android:id="@+id/draw_and_discard_piles"
-            android:orientation="horizontal"
-            android:layout_width="wrap_content"
+        <TextView
+            android:id="@+id/game_info_line"
+            android:layout_width="fill_parent"
             android:layout_height="wrap_content"
-            android:layout_weight="1"
-            android:layout_gravity="center_horizontal">
-
-            <ImageButton
-                android:id="@+id/drawPile"
-                android:layout_width="72dp"
-                android:layout_height="96dp"
-                android:contentDescription="@string/Draw"
-                android:text="@string/Draw"
-                android:src="@drawable/b2fv"/>
-
-            <ImageButton
-                android:id="@+id/discardPile"
-                android:layout_width="72dp"
-                android:layout_height="96dp"
-                android:contentDescription="@string/Discard"
-                android:text="@string/Discard"
-                android:src="@drawable/b2fv"/>
-        </LinearLayout>
+            android:textAppearance="?android:attr/textAppearanceSmall"
+            android:layout_weight="0.5"
+            android:layout_gravity="center_horizontal"/>
 
         <TextView
             android:id="@+id/info_line"
@@ -101,27 +108,26 @@
             android:textAppearance="?android:attr/textAppearanceSmall"
             android:text="@string/blank"
             android:gravity="center_vertical|center_horizontal"
-            android:layout_weight="1"
-            android:textStyle="normal"/>
+            android:layout_weight="0.5"
+            android:textStyle="normal"
+            android:layout_gravity="center_horizontal"/>
 
-        <ImageView
+        <FrameLayout
             android:id="@+id/current_cards"
-            android:layout_width="wrap_content"
-            android:layout_height="72dp"
-            android:gravity="center_horizontal|bottom"
+            android:layout_width="match_parent"
             android:layout_weight="1"
-            android:contentDescription="@string/current_cards"
-            android:cropToPadding="true"
-            android:layout_gravity="center_horizontal"/>
+            android:layout_height="96dp"
+            android:layout_gravity="left">
+        </FrameLayout>
 
-        <ImageView
+        <FrameLayout
             android:id="@+id/current_melds"
-            android:layout_width="wrap_content"
-            android:layout_height="72dp"
+            android:layout_width="match_parent"
             android:layout_weight="1"
-            android:gravity="center_horizontal"
-            android:contentDescription="@string/current_melds"
-            android:layout_gravity="center_horizontal"/>
+            android:layout_height="96dp"
+            android:layout_gravity="left">
+        </FrameLayout>
+
 
     </LinearLayout>
 

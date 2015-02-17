@@ -9,11 +9,6 @@ import java.util.Iterator;
 /**
  * Created by Jeffrey on 1/22/2015.
  * Initial version handling of permutations (each call): nPn-1=n!, where n=round+1
- *  3:  Examined 229 of which 24 were valid (4P3 = 4!)
- *  4:  Examined 2931 of which 120 were valid
- *  5:  Examined 44791 of which 720 were valid
- *  6:  Examined 800668 of which 5040 were valid
- *  7:  Examined 16434825 of which 40320 were valid
  * 1/28/2015 v2 Implement Heap's algorithm inline- see http://www.cs.princeton.edu/~rs/talks/perms.pdf
  * 1/29/2015 Implement Johnson-Trotter algorithm which can act as an iterator (so storage is less of a problem)
  * 1/30/2015 move to a different evaluation method which counts pairs and possible sequences
@@ -22,7 +17,9 @@ import java.util.Iterator;
  * 2/15/2015 Return Card array of melds and unmelded
  * 2/15/2015 Return singles sorted for easier viewing
  * 2/15/2015 Identify partial sequences (JS-KS) in Permutations approach
- * TODO:B Extend for how many rounds we can use permutations by eliminating equivalent permutations (e.g. K*-KS = KS=K*)
+ * 2/17/2015 Replace isSameRank with RankDifference
+ * 2/17/2015 Finding discard when there are no singles/partial melds; remove from a full meld but leave full if >=3
+ * TODO:A Hands are still not going out with a single (meldable) wildcard left
  * TODO:C Discard strategy: Don't discard what others want (wild cards, or cards they picked up)
  * TODO:C Should be able to merge large chunks of Heuristics and Permutations
  * TODO: Current problems:- need to check that partial and full melds don't overlap
@@ -247,7 +244,6 @@ TODO:B Loop over fullMeld and fullSequence alternatives (use perms?)
                 }
             }//end-else partialMelds is not empty
 
-            //TODO:A Eliminate a card out of the longest full meld; might still be full
             else {//have to eliminate a fullMeld - here you want to sort ascending
                 Collections.sort(sortedCards, Card.cardComparatorRankFirstAsc);
                 for (Card card : sortedCards) {
@@ -261,9 +257,12 @@ TODO:B Loop over fullMeld and fullSequence alternatives (use perms?)
                 for (Iterator<CardList> iterator = melds.iterator(); iterator.hasNext(); ) {
                     CardList rankMeldSeq = iterator.next();
                     if (rankMeldSeq.contains(lastDiscard)) {
-                        singles.addAll(rankMeldSeq);
-                        singles.remove(lastDiscard);
-                        iterator.remove();
+                        rankMeldSeq.remove(lastDiscard);
+                        if (rankMeldSeq.size() < 3) {
+                            //have to break up the meld
+                            singles.addAll(rankMeldSeq);
+                            iterator.remove();
+                        }
                         break;
                     }
                 }
@@ -397,8 +396,7 @@ TODO:B Loop over fullMeld and fullSequence alternatives (use perms?)
                     // can't be a sequenceMeld if this is a 3 and the previous card was wild
                     else if (testCard.getRank().isLowestRank() && lastMeldedCard.isWildCard(wildCardRank)) isSequenceMeld = false;
                     //same Suit and next in sequence
-                    //TODO:A: Use getRankDifference here
-                    else if (testCard.isSameSuit(sequenceMeldSuit) && testCard.isSameRank(sequenceMeldLastRank.getNext())) {
+                    else if (testCard.isSameSuit(sequenceMeldSuit) && (1==testCard.getRankDifference(sequenceMeldLastRank))) {
                         testIsMelding = true;
                         isRankMeld = false; //now we know it's a sequence meld
                     }
@@ -532,7 +530,7 @@ TODO:B Loop over fullMeld and fullSequence alternatives (use perms?)
     }
 
     //GETTERS and SETTERS
-    //TODO: Combine these two methods depending on which is calling them
+    //TODO:C Combine these two methods depending on which is calling them
     String getUnMeldedString() {
         StringBuffer unMeldedString = new StringBuffer();
         if (null != partialMelds) {
@@ -542,6 +540,17 @@ TODO:B Loop over fullMeld and fullSequence alternatives (use perms?)
         }
         return unMeldedString.toString();
     }
+
+    String getMeldedString() {
+        StringBuffer meldedString = new StringBuffer();
+        if (null != melds) {
+            for (CardList melds : this.melds) {
+                meldedString.append(melds.getString());
+            }
+        }
+        return meldedString.toString();
+    }
+
     String getSinglesString() {
         return singles.getString();
     }
@@ -560,15 +569,7 @@ TODO:B Loop over fullMeld and fullSequence alternatives (use perms?)
         return sortedCards;
     }
 
-    String getMeldedString() {
-        StringBuffer meldedString = new StringBuffer();
-        if (null != melds) {
-            for (CardList melds : this.melds) {
-                meldedString.append(melds.getString());
-            }
-        }
-        return meldedString.toString();
-    }
+
 
 
     public Card getLastDiscard() {

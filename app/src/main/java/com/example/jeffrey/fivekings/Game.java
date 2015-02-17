@@ -22,7 +22,7 @@ public class Game {
     private static int PERMUTATION_THRESHOLD=500; //if longer than 0.5s for each player we switch to heuristic approach
     static final boolean USE_DRAW_PILE=false;
     static final boolean USE_DISCARD_PILE=true;
-    static final String APP_TAG = BuildConfig.APPLICATION_ID+":"+BuildConfig.VERSION_NAME;
+    static final String APP_TAG = BuildConfig.VERSION_NAME;
     static final int MAX_PLAYERS=12;
     static final int MAX_CARDS=14; //Round of Kings + picked up card
 
