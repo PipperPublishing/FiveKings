@@ -3,23 +3,25 @@
 
     <string name="app_name">FiveKings</string>
     <string name="Score">Scores</string>
-    <string name="scores_after">Scores after round of</string>
+    <string name="scores_after">Scores after %s\'s round</string>
     <string name="current_cards">Current cards</string>
     <string name="current_melds">Current melds</string>
     <string name="cumulative_score">Cumulative Score</string>
     <string name="Draw">Draw</string>
     <string name="Discard">Discard</string>
     <string name="Play">Play</string>
-    <string name="deals">deals</string>
-    <string name="nextPlayer">Next Player</string>
-    <string name="wentOut">went out - last turns!</string>
-    <string name="nextRound">Play Round of </string>
-    <string name="takeTurn">Take your turn</string>
-    <string name="cards">cards</string>
+    <string name="deals">Playing %1$s\'s round; %2$s dealt</string>
+    <string name="nextPlayer">Next Player %s</string>
+    <string name="wentOut">Playing %1$s\'s round; %2$s went out - last turns!</string>
+    <string name="turnInfo">%1$s drew the %2$s from the %3$s pile and discarded the %4$s</string>
+    <string name="nextRound">Play %s\'s round</string>
+    <string name="takeYourTurn">Take your turn</string>
+    <string name="takePlayerTurn">Take %s\'s turn</string>
+    <string name="showScores">Show scores</string>
+    <string name="cards">%s\'s cards and melds</string>
     <string name="displayScores">Displaying current scores</string>
-    <string name="now_playing">Now playing round of</string>
+    <string name="now_playing">Playing %s\'s round</string>
     <string name="blank"></string>
-    <string name="drew_the">drew the</string>
-    <string name="Exit">Exit</string>
+    <string name="newGame">New Game</string>
 
 </resources>

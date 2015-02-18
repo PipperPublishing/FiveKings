@@ -77,7 +77,7 @@ class CardList extends ArrayList<Card> {
 
     String getString() {
         if (this.isEmpty()) return "";
-        StringBuffer sCards = new StringBuffer(2 * this.size());
+        StringBuilder sCards = new StringBuilder(2 * this.size());
         sCards.append("(");
         for (Card card : this) {
             sCards.append(card.getCardString());

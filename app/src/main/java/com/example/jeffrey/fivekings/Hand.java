@@ -20,11 +20,17 @@ import java.util.Iterator;
  * 2/17/2015 Replace isSameRank with RankDifference
  * 2/17/2015 Finding discard when there are no singles/partial melds; remove from a full meld but leave full if >=3
  * TODO:A Hands are still not going out with a single (meldable) wildcard left
+ * TODO:A Partial melds should only include one instance of each card (not 10C-10D and 10C-JC)
+ * TODO:A Heuristics discard: find largest meld; remove card
+ * TODO:A Current problems:- need to check that partial and full melds don't overlap
+ * TODO:B Scoring: A hand with n melds should score higher than any hand with n-1 melds; a partial rank meld > partial sequence
  * TODO:C Discard strategy: Don't discard what others want (wild cards, or cards they picked up)
  * TODO:C Should be able to merge large chunks of Heuristics and Permutations
- * TODO: Current problems:- need to check that partial and full melds don't overlap
- * TODO:A Scoring: A hand with n melds should score higher than any hand with n-1 melds; a partial rank meld > partial sequence
-  */
+ * TODO:B KD sequence is lower frequency, so not preferred over rank melds
+ TODO:B On round of 5's , play to win rather than to minimize
+ TODO:B Currently draws Discard Pile card if it lowers valuation; but should consider Draw Pile if probability of an even lower card
+
+ */
 class Hand {
     //all your cards, excluding what you picked up
     private CardList cards;
@@ -532,7 +538,7 @@ TODO:B Loop over fullMeld and fullSequence alternatives (use perms?)
     //GETTERS and SETTERS
     //TODO:C Combine these two methods depending on which is calling them
     String getUnMeldedString() {
-        StringBuffer unMeldedString = new StringBuffer();
+        StringBuilder unMeldedString = new StringBuilder();
         if (null != partialMelds) {
             for (CardList unMelds : partialMelds) {
                 unMeldedString.append(unMelds.getString());
@@ -542,7 +548,7 @@ TODO:B Loop over fullMeld and fullSequence alternatives (use perms?)
     }
 
     String getMeldedString() {
-        StringBuffer meldedString = new StringBuffer();
+        StringBuilder meldedString = new StringBuilder();
         if (null != melds) {
             for (CardList melds : this.melds) {
                 meldedString.append(melds.getString());

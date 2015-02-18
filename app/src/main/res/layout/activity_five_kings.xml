@@ -91,7 +91,7 @@
         android:layout_below="@+id/score_and_game"
         android:id="@+id/play_area"
         android:weightSum="4"
-        >
+        android:paddingTop="20dp">
 
         <TextView
             android:id="@+id/game_info_line"
@@ -125,7 +125,7 @@
             android:layout_width="match_parent"
             android:layout_weight="1"
             android:layout_height="96dp"
-            android:layout_gravity="left">
+            >
         </FrameLayout>
 
 

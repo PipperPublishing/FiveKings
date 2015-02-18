@@ -3,7 +3,6 @@ package com.example.jeffrey.fivekings;
 import android.annotation.TargetApi;
 import android.app.Activity;
 import android.content.Context;
-import android.graphics.Point;
 import android.graphics.Typeface;
 import android.os.Build;
 import android.os.Bundle;
@@ -37,15 +36,20 @@ import java.util.List;
     2/12/2015   Display each player's hands and top of Discard Pile
     2/15/2015   Added GameState to provide State after each button press
     2/16/2015   Changed LayeredDrawables to FrameLayouts so they can be clicked
+    2/17/2015   Fixed end-of-round button to be Show scores. Last button now says [New Game] and calls Game constructor
+    2/17/2015   turnInfo line now uses parameterized string resource
+    2/17/2015   Converted StringBuffer to StringBuilder throughout
  */
-//TODO:B Embed spaces in string resources
-//TODO:A Need a more elegant way of centering the melds
-//TODO:A Fix button at end of round, and Exit button should become "New Game"
+/*
+TODO:B Fix annoying menu popup problem - what is standard behavior? I think current behavior is because it's a "fullscreen" app
+TODO:B Set one player as "You" and allow clicking of DrawPile, DiscardPile, and drag of card to DiscardPile (but still auto-meld)
+TODO:C Clean up/refactor: unused constants etc.
+*/
 
 public class FiveKings extends Activity {
     static final float CARD_OFFSET =30.0f;
     static final float ADDITIONAL_MELD_OFFSET = 20.0f;
-    static final float CARD_WIDTH = 72.0f;
+    static final float CARD_WIDTH = 50.0f;
 
 
     /**
@@ -220,10 +224,9 @@ public class FiveKings extends Activity {
     void playGame(View v){
         Rank nextRound;
         Player playerWentOut=null;
-        StringBuffer turnInfo = new StringBuffer(100);
+        String turnInfoFormat = getText(R.string.turnInfo).toString();
+        StringBuilder turnInfo = new StringBuilder(100);
 
-        //Beginning of game
-        //need to allow for mGame!=null but GameState reset to NEW_GAME (rerun)
         if (null== mGame) {
             mGame = new Game(this);
             mRoundNumber = (TextView)findViewById(R.id.round_number);
@@ -236,7 +239,18 @@ public class FiveKings extends Activity {
             mCurrentMelds = (FrameLayout) findViewById(R.id.current_melds);
             mCurrentCards = (FrameLayout) findViewById(R.id.current_cards);
             mPlayButton= (Button)findViewById(R.id.Play);
-            mPlayButton.setText(getText(R.string.nextRound)+" "+mGame.getRoundOf().getRankString()+"'s");
+            mPlayButton.setText(resFormat(R.string.nextRound, mGame.getRoundOf().getRankString()));
+            showPlayerScores(mGame.getPlayers());
+        }
+
+        //User pressed [New Game] button
+        else if (GameState.NEW_GAME == mGame.getGameState()) {
+            mGame.init();
+            mGameInfoLine.setText(getText(R.string.blank));
+            mInfoLine.setText(getText(R.string.blank));
+            mPlayButton.setText(resFormat(R.string.nextRound, mGame.getRoundOf().getRankString()));
+            mCurrentCards.removeAllViews();
+            mCurrentMelds.removeAllViews();
             showPlayerScores(mGame.getPlayers());
         }
 
@@ -244,82 +258,90 @@ public class FiveKings extends Activity {
         else if (GameState.ROUND_START == mGame.getGameState()) {
             mGame.initRound();
             mDiscardButton.setImageDrawable(mGame.getDiscardPileDrawable());
-            mGameInfoLine.setText(getText(R.string.now_playing) + " " + mGame.getRoundOf().getRankString() + "'s");
-            mInfoLine.setText(mGame.getDealer().getName() + " " + getText(R.string.deals));
-            mPlayButton.setText(getText(R.string.nextPlayer) + " " + mGame.getPlayer().getName());
+            mGameInfoLine.setText(String.format(getText(R.string.deals).toString(),
+                    mGame.getRoundOf().getRankString(), mGame.getDealer().getName()));
+            mInfoLine.setText(getText(R.string.blank));
+            mPlayButton.setText(resFormat(R.string.nextPlayer, mGame.getPlayer().getName()));
             mCurrentCards.removeAllViews();
             mCurrentMelds.removeAllViews();
         }
 
         else if (GameState.TAKE_TURN == mGame.getGameState()) {
-            playerWentOut = mGame.takeTurn(turnInfo);
-            if (playerWentOut != null) mGameInfoLine.setText(playerWentOut.getName() + " " + getText(R.string.wentOut));
+            turnInfo.setLength(0);
+            playerWentOut = mGame.takeTurn(turnInfoFormat, turnInfo);
+            if (playerWentOut != null) mGameInfoLine.setText(String.format(getText(R.string.wentOut).toString(),
+                    mGame.getRoundOf().getRankString(),playerWentOut.getName()));
             //Show card on discard pile (changes because of this player's play)
             mDiscardButton.setImageDrawable(mGame.getDiscardPileDrawable());
-            showCards(mGame.getPlayer().getHandMelded(),mCurrentMelds);
-            showCards(mGame.getPlayer().getHandUnMelded(),mCurrentCards);
+            showCards(mGame.getPlayer().getHandMelded(), mCurrentMelds);
+            showCards(mGame.getPlayer().getHandUnMelded(), mCurrentCards);
             mInfoLine.setText(turnInfo);
-            if (mGame.endTurn()) mPlayButton.setText(getText(R.string.nextPlayer) + " " + mGame.getPlayer().getName());
+            //returns false if we've reached the player who went out again
+            if (mGame.endTurn()) mPlayButton.setText(resFormat(R.string.nextPlayer, mGame.getPlayer().getName()));
+            else mPlayButton.setText(getText(R.string.showScores));
         }
 
         else if (GameState.TURN_START == mGame.getGameState()) {
             //Show card on discard pile (need to display at beginning of round)
             mDiscardButton.setImageDrawable(mGame.getDiscardPileDrawable());
-            showCards(mGame.getPlayer().getHandMelded(),mCurrentMelds);
-            showCards(mGame.getPlayer().getHandUnMelded(),mCurrentCards);
+            showCards(mGame.getPlayer().getHandMelded(), mCurrentMelds);
+            showCards(mGame.getPlayer().getHandUnMelded(), mCurrentCards);
 
-            mInfoLine.setText(mGame.getPlayer().getName()+"'s " + getText(R.string.cards));
-            mPlayButton.setText(getText(R.string.takeTurn) + " " + mGame.getPlayer().getName());
+            mInfoLine.setText(resFormat(R.string.cards, mGame.getPlayer().getName()));
+            mPlayButton.setText(resFormat(R.string.takePlayerTurn,mGame.getPlayer().getName()));
             mGame.setGameState(GameState.TAKE_TURN);
         }
 
         else if (GameState.ROUND_END == mGame.getGameState()) {
-            mRoundNumber.setText(getText(R.string.scores_after) +" " + mGame.getRoundOf().getRankString() + "'s");
+            mRoundNumber.setText(resFormat(R.string.scores_after, mGame.getRoundOf().getRankString()));
             nextRound = mGame.endRound();
             mGameInfoLine.setText(getText(R.string.displayScores));
             showPlayerScores(mGame.getPlayers());
-            if (null == nextRound) mPlayButton.setText(getText(R.string.Exit));
-            else
-                mPlayButton.setText(getText(R.string.nextRound) + " " + mGame.getRoundOf().getRankString() + "'s");
+            if (GameState.ROUND_START == mGame.getGameState()) mPlayButton.setText(resFormat(R.string.nextRound,mGame.getRoundOf().getRankString()));
         }
 
         else if (GameState.GAME_END == mGame.getGameState()) {
-            mGame.showFinalScores();
+            mPlayButton.setText(getText(R.string.newGame));
+            mGame.logFinalScores();
+            mGame.setGameState(GameState.NEW_GAME);
         }
     }
 
+    private String resFormat(int resource, String param) {
+        return String.format(getText(resource).toString(),param);
+    }
+
+
     //show melds and unmelded as ImageViews
-    private void showCards(ArrayList<CardList> cardLists, FrameLayout frameLayout) {
+    private void showCards(ArrayList<CardList> meldLists, FrameLayout frameLayout) {
         ArrayList<ImageView> cardLayers = new ArrayList<>(Game.MAX_CARDS);
-        //TODO:A Find the horizontal center - better way to do this positioning
-        Point size = new Point();
-        getWindowManager().getDefaultDisplay().getSize(size);
         float xOffset=0f;
-        float zOffset=0f;
         frameLayout.removeAllViews();
-        for (CardList cardlist : cardLists) {
+        for (CardList cardlist : meldLists) {
             for (Card card : cardlist.getCards()) {
-                ImageView i = new ImageView(this);
-                i.setImageDrawable(card.getDrawable());
-                i.setTranslationX(xOffset);
-                i.bringToFront();
-                cardLayers.add(i);
+                ImageView iv = new ImageView(this);
+                iv.setImageDrawable(card.getDrawable());
+                iv.setTranslationX(xOffset);
+                iv.bringToFront();
+                cardLayers.add(iv);
                 xOffset += CARD_OFFSET;
-                zOffset += 1.0f;
             }
             xOffset += ADDITIONAL_MELD_OFFSET;
         }
-        //bit of a hack: we now adjust everything by - 1/2*xOffset to center it
-        xOffset = xOffset - CARD_OFFSET - ADDITIONAL_MELD_OFFSET + CARD_WIDTH; //because we added these at the end of each loop
+        //bit of a hack: we now adjust everything by - 1/2*(width of stacked image) to center it
+        // add CARD_WIDTH because the total width of the stacked image is sum(offsets) + CARD_WIDTH
+        // subtract CARD_OFFSET and ADDITIONAL_MELD_OFFSET because we added these at the end of the loop (but they're not in the layout)
+        xOffset = xOffset - CARD_OFFSET - ADDITIONAL_MELD_OFFSET + CARD_WIDTH;
         if (!cardLayers.isEmpty()) {
             for (ImageView iv : cardLayers) {
+                iv.setTranslationX(iv.getTranslationX()-0.5f*xOffset);
                 frameLayout.addView(iv);
             }
         }
     }//end showCards
 
 
-    //TODO:B Look at switching to ListView, especially since all Table Rows are the same
+    //TODO:C Look at switching to ListView, especially since all Table Rows are the same
     private void showPlayerScores(List<Player> players) {
 
         if (null == mScoreDetail) {

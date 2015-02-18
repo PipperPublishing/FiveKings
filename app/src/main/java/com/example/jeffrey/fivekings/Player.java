@@ -10,8 +10,7 @@ import java.util.Comparator;
  * 2/4/2015 Split discard/draw, meld&score, and discard into separate steps to make it easier to include human players
  * 2/15/2015 Sort unmelded cards for easier viewing
  * 2/15/2015 Initialize isFirstTurn and then check in useDiscardPile to see if we need to do initial melding
-//TODO:B KD sequence is lower frequency, so not preferred over rank melds
-//TODO:B On round of 5's , play to win rather than to minimize
+ * 2/17/2015 Don't use relativePosition for now
 */
 class Player {
     private String name;
@@ -24,9 +23,9 @@ class Player {
     private boolean useDiscardPile=false;
 
 
-    Player(String name, int relativePosition) {
+    Player(String name) {
         this.name = name;
-        this.relativePosition = relativePosition;
+        this.relativePosition = 0; //not meaningful for now
         init();
     }
 
@@ -98,7 +97,7 @@ class Player {
     }
 
     String getMeldedString(boolean withBraces){
-        StringBuffer mMelds = new StringBuffer("Melds ");
+        StringBuilder mMelds = new StringBuilder("Melds ");
         if (withBraces) mMelds.append("{");
         mMelds.append(hand.getMeldedString());
         if (withBraces) mMelds.append("} ");
@@ -108,7 +107,7 @@ class Player {
     String getPartialAndSingles(boolean withBraces) {
         String unMelded = hand.getUnMeldedString();
         String singles = hand.getSinglesString();
-        StringBuffer partialAndSingles = new StringBuffer();
+        StringBuilder partialAndSingles = new StringBuilder();
         if (!unMelded.isEmpty()) {
             partialAndSingles.append("Potential melds ");
             if (withBraces) partialAndSingles.append("{");

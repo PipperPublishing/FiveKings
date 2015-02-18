@@ -14,6 +14,8 @@ import java.util.List;
  *  2/4/2015    Do discard vs draw decision and meld/score/discard as separate steps
  *  2/10/2015   Separate into play, nextRound, takeTurn to interact properly with UI
  *  2/16/2015   Use BuildConfig rather than hardcoding app name
+ *  2/17/2015   Change hardcoding of players' names and add more
+ *  2/17/2015   Add player.init() loop to Game.init() (zero's scores)
  */
 public class Game {
     private static final boolean DEBUG=false;
@@ -47,8 +49,8 @@ public class Game {
         this.context = fkActivity;
         this.deck = new Deck(true, context);
         //TODO: For testing, hardcode player positions
-        this.players = new ArrayList<Player>(){{add(new Player("North",0));add(new Player("East",1));
-            add(new Player("South",2)); add(new Player("West",3));}};
+        this.players = new ArrayList<Player>(){{add(new Player("Jennifer"));add(new Player("Catherine"));
+            add(new Player("Michelle")); add(new Player("Jeffrey")); add(new Player("Grandma")); add(new Player("You"));}};
         init();
     }
 
@@ -56,9 +58,10 @@ public class Game {
     boolean init() {
         deck.shuffle();
         this.dealer = players.get(0);
+        for (Player player : this.players) player.init();
         this.roundOf = Rank.values()[0];
-        this.gameState = GameState.ROUND_START;
         this.usePermutations=true;
+        this.gameState = GameState.ROUND_START;
         return true;
     }
 
@@ -84,14 +87,11 @@ public class Game {
         this.gameState = GameState.TURN_START;
     }//end initRound
 
-    Player takeTurn(StringBuffer turnInfo) {
-        //TODO:B string resources for turninfo
+    Player takeTurn(String turnInfoFormat, StringBuilder turnInfo) {
         long playerStartTime, playerStopTime;
         boolean useDiscardPile = USE_DISCARD_PILE;
-        String mTurnInfo;
 
         //improve hand by picking up from Discard pile or from Draw pile - use useDiscardPile to decide
-        //TODO: v3 of strategy would look also at what other people had been picking up
         //Pick from drawPile unless you can meld/match from discardPile
         //discardPile never runs out, but drawPile may need to be refreshed
         if (null == drawPile.peekNext()) reDeal();
@@ -110,13 +110,13 @@ public class Game {
         //Now meld, score, and decide on discard - if it's an automated player and the Discard Pile we'll just get back the existing results
         if (useDiscardPile) {
             player.meldAndEvaluate(roundOf, usePermutations, (playerWentOut != null), discardPile.peekNext());
-            mTurnInfo = player.getName() + " drew the "+discardPile.peekNext().getCardString()+" from Discard Pile and discarded the " + player.getDiscard().getCardString();
-            Log.d(Game.APP_TAG, mTurnInfo);
+            turnInfo.append(String.format(turnInfoFormat,player.getName(),discardPile.peekNext().getCardString(),"Discard",player.getDiscard().getCardString()));
+            Log.d(Game.APP_TAG, turnInfo.toString());
             player.addCardToHand(discardPile.deal());
         } else {
             player.meldAndEvaluate(roundOf, usePermutations, (playerWentOut != null), drawPile.peekNext());
-            mTurnInfo = player.getName() + " drew the "+drawPile.peekNext().getCardString()+" from Draw Pile and discarded the " + player.getDiscard().getCardString();
-            Log.d(Game.APP_TAG, "Discard pile = " + discardPile.peekNext().getCardString()+"; " + mTurnInfo);
+            turnInfo.append(String.format(turnInfoFormat,player.getName(),drawPile.peekNext().getCardString(),"Draw",player.getDiscard().getCardString()));
+            Log.d(Game.APP_TAG, turnInfo.toString());
             player.addCardToHand(drawPile.deal());
         }
         discardPile.add(player.discardFromHand(player.getDiscard()));
@@ -126,7 +126,6 @@ public class Game {
         Log.d(APP_TAG, "after...... " + player.getMeldedString(true) + player.getPartialAndSingles(true) + " " + sValuationOrScore + player.getHandValueOrScore(null != playerWentOut));
 
         if ((playerWentOut == null) && player.isOut(roundOf)) playerWentOut = player;
-        turnInfo.setLength(0); turnInfo.append(mTurnInfo);
         return playerWentOut;
     }
 
@@ -178,7 +177,7 @@ public class Game {
         else return players.get(currentPlayerIndex+1);
     }
 
-    void showFinalScores() {
+    void logFinalScores() {
         for (Player player : players) {
             Log.i(APP_TAG, player.getName() + "'s final score is " + player.getCumulativeScore());
         }
