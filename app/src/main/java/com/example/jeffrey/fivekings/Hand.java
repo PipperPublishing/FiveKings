@@ -21,14 +21,8 @@ import java.util.Iterator;
  * 2/17/2015 Finding discard when there are no singles/partial melds; remove from a full meld but leave full if >=3
  * TODO:A Hands are still not going out with a single (meldable) wildcard left
  * TODO:A Partial melds should only include one instance of each card (not 10C-10D and 10C-JC)
- * TODO:A Heuristics discard: find largest meld; remove card
- * TODO:A Current problems:- need to check that partial and full melds don't overlap
- * TODO:B Scoring: A hand with n melds should score higher than any hand with n-1 melds; a partial rank meld > partial sequence
- * TODO:C Discard strategy: Don't discard what others want (wild cards, or cards they picked up)
+ * TODO:A Current problems:- need to check that partial and full melds don't overlap, also partial Melds and sequences
  * TODO:C Should be able to merge large chunks of Heuristics and Permutations
- * TODO:B KD sequence is lower frequency, so not preferred over rank melds
- TODO:B On round of 5's , play to win rather than to minimize
- TODO:B Currently draws Discard Pile card if it lowers valuation; but should consider Draw Pile if probability of an even lower card
 
  */
 class Hand {
@@ -76,8 +70,6 @@ Evaluate using
 In the final scoring, calculate partialMelds and unMelded value
 Evaluation accounts for hand potential, but Scoring is just what's left after melding
 TODO:B Account for the overlap between partialMelds and partialSequences
-TODO:B Add in more than one sequence
-TODO:B Loop over fullMeld and fullSequence alternatives (use perms?)
  */
     int meldAndEvaluateUsingHeuristics(Rank wildCardRank, boolean isFinalScore, Card addedCard) {
         //Log.d(Game.APP_TAG,"Entering meldAndEvaluateUsingHeuristics");
@@ -95,7 +87,6 @@ TODO:B Loop over fullMeld and fullSequence alternatives (use perms?)
         ArrayList<CardList> partialSequences = new ArrayList<>(numCards);
 
         //separate out any wildcards
-        //TODO:B create separate list without wildcards - would remove the checks we have to do
         //Log.d(Game.APP_TAG,"---Separate out wildcards");
         CardList wildCards = new CardList(numCards);
         for (Card card : cardsWithAdded) {
@@ -305,8 +296,6 @@ TODO:B Loop over fullMeld and fullSequence alternatives (use perms?)
         Consider all permutations (shouldn't be too expensive) and return value of unmelded
         This is the sledgehammer approach - we use this until it gets too slow and then switch to heuristics
         Everything melded gives the maximum evaluation of 0
-        TODO:B Look at descending sequences so we can throw them out sooner
-        TODO:B Eliminate looking at other perms that are equivalent score (e.g. (K* KS KH) = (KS K* KH)) - use a hash?
          */
     private int meldAndEvaluateUsingPermutations(Rank wildCardRank, boolean isFinalScore, Card addedCard) {
         if (addedCard == null) throw new RuntimeException("Hand.useDiscardPile: addedCard is null");
@@ -519,6 +508,7 @@ TODO:B Loop over fullMeld and fullSequence alternatives (use perms?)
 
 
     Card discardFrom(Card discardedCard){
+        if (this.lastDiscard != discardedCard) this.lastDiscard = discardedCard;
         cards.remove(discardedCard);
         return discardedCard;
     }
@@ -575,10 +565,11 @@ TODO:B Loop over fullMeld and fullSequence alternatives (use perms?)
         return sortedCards;
     }
 
+    int getLength() {
+        return cards.size();
+    }
 
-
-
-    public Card getLastDiscard() {
+    Card getLastDiscard() {
         return lastDiscard;
     }
 

@@ -4,24 +4,34 @@
     <string name="app_name">FiveKings</string>
     <string name="Score">Scores</string>
     <string name="scores_after">Scores after %s\'s round</string>
+    <string name="current_round">Round of %s\'s</string>
     <string name="current_cards">Current cards</string>
     <string name="current_melds">Current melds</string>
     <string name="cumulative_score">Cumulative Score</string>
     <string name="Draw">Draw</string>
     <string name="Discard">Discard</string>
     <string name="Play">Play</string>
-    <string name="deals">Playing %1$s\'s round; %2$s dealt</string>
+    <string name="deals">%1$s dealt</string>
     <string name="nextPlayer">Next Player %s</string>
-    <string name="wentOut">Playing %1$s\'s round; %2$s went out - last turns!</string>
-    <string name="turnInfo">%1$s drew the %2$s from the %3$s pile and discarded the %4$s</string>
-    <string name="nextRound">Play %s\'s round</string>
+    <string name="wentOut">%1$s went out - last turns!</string>
+    <string name="computerTurnInfo">%1$s drew the %2$s from the %3$s pile and discarded the %4$s</string>
+    <string name="humanTurnInfo">%1$s drew the %2$s from the %3$s pile; pick a discard</string>    <string name="nextRound">Play %s\'s round</string>
     <string name="takeYourTurn">Take your turn</string>
-    <string name="takePlayerTurn">Take %s\'s turn</string>
+    <string name="takePlayerTurn">Play %s\'s turn</string>
     <string name="showScores">Show scores</string>
-    <string name="cards">%s\'s cards and melds</string>
+    <string name="computerCardsAndMelds">%s\'s cards and melds</string>
+    <string name="yourCardsAndMelds">Your cards and melds; pick a card from the Draw or Discard pile</string>
     <string name="displayScores">Displaying current scores</string>
     <string name="now_playing">Playing %s\'s round</string>
     <string name="blank"></string>
     <string name="newGame">New Game</string>
+    <string name="isHuman">human</string>
+    <string name="isComputer">computer</string>
+    <string name="addPlayersTitle">Add player</string>
+    <string name="editPlayersTitle">Edit player</string>
+    <string name="playerName">Name</string>
+    <string name="add">Add</string>
+    <string name="save">Save</string>
+    <string name="close">Close</string>
 
 </resources>

@@ -1,8 +1,6 @@
 package com.example.jeffrey.fivekings;
 
 import android.content.Context;
-import android.graphics.Bitmap;
-import android.graphics.BitmapFactory;
 import android.graphics.drawable.Drawable;
 
 import java.util.Comparator;
@@ -13,9 +11,10 @@ import java.util.Comparator;
  * 2/3/2015 Added null suit constructor (for Jokers)
  * 2/4/2015 Moved Joker handling up here and out of Rank enum
  * 2/14/2015 Added bmp's for cards; resources are hard-coded to card rank and suit
+ * 2/19/2015    Removed bitmap
  */
 //TODO:B Intermediate and final scoring should be moved out of Card probably
-    //TODO:B Create a subclass for Jokers which doesn't have rank and suit
+//TODO:B Create a subclass for Jokers which doesn't have rank and suit
 class Card {
     //can put these into resource files
     static final int INTERMEDIATE_WILD_CARD_VALUE=1;
@@ -24,7 +23,7 @@ class Card {
     static final String JOKER_STRING="Joker";
 
     //static array of mapping from cards to resource IDs
-    //TODO:A Need to get a suit of Stars
+    //For now, stars are blue diamonds
     //array of [Suits][Ranks]
     static final int[][] sBitmapResource = {
             {R.drawable.s3, R.drawable.s4, R.drawable.s5, R.drawable.s6, R.drawable.s7, R.drawable.s8, R.drawable.s9, R.drawable.s10, R.drawable.sj, R.drawable.sq, R.drawable.sk},
@@ -76,8 +75,6 @@ class Card {
     private final String cardString;
     private final int cardValue;
     private final boolean isJoker;
-    @Deprecated
-    private final Bitmap bitmap;
     private final Drawable drawable;
 
     Card(Suit suit, Rank rank, Context context) {
@@ -87,7 +84,6 @@ class Card {
         this.cardValue = rank.getRankValue();
         this.isJoker = false;
         this.drawable = context.getResources().getDrawable(sBitmapResource[suit.getOrdinal()][this.getRank().getOrdinal()]);
-        this.bitmap = BitmapFactory.decodeResource(context.getResources(),sBitmapResource[suit.getOrdinal()][this.getRank().getOrdinal()]);
     }
 
     //no arguments constructor is for Jokers
@@ -98,7 +94,6 @@ class Card {
         this.cardString = JOKER_STRING;
         this.cardValue = FINAL_JOKER_VALUE;
         this.drawable = context.getResources().getDrawable(R.drawable.joker1);
-        this.bitmap = BitmapFactory.decodeResource(context.getResources(), R.drawable.joker1);
     }
 
     //true if a rank wildcard or a Joker; false if not (or null)
@@ -139,10 +134,6 @@ class Card {
     int getRankDifference(Card card) {return this.getRankValue() - card.getRankValue();}
 
     int getRankDifference(Rank rank) {return this.getRankValue() - rank.getRankValue();}
-
-    Bitmap getBitmap() {
-        return bitmap;
-    }
 
 
     Drawable getDrawable() {

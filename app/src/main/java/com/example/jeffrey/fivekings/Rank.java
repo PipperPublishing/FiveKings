@@ -13,6 +13,7 @@ enum Rank {
     private final int value;
     private final String string;
 
+    static final Rank getLowestRank() { return Rank.THREE;}
 
     private Rank(int value, String string){
         this.value = value;

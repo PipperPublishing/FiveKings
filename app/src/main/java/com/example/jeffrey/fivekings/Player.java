@@ -11,34 +11,45 @@ import java.util.Comparator;
  * 2/15/2015 Sort unmelded cards for easier viewing
  * 2/15/2015 Initialize isFirstTurn and then check in useDiscardPile to see if we need to do initial melding
  * 2/17/2015 Don't use relativePosition for now
+ * 2/17/2015    Added isHuman to control when you can click on piles
+ *              Added checkHandSize() to make sure we have the right number of cards
 */
 class Player {
+    private boolean isHuman; //interact allowing clicking of Draw and Discard piles
     private String name;
     //dealer rotates every round, but relativePosition says where this player sits relative to others
     private int relativePosition;
     private int roundScore;
+    private int numCards;
     private boolean isFirstTurn;
     private int cumulativeScore;
     private Hand hand;
     private boolean useDiscardPile=false;
 
 
-    Player(String name) {
+    Player(String name, boolean isHuman) {
         this.name = name;
+        this.isHuman = isHuman;
         this.relativePosition = 0; //not meaningful for now
         init();
     }
 
     boolean init() {
         cumulativeScore = 0;
-        initRound();
+        initRound(Rank.getLowestRank());
         return true;
     }
-    boolean initRound() {
+    boolean initRound(Rank roundOf) {
         hand = new Hand();
         roundScore = 0;
+        this.numCards = roundOf.getRankValue();
         isFirstTurn = true;
         return true;
+    }
+
+    boolean initAndDealNewHand(CardList cards,Rank roundOf) {
+        initRound(roundOf);
+        return hand.dealNew(cards,roundOf.getRankValue());
     }
 
     static final Comparator<Player> playerComparatorByScoreDesc = new Comparator<Player>() {
@@ -48,10 +59,17 @@ class Player {
         }
     };
 
+
     void evaluateIfFirstTurn(Rank roundOf, boolean usePermutations, boolean isFinalScore) {
-        //if roundScore is not set, we haven't melded yet
-        if (isFirstTurn) hand.meldAndEvaluate(roundOf, usePermutations, isFinalScore);
+        //if first Turn, we haven't got a score yet
+        if (isFirstTurn) meldAndEvaluateAsIs(roundOf, usePermutations, isFinalScore);
         isFirstTurn = false;
+    }
+
+    //FIX-NEXT: clean up this mess
+    void meldAndEvaluateAsIs(Rank roundOf, boolean usePermutations, boolean isFinalScore) {
+        //currently uses heuristics to meld
+        hand.meldAndEvaluate(roundOf, usePermutations, isFinalScore);
     }
 
     boolean useDiscardPile(Rank roundOf, boolean usePermutations, boolean isFinalScore, Card discardPileCard) {
@@ -59,7 +77,6 @@ class Player {
         //this will also avoid loops where we do not draw because it doesn't improve hand
         int beforeEvaluation = hand.getHandValueOrScore(isFinalScore);
         int afterEvaluation = hand.meldAndEvaluate(roundOf, usePermutations, isFinalScore, discardPileCard);
-        //TODO:C eventually should be able to track what is left in drawpile
         this.useDiscardPile = (afterEvaluation < beforeEvaluation);
         return useDiscardPile;
     }
@@ -78,18 +95,24 @@ class Player {
     Card discardFromHand(Card cardToDiscard) {
         if (cardToDiscard == null) return null;
         hand.discardFrom(cardToDiscard);
+        checkHandSize();
         return cardToDiscard;
     }
 
     boolean addCardToHand(Card card) {
         if (card == null) return false;
+        checkHandSize();
         hand.add(card);
         return true;
     }
 
-    boolean initAndDealNewHand(CardList cards, int numberToDeal) {
-        initRound();
-        return hand.dealNew(cards,numberToDeal);
+    private void checkHandSize() throws RuntimeException{
+        if (hand.getLength() != this.numCards) throw new RuntimeException(Game.APP_TAG + "checkHandSize: Hand length is too short/long");
+    }
+
+    void update(String updatedName, boolean isHuman) {
+        this.name = updatedName;
+        this.isHuman = isHuman;
     }
 
     String getName() {
@@ -154,4 +177,7 @@ class Player {
         return cumulativeScore;
     }
 
+    boolean isHuman() {
+        return isHuman;
+    }
 }

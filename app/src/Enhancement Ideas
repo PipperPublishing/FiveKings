@@ -1,0 +1,71 @@
+v0.1.09 Human Player
+- DONE: Set one player as "You"
+    - DONE: allow clicking of DrawPile, DiscardPile
+    - DONE: clickable cards in Melds and Cards
+    - DONE: click to discard from unmelded to DiscardPile (but still auto-meld)
+- DONE: Add entry of Human and Computer player names
+
+v0.1.10 Clean-up
+- clean up getters and setters (call from own class); eliminate setters where possible
+- clean up Player;
+- have a permutations version without an added card
+- Convert showScores to use ListView and get rid of nasty invisible fields
+
+----------------------
+v0.2.00 Graphics
+- highlight discard when we're about to select it, or show Toast as we move across
+- make discard draggable; snap discard only when it reaches the pile
+- allow dragging for melds
+- Add [Meld] button to meld for you and make default behavior to not meld
+- Fix annoying menu popup problem
+    - what is standard behavior? I think current behavior is because it's a "fullscreen" app
+    - Show bottom strip all the time, and top when you swipe down
+- Find a suit of Stars
+- Better [Play] and [Meld] button design (find a good image)
+- visual cue for buttons and piles
+- Landscape layout
+- update scores throughout final turn
+- put Dealer next to the dealer
+- DONE: Replace LinearLayouts with RelativeLayouts
+- DONE: Click on scores should allow editing names
+- DONE: Long press on [Play] should be something (new game)
+- Show only computer melds when they go out, and what they discard
+
+
+
+---------------------------
+v0.3.00 : Scoring/Valuation
+Scoring/Valuation:
+- A hand with n melds should score higher than any hand with n-1 melds; a partial rank meld > partial sequence
+- Don't discard what others want (wild cards, or cards they picked up)
+- KD sequence is lower frequency, so not preferred over rank melds
+- On round of 5's , play to win rather than to minimize
+- Currently draws Discard Pile card if it lowers valuation; but should consider Draw Pile if probability of an even lower card
+    - track what is left in DrawPile (or cheat and remember it)
+    - Cheat mode where it peeks at draw pile card
+
+Permutations:
+- Can stop when we find one with Valuation=0
+- Look at descending sequences so we can throw them out sooner
+- Eliminate looking at other perms that are equivalent score (e.g. (K* KS KH) = (KS K* KH)) - use a hash?
+
+
+Heuristics:
+- Add in more than one sequence
+- Loop over fullMeld and fullSequence alternatives (use perms?)
+- Discard: find largest meld; remove card
+- create separate list without wildcards - would remove the checks we have to do
+
+
+---------------
+v0.4.00: Menu
+- Instructions
+- Settings
+    - Computer cheats by looking at Draw Pile
+    - Show other players cards with/except for next player after you
+- Play
+    - Start a new game with new players
+
+- Hibernate state if forced to
+- Clean up Game state flow and handling
+- Look at use of Static and Inner classes
