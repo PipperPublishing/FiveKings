@@ -19,13 +19,16 @@ import java.util.Iterator;
  * 2/15/2015 Identify partial sequences (JS-KS) in Permutations approach
  * 2/17/2015 Replace isSameRank with RankDifference
  * 2/17/2015 Finding discard when there are no singles/partial melds; remove from a full meld but leave full if >=3
+ * 2/24/2015    Move checkSize from Player to Hand
  * TODO:A Hands are still not going out with a single (meldable) wildcard left
  * TODO:A Partial melds should only include one instance of each card (not 10C-10D and 10C-JC)
  * TODO:A Current problems:- need to check that partial and full melds don't overlap, also partial Melds and sequences
  * TODO:C Should be able to merge large chunks of Heuristics and Permutations
+ * TODO:B: Should Hand be an inner class of Player since it is never accessed outside it?
 
  */
 class Hand {
+    private final int numCards; //how many cards you should have
     //all your cards, excluding what you picked up
     private CardList cards;
     // these following values are the LATEST meld/evaluate attempt and so are mutable
@@ -35,21 +38,22 @@ class Hand {
     // and those unmelded (which count against the score)
     private ArrayList<CardList> partialMelds;
     private CardList singles;
-    private int intermediateHandValue; //looks at partial melds and sequences at 1/2 value
-    private int finalHandScore; //looks at full value of cards not in melds
+    private int intermediateValue; //looks at partial melds and sequences at 1/2 value
+    private int finalScore; //looks at full value of cards not in melds
     private Card lastDiscard;
 
-    //Default constructor is from CardList
-    Hand() {
-        cards = new CardList();
+    Hand(int numCards) {
+        this.numCards = numCards;
+        cards = new CardList(numCards);
         melds = new ArrayList<>();
         partialMelds = new ArrayList<>();
-        singles = new CardList(); //set to cards in dealNew
-        intermediateHandValue = 0;
-        finalHandScore=0;
+        singles = new CardList(numCards); //set to cards in dealNew
+        intermediateValue = 0;
+        finalScore =0;
         lastDiscard=null;
     }
 
+    //FIX-NEXT: Clean up this mess
     int meldAndEvaluate(Rank wildCardRank, boolean usePermutations, boolean isFinalScore, Card addedCard) {
         int valuation;
         if (usePermutations) valuation = meldAndEvaluateUsingPermutations(wildCardRank, isFinalScore, addedCard);
@@ -267,10 +271,10 @@ TODO:B Account for the overlap between partialMelds and partialSequences
         }//end if addedCard != null (a normal turn)
 
         //Evaluate this; don't pass full melds/sequences because they don't count in scoring
-        intermediateHandValue = calculateHandValue(wildCardRank, isFinalScore, cardsWithAdded, partialMelds, singles);
+        intermediateValue = calculateHandValue(wildCardRank, isFinalScore, cardsWithAdded, partialMelds, singles);
 
         //Log.d(Game.APP_TAG,"---exiting meldAndEvaluateUsingHeuristics");
-        return intermediateHandValue;
+        return intermediateValue;
     }//end int meldAndEvaluateUsingHeuristics
 
     //save test if full; see if you can pad it to a full with wildcards and keep/discard if not
@@ -456,10 +460,10 @@ TODO:B Account for the overlap between partialMelds and partialSequences
         }
         if (isFinalScore) partialMelds.clear();
 
-        intermediateHandValue = calculateHandValue(wildCardRank, isFinalScore,cardsWithAdded, partialMelds, singles);
+        intermediateValue = calculateHandValue(wildCardRank, isFinalScore,cardsWithAdded, partialMelds, singles);
 
         //Log.d(Game.APP_TAG, "Examined "+allPermutations+" permutations");
-        return intermediateHandValue;
+        return intermediateValue;
     }//end int meldAndEvaluateUsingPermutations
 
 
@@ -472,13 +476,13 @@ TODO:B Account for the overlap between partialMelds and partialSequences
         */
     private int calculateHandValue(Rank wildCardRank, boolean isFinalScore,  CardList cardsWithAdded, ArrayList<CardList> partialMelds, CardList singles) {
         float handValue = 0.0f;
-        finalHandScore=0;
+        finalScore =0;
         for (Card card : cardsWithAdded) {
             float cardValue = card.getScore(wildCardRank, isFinalScore);
             //if Final, then singles contains everything in partialMelds at full value
             //otherwise reduce it by 1/2 if partially melded
             if (contains(partialMelds,card) || singles.contains(card)) {
-                finalHandScore += cardValue;
+                finalScore += cardValue;
                 if (!isFinalScore && contains(partialMelds, card)) handValue += 0.5 * cardValue;
                 else handValue += cardValue;
             }
@@ -500,13 +504,7 @@ TODO:B Account for the overlap between partialMelds and partialSequences
         return false;
     }
 
-
-    protected int getHandValueOrScore(boolean isFinalScore){
-        if (isFinalScore) return this.finalHandScore;
-        else return this.intermediateHandValue;
-    }
-
-
+    //TODO:B Maybe discardFrom and add should both trigger an automatic re-melding
     Card discardFrom(Card discardedCard){
         if (this.lastDiscard != discardedCard) this.lastDiscard = discardedCard;
         cards.remove(discardedCard);
@@ -525,22 +523,24 @@ TODO:B Account for the overlap between partialMelds and partialSequences
         return true;
     }
 
-    //GETTERS and SETTERS
-    //TODO:C Combine these two methods depending on which is calling them
-    String getUnMeldedString() {
-        StringBuilder unMeldedString = new StringBuilder();
-        if (null != partialMelds) {
-            for (CardList unMelds : partialMelds) {
-                unMeldedString.append(unMelds.getString());
-            }
-        }
-        return unMeldedString.toString();
+    boolean checkSize() {
+        return numCards == cards.size();
     }
 
-    String getMeldedString() {
+    //GETTERS
+    int getHandValueOrScore(boolean isFinalScore){
+        if (isFinalScore) return this.finalScore;
+        else return this.intermediateValue;
+    }
+
+    String getMeldedString() { return getString(this.melds);}
+
+    String getUnMeldedString() {return getString(this.partialMelds);}
+
+    private static String getString(ArrayList<CardList> meldsOrUnMelds) {
         StringBuilder meldedString = new StringBuilder();
-        if (null != melds) {
-            for (CardList melds : this.melds) {
+        if (null != meldsOrUnMelds) {
+            for (CardList melds : meldsOrUnMelds) {
                 meldedString.append(melds.getString());
             }
         }
@@ -563,10 +563,6 @@ TODO:B Account for the overlap between partialMelds and partialSequences
         CardList sortedCards = new CardList(singles);
         Collections.sort(sortedCards, Card.cardComparatorRankFirstDesc);
         return sortedCards;
-    }
-
-    int getLength() {
-        return cards.size();
     }
 
     Card getLastDiscard() {

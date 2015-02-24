@@ -12,15 +12,15 @@ import java.util.Comparator;
  * 2/4/2015 Moved Joker handling up here and out of Rank enum
  * 2/14/2015 Added bmp's for cards; resources are hard-coded to card rank and suit
  * 2/19/2015    Removed bitmap
+ * 2/23/2015    Correctly interpret Joker String (have to explicitly get from resource)
  */
 //TODO:B Intermediate and final scoring should be moved out of Card probably
 //TODO:B Create a subclass for Jokers which doesn't have rank and suit
 class Card {
-    //can put these into resource files
-    static final int INTERMEDIATE_WILD_CARD_VALUE=1;
+    static final int INTERMEDIATE_WILD_CARD_VALUE=1; //TODO:B 0.3.0: should be moved into scoring class/methods
     static final int FINAL_WILD_CARD_VALUE =20;
     static final int FINAL_JOKER_VALUE=50;
-    static final String JOKER_STRING="Joker";
+    static final int JOKER_STRING=R.string.Joker;
 
     //static array of mapping from cards to resource IDs
     //For now, stars are blue diamonds
@@ -80,7 +80,7 @@ class Card {
     Card(Suit suit, Rank rank, Context context) {
         this.suit = suit;
         this.rank = rank;
-        this.cardString = rank.getRankString() + suit.getSuitString();
+        this.cardString = rank.getString() + suit.getString();
         this.cardValue = rank.getRankValue();
         this.isJoker = false;
         this.drawable = context.getResources().getDrawable(sBitmapResource[suit.getOrdinal()][this.getRank().getOrdinal()]);
@@ -91,7 +91,7 @@ class Card {
         this.isJoker = true;
         this.suit = null;
         this.rank = null;
-        this.cardString = JOKER_STRING;
+        this.cardString = context.getResources().getString(JOKER_STRING);
         this.cardValue = FINAL_JOKER_VALUE;
         this.drawable = context.getResources().getDrawable(R.drawable.joker1);
     }
@@ -127,7 +127,6 @@ class Card {
     boolean isSameRank(Card card) { return this.rank == card.rank; }
     boolean isSameRank(Rank rank) { return this.rank == rank;}
 
-    boolean isSameSuit(Card card) {return this.suit == card.suit;}
     boolean isSameSuit(Suit suit) {return this.suit == suit;}
 
     //TODO:C use compare method instead

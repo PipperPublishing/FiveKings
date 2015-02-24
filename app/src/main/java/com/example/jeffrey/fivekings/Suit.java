@@ -14,7 +14,7 @@ enum Suit {
         this.suitString = suitString;
     }
 
-    String getSuitString() {
+    String getString() {
         return suitString;
     }
     int getOrdinal() {

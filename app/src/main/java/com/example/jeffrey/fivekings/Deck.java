@@ -12,7 +12,7 @@ import android.content.Context;
 class Deck extends CardList {
     private static Deck deck = null;
 
-    private Deck(boolean doShuffle, Context context) {
+    private Deck(Context context) {
         for (Suit suit : Suit.values()) {
             for (Rank rank : Rank.values()) {
                 this.add(new Card(suit, rank, context));
@@ -24,7 +24,7 @@ class Deck extends CardList {
     }
 
     static Deck getInstance(boolean doShuffle, Context context) {
-        if (null == deck) deck = new Deck(doShuffle, context);
+        if (null == deck) deck = new Deck(context);
         if (doShuffle) deck.shuffle();
         return deck;
     }//end Deck() constructor

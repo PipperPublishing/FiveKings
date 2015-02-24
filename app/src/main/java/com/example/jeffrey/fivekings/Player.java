@@ -13,6 +13,8 @@ import java.util.Comparator;
  * 2/17/2015 Don't use relativePosition for now
  * 2/17/2015    Added isHuman to control when you can click on piles
  *              Added checkHandSize() to make sure we have the right number of cards
+ * 2/23/2015    Clean up - loop over possible discards and evaluate rather than using addedCard;
+ *              this sets us up for further changes to improving strategy and scoring
 */
 class Player {
     private boolean isHuman; //interact allowing clicking of Draw and Discard piles
@@ -20,7 +22,6 @@ class Player {
     //dealer rotates every round, but relativePosition says where this player sits relative to others
     private int relativePosition;
     private int roundScore;
-    private int numCards;
     private boolean isFirstTurn;
     private int cumulativeScore;
     private Hand hand;
@@ -40,10 +41,9 @@ class Player {
         return true;
     }
     boolean initRound(Rank roundOf) {
-        hand = new Hand();
-        roundScore = 0;
-        this.numCards = roundOf.getRankValue();
-        isFirstTurn = true;
+        this.roundScore = 0;
+        this.hand = new Hand(roundOf.getRankValue());
+        this.isFirstTurn = true;
         return true;
     }
 
@@ -88,13 +88,13 @@ class Player {
     }
 
 
-    boolean isOut(Rank wildCardRank) {
+    boolean isOut() {
         return (hand.getHandValueOrScore(true) == 0);
     }
 
     Card discardFromHand(Card cardToDiscard) {
         if (cardToDiscard == null) return null;
-        hand.discardFrom(cardToDiscard);
+        hand.discardFrom(cardToDiscard); //FIX-NEXT: Fix melds/singles while we're at it?
         checkHandSize();
         return cardToDiscard;
     }
@@ -102,17 +102,23 @@ class Player {
     boolean addCardToHand(Card card) {
         if (card == null) return false;
         checkHandSize();
-        hand.add(card);
+        hand.add(card); //FIX-NEXT: Fix melds/singles immediately, or invalidate?
         return true;
     }
 
     private void checkHandSize() throws RuntimeException{
-        if (hand.getLength() != this.numCards) throw new RuntimeException(Game.APP_TAG + "checkHandSize: Hand length is too short/long");
+        if (!hand.checkSize()) throw new RuntimeException(Game.APP_TAG + "checkHandSize: Hand length is too short/long");
     }
 
     void update(String updatedName, boolean isHuman) {
         this.name = updatedName;
         this.isHuman = isHuman;
+    }
+
+    //GETTERS and SETTERS
+    void addToCumulativeScore() {
+        roundScore = hand.getHandValueOrScore(true);
+        cumulativeScore += roundScore;
     }
 
     String getName() {
@@ -155,12 +161,6 @@ class Player {
 
     int getRoundScore() {
         return roundScore;
-    }
-
-    void addToCumulativeScore() {
-        roundScore = hand.getHandValueOrScore(true);
-
-        cumulativeScore += roundScore;
     }
 
     ArrayList<CardList> getHandMelded() {

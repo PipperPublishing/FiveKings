@@ -6,36 +6,34 @@ v0.1.09 Human Player
 - DONE: Add entry of Human and Computer player names
 
 v0.1.10 Clean-up
-- clean up getters and setters (call from own class); eliminate setters where possible
-- clean up Player;
-- have a permutations version without an added card
-- Convert showScores to use ListView and get rid of nasty invisible fields
+- DONE: clean up getters and setters (call from own class); eliminate setters where possible
+- DONE: clean up Game
+- DONE: Draw is empty, then redeal from Discard - make inner or static classes?
 
-----------------------
-v0.2.00 Graphics
-- highlight discard when we're about to select it, or show Toast as we move across
-- make discard draggable; snap discard only when it reaches the pile
-- allow dragging for melds
-- Add [Meld] button to meld for you and make default behavior to not meld
-- Fix annoying menu popup problem
-    - what is standard behavior? I think current behavior is because it's a "fullscreen" app
-    - Show bottom strip all the time, and top when you swipe down
-- Find a suit of Stars
-- Better [Play] and [Meld] button design (find a good image)
-- visual cue for buttons and piles
-- Landscape layout
-- update scores throughout final turn
-- put Dealer next to the dealer
-- DONE: Replace LinearLayouts with RelativeLayouts
-- DONE: Click on scores should allow editing names
-- DONE: Long press on [Play] should be something (new game)
-- Show only computer melds when they go out, and what they discard
+---------
+v0.1.11 Clean-up
+- Clean up Hand
+- Clean up Player;
+- Fix TODO:A which are not graphics
 
-
+---------
+v0.1.12
+- Remove deprecated classes and code
+- Remove commented out UI hider code
+- remove UI hiding code (including systemUIHider); possible make banner smaller or go away
 
 ---------------------------
-v0.3.00 : Scoring/Valuation
-Scoring/Valuation:
+v0.2.00 : Scoring/Valuation
+- Stuff from piece of paper / notes on iPad
+    - Loop over discards - this will allow us to merge some code
+Hand:
+- Present sorted?
+- TODO's
+- have a permutations version without an added card
+
+Scoring/Valuation:- move to separate class
+- Move out of getHighestScoreCard
+- Card should only know about base scoring and perhaps return two different values (base score and wildcard score) - move scoring out of it
 - A hand with n melds should score higher than any hand with n-1 melds; a partial rank meld > partial sequence
 - Don't discard what others want (wild cards, or cards they picked up)
 - KD sequence is lower frequency, so not preferred over rank melds
@@ -48,13 +46,49 @@ Permutations:
 - Can stop when we find one with Valuation=0
 - Look at descending sequences so we can throw them out sooner
 - Eliminate looking at other perms that are equivalent score (e.g. (K* KS KH) = (KS K* KH)) - use a hash?
-
+- use sorted lists
 
 Heuristics:
 - Add in more than one sequence
 - Loop over fullMeld and fullSequence alternatives (use perms?)
 - Discard: find largest meld; remove card
 - create separate list without wildcards - would remove the checks we have to do
+- use sorted lists
+
+- In the round of n, if you already have m cards in melds, then if m+3 >n then you should value a partial meld at full value
+    (because you must meld to the existing melds to go out)
+
+
+
+
+----------------------
+v0.3.00 Graphics
+- make cards bigger - why aren't they expanding to fill available space
+Melding/Discard:
+    - grey out not-real cards in partial melds
+    - highlight discard when we're about to select it, or show Toast as we move across
+    - DONE: make discard draggable; snap discard only when it reaches the pile
+    - short Touch for drag?
+    - allow dragging for melds
+    - Add [Meld] button to meld for you and make default behavior to not meld
+    - Better [Play] and [Meld] button design (find a good image)
+- Use Toasts (with string resources) for instructions instead of infoLine/mGameInfo
+- DONE: Fix annoying menu popup problem
+- Find a suit of Stars
+- visual cue for buttons and piles (flash or change color)
+- Landscape layout
+- update scores throughout final turn
+- put deal icon next to the dealer
+- DONE: Replace LinearLayouts with RelativeLayouts
+- DONE: Click on scores should allow editing names
+- DONE: Long press on [Play] should be something (new game)
+- Show only computer melds when they go out, and what they discard
+    - make it a setting so we can put it in the menu later (fow now in a settings dialog?)
+- Convert showScores to use ListView and get rid of nasty invisible fields - use set/getTag??
+    - use mock fields (perhaps Computer, You) to get layout width better
+    - [+] button to add Players (disable after game starts)
+    -
+
 
 
 ---------------
@@ -69,3 +103,11 @@ v0.4.00: Menu
 - Hibernate state if forced to
 - Clean up Game state flow and handling
 - Look at use of Static and Inner classes
+
+-----------------
+v0.5.00 Graphics
+- Different layouts and resources for different screen sizes
+
+-----------------
+v1.1.01 Optimization
+- Use multi-threading to preprocess computer hands while waiting for button presses

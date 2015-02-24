@@ -6,57 +6,64 @@
              android:id="@+id/fullscreen_content"
              tools:context=".FiveKings"
              android:paddingTop="@dimen/abc_action_bar_stacked_max_height"
-             android:paddingBottom="48dp">
+             android:paddingBottom="10dp">
     <!-- The primary full-screen view. This can be replaced with whatever view
          is needed to present your content, e.g. VideoView, SurfaceView,
          TextureView, etc. -->
 
-    <TextView
-        android:id="@+id/round_number"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:textAppearance="?android:attr/textAppearanceMedium"
-        android:text="@string/Score"
-        android:layout_alignParentTop="true"
-        android:layout_alignParentLeft="true"
-        android:layout_alignParentStart="true"
-        />
-
-    <TextView
+    <LinearLayout
+        android:orientation="horizontal"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:textAppearance="?android:attr/textAppearanceMedium"
-        android:text="@string/blank"
-        android:id="@+id/current_round"
-        android:gravity="right"
-        android:layout_toEndOf="@id/round_number"/>
-
-    <LinearLayout
-        android:id="@+id/score_and_game"
-        android:orientation="horizontal"
-        android:layout_width="fill_parent"
-        android:layout_height="wrap_content"
-        android:layout_below="@id/round_number"
-        android:layout_alignLeft="@id/round_number"
         android:weightSum="1"
-        android:baselineAligned="false">
-
-        <TableLayout
-            android:id="@+id/scoreDetail"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_weight="0.6">
-        </TableLayout>
-
+        android:baselineAligned="false"
+        android:id="@+id/score_and_piles">
+        <!-- Need to use layout_width=0dp and layout_weight=1 for children to get proper weighting -->
         <LinearLayout
-            android:id="@+id/draw_and_discard_piles"
-            android:layout_width="wrap_content"
+            android:id="@+id/score_and_game"
+            android:orientation="vertical"
+            android:layout_width="0dp"
             android:layout_height="wrap_content"
-            android:layout_weight="0.4"
+            android:layout_weight="0.5"
+            android:baselineAligned="false"
+            >
+
+            <TextView
+                android:id="@+id/after_round"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:textAppearance="?android:attr/textAppearanceMedium"
+                android:text="@string/Score"
+                />
+
+            <TableLayout
+                android:id="@+id/scoreDetail"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                >
+            </TableLayout>
+
+        </LinearLayout>
+
+        <RelativeLayout
+            android:id="@+id/draw_and_discard_piles"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
             android:weightSum="3"
-            android:layout_gravity="center_horizontal"
+            android:layout_weight="0.5"
             android:orientation="horizontal"
-            android:gravity="center_horizontal">
+            >
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:textAppearance="?android:attr/textAppearanceMedium"
+                android:text="@string/blank"
+                android:id="@+id/current_round"
+                android:layout_alignParentLeft="false"
+                android:layout_alignParentTop="false"
+                android:layout_centerHorizontal="true"
+                />
 
             <ImageButton
                 android:id="@+id/drawPile"
@@ -65,7 +72,16 @@
                 android:contentDescription="@string/Draw"
                 android:text="@string/Draw"
                 android:src="@drawable/b2fv"
-                />
+                android:layout_alignParentLeft="false"
+                android:layout_alignParentTop="false"
+                android:layout_below="@+id/current_round"
+                android:layout_toLeftOf="@+id/spacer"/>
+
+            <Space
+                android:id="@+id/spacer"
+                android:layout_width="10dp"
+                android:layout_height="wrap_content"
+                android:layout_centerHorizontal="true"/>
 
             <ImageButton
                 android:id="@+id/discardPile"
@@ -74,9 +90,12 @@
                 android:contentDescription="@string/Discard"
                 android:text="@string/Discard"
                 android:src="@drawable/b2fv"
-                />
-        </LinearLayout>
+                android:layout_alignParentLeft="false"
+                android:layout_alignParentTop="false"
+                android:layout_below="@+id/current_round"
+                android:layout_toRightOf="@+id/spacer"/>
 
+        </RelativeLayout>
     </LinearLayout>
 
     <LinearLayout
@@ -84,18 +103,14 @@
         android:orientation="vertical"
         android:layout_width="fill_parent"
         android:layout_height="wrap_content"
-        android:layout_below="@+id/score_and_game"
         android:id="@+id/play_area"
-        android:weightSum="4"
-        android:paddingTop="10dp">
+        android:paddingTop="10dp"
+        android:layout_below="@+id/score_and_piles">
 
         <TextView
             android:id="@+id/game_info_line"
             android:layout_width="fill_parent"
             android:layout_height="wrap_content"
-            android:layout_weight="0.5"
-            android:layout_gravity="center_horizontal"
-            android:gravity="center_horizontal"
             android:textAppearance="?android:attr/textAppearanceSmall"/>
 
         <TextView
@@ -105,24 +120,23 @@
             android:textAppearance="?android:attr/textAppearanceSmall"
             android:text="@string/blank"
             android:gravity="center_vertical|center_horizontal"
-            android:layout_weight="0.5"
             android:textStyle="normal"
             android:layout_gravity="center_horizontal"/>
-
+        <!-- Use layout_weight=1 for current_cards and current_melds; this makes them fill empty space equally -->
         <RelativeLayout
             android:id="@+id/current_cards"
             android:layout_width="match_parent"
-            android:layout_weight="1"
-            android:layout_height="96dp"
-            android:gravity="center">
+            android:layout_height="wrap_content"
+            android:gravity="center"
+            android:layout_weight="1">
         </RelativeLayout>
 
         <RelativeLayout
             android:id="@+id/current_melds"
             android:layout_width="match_parent"
-            android:layout_weight="1"
-            android:layout_height="96dp"
-            android:gravity="center">
+            android:layout_height="wrap_content"
+            android:gravity="center"
+            android:layout_weight="1">
         </RelativeLayout>
 
 
@@ -132,25 +146,14 @@
         android:id="@+id/Play"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="@string/Play"
+        android:text="@string/startGame"
         android:layout_gravity="center_horizontal|bottom"
         android:layout_alignParentBottom="true"
         android:layout_alignParentRight="false"
         android:layout_centerHorizontal="true"
         android:background="@android:drawable/btn_default"
-        android:textColor="@color/primary_text_default_material_light"/>
-
-    <LinearLayout
-        android:id="@+id/fullscreen_content_controls"
-        style="?buttonBarStyle"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_gravity="bottom|center_horizontal"
-        android:background="@color/black_overlay"
-        android:orientation="horizontal"
-        tools:ignore="UselessParent" >
-
-    </LinearLayout>
+        android:textColor="@color/primary_text_default_material_light"
+        android:layout_alignWithParentIfMissing="false"/>
 
 
 </RelativeLayout>

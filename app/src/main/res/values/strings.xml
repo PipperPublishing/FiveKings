@@ -2,6 +2,7 @@
 <resources>
 
     <string name="app_name">FiveKings</string>
+    <string name="Joker">Joker</string>
     <string name="Score">Scores</string>
     <string name="scores_after">Scores after %s\'s round</string>
     <string name="current_round">Round of %s\'s</string>
@@ -10,12 +11,12 @@
     <string name="cumulative_score">Cumulative Score</string>
     <string name="Draw">Draw</string>
     <string name="Discard">Discard</string>
-    <string name="Play">Play</string>
+    <string name="startGame">Start Game</string>
     <string name="deals">%1$s dealt</string>
     <string name="nextPlayer">Next Player %s</string>
     <string name="wentOut">%1$s went out - last turns!</string>
-    <string name="computerTurnInfo">%1$s drew the %2$s from the %3$s pile and discarded the %4$s</string>
-    <string name="humanTurnInfo">%1$s drew the %2$s from the %3$s pile; pick a discard</string>    <string name="nextRound">Play %s\'s round</string>
+    <string name="computerTurnInfo">%1$s drew from the %3$s pile and discarded the %4$s</string>
+    <string name="humanTurnInfo">%1$s drew the %2$s from the %3$s pile; drag a discard to the Discard pile</string>    <string name="nextRound">Play %s\'s round</string>
     <string name="takeYourTurn">Take your turn</string>
     <string name="takePlayerTurn">Play %s\'s turn</string>
     <string name="showScores">Show scores</string>

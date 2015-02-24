@@ -8,9 +8,18 @@ android {
         applicationId "com.example.jeffrey.fivekings"
         minSdkVersion 14
         targetSdkVersion 21
-        versionCode 109
-        versionName "0.1.09"
+        versionCode 110
+        versionName "0.1.10"
     }
+
+    applicationVariants.all { variant ->
+        variant.outputs.each { output ->
+            output.outputFile = new File(
+                    output.outputFile.parent,
+                    output.outputFile.name.replace(".apk", "-${variant.versionName}.apk"))
+        }
+    }
+
     buildTypes {
         release {
             minifyEnabled false

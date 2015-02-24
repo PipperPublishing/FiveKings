@@ -3,7 +3,8 @@ package com.example.jeffrey.fivekings;
 /**
  * Created by Jeffrey on 1/22/2015.
  */
-public class DrawPile extends CardList {
+@Deprecated
+class DrawPile extends CardList {
     DrawPile() {
         super();
         clear();

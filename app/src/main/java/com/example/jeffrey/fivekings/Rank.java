@@ -28,6 +28,8 @@ enum Rank {
     boolean isLowestRank() {
         return 0 == this.ordinal();
     }
+
+    //GETTERS
     int getRankValue() {
         return value;
     }
@@ -36,7 +38,7 @@ enum Rank {
         return this.ordinal();
     }
 
-    String getRankString() {
+    String getString() {
         return string;
     }
 }

@@ -1,14 +1,12 @@
 package com.example.jeffrey.fivekings;
 
-import android.annotation.TargetApi;
 import android.app.Activity;
+import android.content.ClipData;
 import android.content.Context;
 import android.graphics.Typeface;
-import android.os.Build;
 import android.os.Bundle;
-import android.os.Handler;
+import android.util.Log;
 import android.view.LayoutInflater;
-import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Button;
@@ -41,10 +39,10 @@ import java.util.List;
     2/17/2015   Fixed end-of-round button to be Show scores. Last button now says [New Game] and calls Game constructor
     2/17/2015   turnInfo line now uses parameterized string resource
     2/17/2015   Converted StringBuffer to StringBuilder throughout
+    2/21/2015   Creating basic elements of Draw-and-Drop listener (for discarding)
+    2/23/2015   Trigger drag on simple click of a card
+                Set DiscardPile clickable or not (disabled means you can't drop on it)
  */
-/*
-TODO:C Clean up/refactor: unused constants etc.
-*/
 
 public class FiveKings extends Activity {
     static final float CARD_OFFSET =25.0f;
@@ -105,9 +103,10 @@ public class FiveKings extends Activity {
 
         setContentView(R.layout.activity_five_kings);
 
+
         final View controlsView = findViewById(R.id.fullscreen_content_controls);
         final View contentView = findViewById(R.id.fullscreen_content);
-
+/*
         // Set up an instance of SystemUiHider to control the system UI for
         // this activity.
         mSystemUiHider = SystemUiHider.getInstance(this, contentView, HIDER_FLAGS);
@@ -149,7 +148,8 @@ public class FiveKings extends Activity {
                         }
                     }
                 });
-
+*/
+/*
         // Set up the user interaction to manually show or hide the system UI.
         contentView.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -160,25 +160,28 @@ public class FiveKings extends Activity {
                     mSystemUiHider.show();
                 }
             }
-        });
+        });*/
 
-        //set up the playGame handler for the Button
+        //set up the playGameClicked handler for the Button
         //set the OnClickListener for the button - for some reason this doesn't reliably work from XML
         mPlayButton = (Button)findViewById(R.id.Play);
+/*
         //stops UI from hiding during button access
         mPlayButton.setOnTouchListener(mDelayHideTouchListener);
+*/
 
         mPlayButton.setOnClickListener(new View.OnClickListener() {
             public void onClick(View v) {
-                playGame(v);
+                playGameClicked(v);
             }
         });
         mPlayButton.setOnLongClickListener(new View.OnLongClickListener() {
             public boolean onLongClick(View v) {
+                //TODO:B Use string resource here
                 Toast.makeText(getApplicationContext(), "Starting new game", Toast.LENGTH_SHORT).show();
                 mPlayButton.setText(getText(R.string.newGame));
                 mGame.setGameState(GameState.NEW_GAME);
-                playGame(v);
+                playGameClicked(v);
                 return true;
             }
         });
@@ -186,20 +189,21 @@ public class FiveKings extends Activity {
         final ImageButton drawPileButton = (ImageButton)findViewById(R.id.drawPile);
         drawPileButton.setOnClickListener(new View.OnClickListener() {
             public void onClick(View v) {
-                pickDrawPile(v);
+                clickedDrawPile(v);
             }
         });
 
         final ImageButton discardPileButton = (ImageButton)findViewById(R.id.discardPile);
         discardPileButton.setOnClickListener(new View.OnClickListener() {
             public void onClick(View v) {
-                pickDiscardPile(v);
+                clickedDiscardPile(v);
             }
         });
 
         //Listen for clicks on the melds or cards
     }//end onCreate
 
+/*
     @Override
     protected void onPostCreate(Bundle savedInstanceState) {
         super.onPostCreate(savedInstanceState);
@@ -211,11 +215,15 @@ public class FiveKings extends Activity {
     }
 
 
-    /**
+    *//*
+*/
+/**
      * Touch listener to use for in-layout UI controls to delay hiding the
      * system UI. This is to prevent the jarring behavior of controls going away
      * while interacting with activity UI.
-     */
+     *//*
+*/
+/*
     View.OnTouchListener mDelayHideTouchListener = new View.OnTouchListener() {
         @Override
         public boolean onTouch(View view, MotionEvent motionEvent) {
@@ -234,14 +242,17 @@ public class FiveKings extends Activity {
         }
     };
 
-    /**
+    */
+/**
      * Schedules a call to hide() in [delay] milliseconds, canceling any
      * previously scheduled calls.
-     */
+     *//*
+
     private void delayedHide(int delayMillis) {
         mHideHandler.removeCallbacks(mHideRunnable);
         mHideHandler.postDelayed(mHideRunnable, delayMillis);
     }
+*/
 
  /*   EVENT HANDLERS*/
     //Event handler for [Save] in add player dialog
@@ -252,24 +263,24 @@ public class FiveKings extends Activity {
  }
 
     //the Event handler for button presses on [Play]
-    private void playGame(View v){
+    private void playGameClicked(View v){
         enablePlayDisableDrawDiscard(true);
         if (null== mGame) {
             mGame = new Game(this); //also sets gameState=ROUND_START
-            mLastRoundScores = (TextView)findViewById(R.id.round_number);
+            mLastRoundScores = (TextView)findViewById(R.id.after_round);
             mCurrentRound = (TextView)findViewById(R.id.current_round);
             mGameInfoLine = (TextView) findViewById(R.id.game_info_line);
             mGameInfoLine.setTypeface(null, Typeface.BOLD_ITALIC);
             mInfoLine = (TextView) findViewById(R.id.info_line);
             mInfoLine.setTypeface(null, Typeface.ITALIC);
             mDiscardButton = (ImageButton)findViewById(R.id.discardPile);
-            mDiscardButton.setEnabled(false);
+            mDiscardButton.setClickable(false);
             mDrawPileButton = (ImageButton)findViewById(R.id.drawPile);
             mDrawPileButton.setEnabled(false);
             mCurrentMelds = (RelativeLayout) findViewById(R.id.current_melds);
             mCurrentCards = (RelativeLayout) findViewById(R.id.current_cards);
-            this.mCurrentRound.setText(resFormat(R.string.current_round,mGame.getRoundOf().getRankString()));
-            this.mPlayButton.setText(resFormat(R.string.nextRound, mGame.getRoundOf().getRankString()));
+            this.mCurrentRound.setText(resFormat(R.string.current_round,mGame.getRoundOf().getString()));
+            this.mPlayButton.setText(resFormat(R.string.nextRound, mGame.getRoundOf().getString()));
             showPlayerScores(mGame.getPlayers());
 
             showAddPlayers();
@@ -280,7 +291,7 @@ public class FiveKings extends Activity {
             mGame.init();
             mGameInfoLine.setText(getText(R.string.blank));
             mInfoLine.setText(getText(R.string.blank));
-            this.mPlayButton.setText(resFormat(R.string.nextRound, mGame.getRoundOf().getRankString()));
+            this.mPlayButton.setText(resFormat(R.string.nextRound, mGame.getRoundOf().getString()));
             mCurrentCards.removeAllViews();
             mCurrentMelds.removeAllViews();
             showPlayerScores(mGame.getPlayers());
@@ -289,13 +300,13 @@ public class FiveKings extends Activity {
         //starting a round
         else if (GameState.ROUND_START == mGame.getGameState()) {
             mGame.initRound();
-            mDiscardButton.setImageDrawable(mGame.getDiscardPileDrawable());
-            this.mCurrentRound.setText(resFormat(R.string.current_round,mGame.getRoundOf().getRankString()));
+            this.mCurrentRound.setText(resFormat(R.string.current_round, mGame.getRoundOf().getString()));
             mGameInfoLine.setText(String.format(getText(R.string.deals).toString(), mGame.getDealer().getName()));
             mInfoLine.setText(getText(R.string.blank));
             this.mPlayButton.setText(resFormat(R.string.nextPlayer, mGame.getPlayer().getName()));
             mCurrentCards.removeAllViews();
             mCurrentMelds.removeAllViews();
+            syncDiscardMeldsCards(null);
         }
 
         else if (GameState.TAKE_COMPUTER_TURN == mGame.getGameState()) {
@@ -313,10 +324,7 @@ public class FiveKings extends Activity {
         }
 
         else if (GameState.TURN_START == mGame.getGameState()) {
-            //Show card on discard pile (need to display at beginning of round)
-            mDiscardButton.setImageDrawable(mGame.getDiscardPileDrawable());
-            showCards(mGame.getPlayer().getHandMelded(), mCurrentMelds);
-            showCards(mGame.getPlayer().getHandUnMelded(), mCurrentCards);
+            syncDiscardMeldsCards(null);
 
             if (mGame.getPlayer().isHuman()) {
                 mInfoLine.setText(resFormat(R.string.yourCardsAndMelds, mGame.getPlayer().getName()));
@@ -331,11 +339,11 @@ public class FiveKings extends Activity {
         }//end TURN_START
 
         else if (GameState.ROUND_END == mGame.getGameState()) {
-            mLastRoundScores.setText(resFormat(R.string.scores_after, mGame.getRoundOf().getRankString()));
+            mLastRoundScores.setText(resFormat(R.string.scores_after, mGame.getRoundOf().getString()));
             mGame.endRound();
             mGameInfoLine.setText(getText(R.string.displayScores));
             showPlayerScores(mGame.getPlayers());
-            if (GameState.ROUND_START == mGame.getGameState()) this.mPlayButton.setText(resFormat(R.string.nextRound,mGame.getRoundOf().getRankString()));
+            if (GameState.ROUND_START == mGame.getGameState()) this.mPlayButton.setText(resFormat(R.string.nextRound,mGame.getRoundOf().getString()));
         }
 
         else if (GameState.GAME_END == mGame.getGameState()) {
@@ -346,18 +354,17 @@ public class FiveKings extends Activity {
     }
 
     //Event handler for clicks on Discard Pile
-    private void pickDiscardPile(View v) {
+    private void clickedDiscardPile(View v) {
         drawOrDiscard(Game.USE_DISCARD_PILE);
     }
 
     //Event handler for clicks on Draw Pile
-    private void pickDrawPile(View v) {
+    private void clickedDrawPile(View v) {
         drawOrDiscard(Game.USE_DRAW_PILE);
     }
 
     private void drawOrDiscard(boolean useDiscardPile) {
         StringBuilder turnInfo = new StringBuilder(100);
-        Player playerWentOut=null;
 
         turnInfo.setLength(0);
         mGame.takeHumanTurn(getText(R.string.humanTurnInfo).toString(), turnInfo, useDiscardPile); //also sets GameState to END_HUMAN_TURN
@@ -366,14 +373,35 @@ public class FiveKings extends Activity {
     }
 
 
-//Event Handler for clicks on cards or melds
-    private void clickedCard(CardView cv) {
-        Toast toast = Toast.makeText(this, cv.getCard().getCardString() + " clicked ", Toast.LENGTH_SHORT);
-        toast.show();
+//Event Handler for clicks on cards or melds - called from DiscardPile drag listener
+    boolean draggedCard(int iCardView) {
+        CardView foundCardView=null;
+        //find the view we coded with this index
+        for (int iView = 0; iView < mCurrentCards.getChildCount(); iView++) {
+            CardView cv = (CardView) mCurrentCards.getChildAt(iView);
+            if (cv.getViewIndex() == iCardView) {
+                foundCardView=cv;
+                break;
+            }
+        }
+        if (foundCardView == null) //less likely, but search melded cards too
+            for (int iView = 0; iView < mCurrentMelds.getChildCount(); iView++) {
+                CardView cv = (CardView) mCurrentMelds.getChildAt(iView);
+                if (cv.getViewIndex() == iCardView) {
+                    foundCardView=cv;
+                    break;
+                }
+            }
+        if (foundCardView == null) {
+            Toast.makeText(this, "No matching card found", Toast.LENGTH_SHORT).show();
+            Log.e(mGame.APP_TAG, "draggedCard: No matching card found");
+            return false;
+        }
+        else Toast.makeText(this, foundCardView.getCard().getCardString() + " discarded", Toast.LENGTH_SHORT).show();
 
         if (GameState.END_HUMAN_TURN == mGame.getGameState()) {
-            if (!mGame.getPlayer().isHuman()) throw new RuntimeException("clickedCard: player is not Human");
-            Player playerWentOut = mGame.endHumanTurn(cv.getCard());
+            if (!mGame.getPlayer().isHuman()) throw new RuntimeException("draggedCard: player is not Human");
+            Player playerWentOut = mGame.endHumanTurn(foundCardView.getCard());
             if (playerWentOut != null) mGameInfoLine.setText(String.format(getText(R.string.wentOut).toString(),playerWentOut.getName()));
             syncDiscardMeldsCards(null);
 
@@ -383,32 +411,36 @@ public class FiveKings extends Activity {
 
             enablePlayDisableDrawDiscard(true);
         }
+        return true;
     }
 
     /* COMMON METHODS FOR MANAGING UI ELEMENTS */
+    //TODO:A: Also enable/disable dragging of discard when not human on discard step
     private void enablePlayDisableDrawDiscard(boolean enable) {
         if (this.mPlayButton != null) {
             this.mPlayButton.setEnabled(enable);
             this.mPlayButton.setVisibility(enable ? View.VISIBLE : View.INVISIBLE);
         }
         if (this.mDrawPileButton != null) this.mDrawPileButton.setEnabled(!enable);
-        if (this.mDiscardButton != null) this.mDiscardButton.setEnabled(!enable);
+        if (this.mDiscardButton != null) this.mDiscardButton.setClickable(!enable);
     }
     private void enablePlayDisableDrawDiscard(boolean enablePlay, boolean enablePiles) {
         enablePlayDisableDrawDiscard(enablePlay);
         if (this.mDrawPileButton != null) this.mDrawPileButton.setEnabled(enablePiles);
-        if (this.mDiscardButton != null) this.mDiscardButton.setEnabled(enablePiles);
+        if (this.mDiscardButton != null) this.mDiscardButton.setClickable(enablePiles);
     }
 
     private void syncDiscardMeldsCards(StringBuilder turnInfo) {
         //Show card on discard pile (changes because of this player's play)
         mDiscardButton.setImageDrawable(mGame.getDiscardPileDrawable());
-        showCards(mGame.getPlayer().getHandMelded(), mCurrentMelds);
-        showCards(mGame.getPlayer().getHandUnMelded(), mCurrentCards);
+        mDiscardButton.setOnDragListener(new ImageButtonDragEventListener() );
+
+        int iBase = showCards(mGame.getPlayer().getHandMelded(), mCurrentMelds,0);
+        showCards(mGame.getPlayer().getHandUnMelded(), mCurrentCards, iBase);
         mInfoLine.setText(turnInfo);
     }
 
-    //open Add Player dialog (edits existing)
+    //open Add Player dialog
     private void showAddPlayers() {
         //pop open the Players dialog for the names
         EnterPlayersDialogFragment epdf = EnterPlayersDialogFragment.newInstance(null, false, true, -1);
@@ -421,21 +453,40 @@ public class FiveKings extends Activity {
     }
 
     //show melds and unmelded as ImageViews
-    private void showCards(ArrayList<CardList> meldLists, RelativeLayout relativeLayout) {
+    private int showCards(ArrayList<CardList> meldLists, RelativeLayout relativeLayout, int iViewBase) {
         ArrayList<CardView> cardLayers = new ArrayList<>(Game.MAX_CARDS);
         float xOffset=0f;
+        int iView=iViewBase;
         relativeLayout.removeAllViews();
         for (CardList cardlist : meldLists) {
             for (Card card : cardlist.getCards()) {
-                CardView cv = new CardView(this, card );
+                CardView cv = new CardView(this, card, iView );
+                cv.setTag(iView); //allows us to pass the index into the dragData without dealing with messy object passing
+                iView++;
                 cv.setImageDrawable(card.getDrawable());
                 cv.setTranslationX(xOffset);
                 cv.bringToFront();
-                cv.setOnClickListener(new CardView.OnClickListener() {
-                    public void onClick(View cardView) {
-                        clickedCard((CardView) cardView);
-                    }
+                cv.setClickable(false);
+                cv.setOnDragListener(new CardViewDragEventListener() );
+                cv.setOnLongClickListener(new View.OnLongClickListener() {
+                    // Defines the one method for the interface, which is called when the View is long-clicked
+                    public boolean onLongClick(View v) {
+                        // Create a new ClipData using the tag as a label, the plain text MIME type, and
+                        // the string containing the View index. This will create a new ClipDescription object within the
+                        // ClipData, and set its MIME type entry to "text/plain"
+                        ClipData dragData = ClipData.newPlainText("Discard", v.getTag().toString());
+                        View.DragShadowBuilder myShadow = new CardViewDragShadowBuilder(v);
+
+                        // Starts the drag
+                        v.startDrag(dragData,  // the data to be dragged
+                                myShadow,  // the drag shadow builder
+                                null,      // no need to use local data
+                                0          // flags (not currently used, set to 0)
+                        );
+                        return true;
+                    }//end onClick
                 });
+
                 cardLayers.add(cv);
                 xOffset += CARD_OFFSET;
             }
@@ -451,6 +502,7 @@ public class FiveKings extends Activity {
                 relativeLayout.addView(cv);
             }
         }
+        return iView; //used as the starting index for mCurrentMelds
     }//end showCards
 
 
@@ -528,6 +580,5 @@ public class FiveKings extends Activity {
     private String resFormat(int resource, String param) {
         return String.format(getText(resource).toString(),param);
     }
-
 
 }

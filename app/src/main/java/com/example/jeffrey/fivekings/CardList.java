@@ -33,6 +33,7 @@ class CardList extends ArrayList<Card> {
     }
 
     //shuffle by randomly picking a card and moving it to the end of the list
+    @Deprecated
     protected boolean myShuffle() {
         Card shuffledCard;
         Random randGenerator = new Random();
@@ -48,6 +49,7 @@ class CardList extends ArrayList<Card> {
         return remove(0);
     }
 
+    //TODO:B: Is this an interface? is not meaningful in the base class (but is called by DrawPile)
     protected Card peekNext() {
         return (0== this.size() ? null : this.get(0));
     }
@@ -67,13 +69,6 @@ class CardList extends ArrayList<Card> {
         return highestScoringCard;
     }
 
-
-    //ignore value of wild card and Joker except in last licks round and final round scoring
-    protected int getScore(Rank wildCardRank, boolean isFinalScore) {
-        int score = 0;
-        for (Card card : this) score += card.getScore(wildCardRank, isFinalScore);
-        return score;
-    }
 
     String getString() {
         if (this.isEmpty()) return "";
