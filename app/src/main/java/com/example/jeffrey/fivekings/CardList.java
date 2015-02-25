@@ -12,6 +12,7 @@ import java.util.Random;
  * 2/1/2015 replaced "cards" member variable with this and commented out unnecessary Overrides
  * 2/3/2015 pushed card scoring down into Card
  * 2/5/2015 Call Collections.shuffle()
+ * 2/25/2015    Deprecated myShuffle
  */
 class CardList extends ArrayList<Card> {
 
@@ -81,4 +82,6 @@ class CardList extends ArrayList<Card> {
         sCards.append(")");
         return sCards.toString();
     }
+
+
 }

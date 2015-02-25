@@ -11,10 +11,12 @@ v0.1.10 Clean-up
 - DONE: Draw is empty, then redeal from Discard - make inner or static classes?
 
 ---------
-v0.1.11 Clean-up
-- Clean up Hand
-- Clean up Player;
+>>> v0.1.11 Clean-up
+- DONE: Clean up Hand
+- DONE: Clean up Player;
+- DONE: Edit comments
 - Fix TODO:A which are not graphics
+- DONE: Make Hand an inner class of Player
 
 ---------
 v0.1.12
@@ -23,7 +25,7 @@ v0.1.12
 - remove UI hiding code (including systemUIHider); possible make banner smaller or go away
 
 ---------------------------
-v0.2.00 : Scoring/Valuation
+v0.2.00 : Melding/Scoring/Valuation
 - Stuff from piece of paper / notes on iPad
     - Loop over discards - this will allow us to merge some code
 Hand:
@@ -65,12 +67,12 @@ Heuristics:
 v0.3.00 Graphics
 - make cards bigger - why aren't they expanding to fill available space
 Melding/Discard:
+    - Drag to create melds, or [Meld] button for computer version
+        - how do you show outline of meld?
     - grey out not-real cards in partial melds
     - highlight discard when we're about to select it, or show Toast as we move across
     - DONE: make discard draggable; snap discard only when it reaches the pile
     - short Touch for drag?
-    - allow dragging for melds
-    - Add [Meld] button to meld for you and make default behavior to not meld
     - Better [Play] and [Meld] button design (find a good image)
 - Use Toasts (with string resources) for instructions instead of infoLine/mGameInfo
 - DONE: Fix annoying menu popup problem
@@ -103,6 +105,7 @@ v0.4.00: Menu
 - Hibernate state if forced to
 - Clean up Game state flow and handling
 - Look at use of Static and Inner classes
+- About with Version number and contact information
 
 -----------------
 v0.5.00 Graphics

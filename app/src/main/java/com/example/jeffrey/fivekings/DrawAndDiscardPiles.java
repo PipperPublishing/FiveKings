@@ -5,6 +5,7 @@ import android.util.Log;
 /**
  * Created by Jeffrey on 2/20/2015.
  * Encapsulates the draw and discard pile so that we can redeal the Draw pile when it runs out
+ * 2/24/2015    Moved hand deal to here to encapsulate it - just deals as many cards as requested
  * TODO:B: Also make them singletons?
  * TODO:B Make peekNext() and deal() part of an interface that they implement but CardList does not
  */
@@ -20,7 +21,6 @@ class DrawAndDiscardPiles {
     void dealToDiscard() {
         discardPile.add(drawPile.deal());
     }
-
 
     /**
      * Created by Jeffrey on 1/22/2015.
@@ -46,6 +46,12 @@ class DrawAndDiscardPiles {
         protected Card peekNext() {
             reDealIfEmpty();
             return super.peekNext();
+        }
+
+        CardList deal(int numCards) {
+            CardList returnedCards = new CardList(numCards);
+            for (int iCard=0; iCard < numCards; iCard++) returnedCards.add(deal());
+            return returnedCards;
         }
 
         private void reDealIfEmpty () {

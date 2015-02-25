@@ -20,13 +20,9 @@ import java.util.Iterator;
  * 2/17/2015 Replace isSameRank with RankDifference
  * 2/17/2015 Finding discard when there are no singles/partial melds; remove from a full meld but leave full if >=3
  * 2/24/2015    Move checkSize from Player to Hand
- * TODO:A Hands are still not going out with a single (meldable) wildcard left
- * TODO:A Partial melds should only include one instance of each card (not 10C-10D and 10C-JC)
- * TODO:A Current problems:- need to check that partial and full melds don't overlap, also partial Melds and sequences
- * TODO:C Should be able to merge large chunks of Heuristics and Permutations
- * TODO:B: Should Hand be an inner class of Player since it is never accessed outside it?
-
+ * 2/25/2015    Deprecated and removed todos
  */
+@Deprecated
 class Hand {
     private final int numCards; //how many cards you should have
     //all your cards, excluding what you picked up
@@ -47,13 +43,12 @@ class Hand {
         cards = new CardList(numCards);
         melds = new ArrayList<>();
         partialMelds = new ArrayList<>();
-        singles = new CardList(numCards); //set to cards in dealNew
+        singles = new CardList(numCards); //set to cards in dealAndMeld
         intermediateValue = 0;
         finalScore =0;
         lastDiscard=null;
     }
 
-    //FIX-NEXT: Clean up this mess
     int meldAndEvaluate(Rank wildCardRank, boolean usePermutations, boolean isFinalScore, Card addedCard) {
         int valuation;
         if (usePermutations) valuation = meldAndEvaluateUsingPermutations(wildCardRank, isFinalScore, addedCard);
@@ -73,7 +68,6 @@ Evaluate using
     3. Minimize unMelded: remaining singles - minimize the score of this by throwing away the
 In the final scoring, calculate partialMelds and unMelded value
 Evaluation accounts for hand potential, but Scoring is just what's left after melding
-TODO:B Account for the overlap between partialMelds and partialSequences
  */
     int meldAndEvaluateUsingHeuristics(Rank wildCardRank, boolean isFinalScore, Card addedCard) {
         //Log.d(Game.APP_TAG,"Entering meldAndEvaluateUsingHeuristics");
@@ -207,14 +201,13 @@ TODO:B Account for the overlap between partialMelds and partialSequences
             partialMelds.addAll(partialSequences);
         }
         //Clean up what is now left in singles  - for final scoring we put wildcards and partial melds/sequences into singles
-        //TODO:A Shouldn't be any wildcards left - but possible they will not get included here (if there weren't any melds)
         singles = new CardList(cardsWithAdded);
         for (Card card:cardsWithAdded) {
             if (contains(melds,card)) singles.remove(card);
             if (!isFinalScore && contains(partialMelds,card)) singles.remove(card);
         }
 
-        //Find discard - TODO:B can we pull this into a separate method?
+        //Find discard
         if (addedCard != null) {
             //Now find most expensive single card to discard - if there aren't any singles then pick highest value partialMeld
             //Log.d(Game.APP_TAG,"---find discard");
@@ -302,7 +295,7 @@ TODO:B Account for the overlap between partialMelds and partialSequences
         Everything melded gives the maximum evaluation of 0
          */
     private int meldAndEvaluateUsingPermutations(Rank wildCardRank, boolean isFinalScore, Card addedCard) {
-        if (addedCard == null) throw new RuntimeException("Hand.useDiscardPile: addedCard is null");
+        if (addedCard == null) throw new RuntimeException("Hand.meldAndEvaluate: addedCard is null");
 
         CardList cardsWithAdded = new CardList(cards);
         cardsWithAdded.add(addedCard);
@@ -504,7 +497,6 @@ TODO:B Account for the overlap between partialMelds and partialSequences
         return false;
     }
 
-    //TODO:B Maybe discardFrom and add should both trigger an automatic re-melding
     Card discardFrom(Card discardedCard){
         if (this.lastDiscard != discardedCard) this.lastDiscard = discardedCard;
         cards.remove(discardedCard);

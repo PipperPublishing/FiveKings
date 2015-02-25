@@ -20,6 +20,7 @@ import java.util.List;
  *  2/17/2015   Made deck a singleton
  *  2/19/2015   Start with Computer and You as hard-coded players; you can add more or change names
  *  2/20/2015   Moved reDeal to new DrawAndDiscardPiles to encapsulate it
+ *  2/24/2015   Separated logic for Human/Computer more clearly in takeTurn
  */
 public class Game {
     private static final boolean DEBUG=false;
@@ -58,8 +59,8 @@ public class Game {
     boolean init() {
         deck.shuffle();
         this.dealer = players.get(0);
-        for (Player player : this.players) player.init();
-        this.roundOf = Rank.values()[0];
+        for (Player player : this.players) player.initGame();
+        this.roundOf = Rank.getLowestRank();
         this.usePermutations=true;
         this.gameState = GameState.ROUND_START;
         return true;
@@ -85,11 +86,9 @@ public class Game {
     }//end initRound
 
     void takeHumanTurn(String turnInfoFormat, StringBuilder turnInfo, boolean useDiscardPile) {
-        takeTurn(turnInfoFormat, turnInfo, true, useDiscardPile);
-
-        //Now meld and score (discard is a separate UI call)
-        player.meldAndEvaluateAsIs(this.roundOf, this.usePermutations, playerWentOut != null);
-        this.gameState = GameState.END_HUMAN_TURN;
+       takeTurn(turnInfoFormat, turnInfo, true, useDiscardPile);
+       //don't meld, because it was done as part of evaluation
+       this.gameState = GameState.END_HUMAN_TURN;
     }
 
     Player takeAutoTurn(String turnInfoFormat, StringBuilder turnInfo) {
@@ -97,25 +96,6 @@ public class Game {
 
         if ((playerWentOut == null) && player.isOut()) playerWentOut = player;
         return playerWentOut;
-    }
-
-    Player endHumanTurn(Card discard) {
-        String sValuationOrScore = (null == playerWentOut) ? "Valuation=" : "Score=";
-
-        drawAndDiscardPiles.discardPile.add(player.discardFromHand(discard));
-        player.meldAndEvaluateAsIs(this.roundOf, this.usePermutations, playerWentOut != null);
-        Log.d(APP_TAG, "You discarded the " + discard.getCardString());
-        Log.d(APP_TAG, "after...... " + player.getMeldedString(true) + player.getPartialAndSingles(true) + " " + sValuationOrScore + player.getHandValueOrScore(null != playerWentOut));
-
-        if ((playerWentOut == null) && player.isOut()) playerWentOut = player;
-        return playerWentOut;
-    }
-    boolean endTurn() {
-        player = getNextPlayer(player);
-        //we've come back around to the player who went out
-        if (player == playerWentOut) this.gameState = GameState.ROUND_END;
-        else this.gameState = GameState.TURN_START;
-        return (this.gameState == GameState.TURN_START);
     }
 
  private void takeTurn(String turnInfoFormat, StringBuilder turnInfo, boolean isHuman, boolean useDiscardPile) {
@@ -129,26 +109,35 @@ public class Game {
          Log.d(Game.APP_TAG, "Player " + player.getName() + ": Using Permutations");
      else Log.d(Game.APP_TAG, "Player " + player.getName() + ": Using Heuristics");
      String sValuationOrScore = (null == playerWentOut) ? "Valuation=" : "Score=";
-     player.evaluateIfFirstTurn(roundOf, usePermutations, (playerWentOut != null));
      Log.d(APP_TAG, "before...... " + player.getMeldedString(true) + player.getPartialAndSingles(true) + " "
              + sValuationOrScore + player.getHandValueOrScore(null != playerWentOut));
      playerStartTime = System.currentTimeMillis();
 
-     if (!isHuman) useDiscardPile = player.useDiscardPile(roundOf, usePermutations, (playerWentOut != null), drawAndDiscardPiles.discardPile.peekNext());
-     //Now meld, score, and decide on discard - if it's an automated player and the Discard Pile we'll just get back the existing results
-     if (useDiscardPile) {
-         if (isHuman) player.useDiscardPile(roundOf, usePermutations, (playerWentOut != null), drawAndDiscardPiles.discardPile.peekNext());
-         player.meldAndEvaluate(roundOf, usePermutations, (playerWentOut != null), drawAndDiscardPiles.discardPile.peekNext());
-         turnInfo.append(String.format(turnInfoFormat, player.getName(), drawAndDiscardPiles.discardPile.peekNext().getCardString(), "Discard",
-                 (isHuman ? null : player.getDiscard().getCardString())));
-         player.addCardToHand(drawAndDiscardPiles.discardPile.deal());
-     } else {
-         player.meldAndEvaluate(roundOf, usePermutations, (playerWentOut != null), drawAndDiscardPiles.drawPile.peekNext());
-         turnInfo.append(String.format(turnInfoFormat, player.getName(), drawAndDiscardPiles.drawPile.peekNext().getCardString(), "Draw",
-                 (isHuman ? null : player.getDiscard().getCardString())));
-         player.addCardToHand(drawAndDiscardPiles.drawPile.deal());
+     Card drawnCard=null;
+     if (isHuman) {
+         if (useDiscardPile) {
+             drawnCard = drawAndDiscardPiles.discardPile.peekNext();
+             player.meldAndEvaluate(usePermutations, (playerWentOut != null), drawAndDiscardPiles.discardPile.deal());
+             turnInfo.append(String.format(turnInfoFormat, player.getName(), drawnCard.getCardString(), "Discard"));
+         } else {
+             drawnCard = drawAndDiscardPiles.drawPile.peekNext();
+             player.meldAndEvaluate(usePermutations, (playerWentOut != null), drawAndDiscardPiles.drawPile.deal());
+             turnInfo.append(String.format(turnInfoFormat, player.getName(), drawnCard.getCardString(), "Draw"));
+         }
+     }else {
+         //if Auto/Computer, then we test whether discard improves score/valuation
+         useDiscardPile = player.findBestHand(usePermutations, (playerWentOut != null), drawAndDiscardPiles.discardPile.peekNext());
+         if (useDiscardPile) {
+            drawnCard = drawAndDiscardPiles.discardPile.deal(); //note use of deal() here
+            //already melded and have discard
+            turnInfo.append(String.format(turnInfoFormat, player.getName(), drawnCard.getCardString(), "Discard", player.getDiscard().getCardString()));
+
+         }else {
+            drawnCard = drawAndDiscardPiles.drawPile.peekNext();
+            player.findBestHand(usePermutations, (playerWentOut != null), drawAndDiscardPiles.drawPile.deal());
+            turnInfo.append(String.format(turnInfoFormat, player.getName(), drawnCard.getCardString(), "Draw", player.getDiscard().getCardString()));
+         }
      }
-     Log.d(Game.APP_TAG, turnInfo.toString());
      playerStopTime = System.currentTimeMillis();
      usePermutations = DEBUG || (usePermutations && ((playerStopTime - playerStartTime) < PERMUTATION_THRESHOLD));
      if (!isHuman) {
@@ -157,6 +146,25 @@ public class Game {
      }
  }
 
+    Player endHumanTurn(Card discard) {
+        String sValuationOrScore = (null == playerWentOut) ? "Valuation=" : "Score=";
+
+        //Now discard and meld again
+        drawAndDiscardPiles.discardPile.add(player.discardFromHand(discard));
+        player.meldAndEvaluate(usePermutations, (playerWentOut!=null));
+        Log.d(APP_TAG, "You discarded the " + discard.getCardString());
+        Log.d(APP_TAG, "after...... " + player.getMeldedString(true) + player.getPartialAndSingles(true) + " " + sValuationOrScore + player.getHandValueOrScore(null != playerWentOut));
+
+        if ((playerWentOut == null) && player.isOut()) playerWentOut = player;
+        return playerWentOut;
+    }
+    boolean endTurn() {
+        player = getNextPlayer(player);
+        //we've come back around to the player who went out
+        if (player == playerWentOut) this.gameState = GameState.ROUND_END;
+        else this.gameState = GameState.TURN_START;
+        return (this.gameState == GameState.TURN_START);
+    }
 
     Rank endRound() {
         if (playerWentOut == null) throw new RuntimeException("Error - playerWentOut is null");

@@ -5,8 +5,8 @@ import android.util.Log;
 /**
  * Created by Jeffrey on 1/22/2015.
  * 2/18/2015       - Don't throw exception when peekNext() is empty, because it can be like that in between drawing and discarding when we try to display image
+ * 2/25/2015    Deprecated (now inner class of DrawAndDiscardPiles
  */
-//TODO:B Convert DiscardPile and DrawPile to singletons
     @Deprecated
 class DiscardPile extends CardList {
     public DiscardPile() {
