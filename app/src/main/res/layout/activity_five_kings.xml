@@ -83,7 +83,8 @@
                 android:layout_height="wrap_content"
                 android:layout_centerHorizontal="true"/>
 
-            <ImageButton
+            <view
+                class="com.example.jeffrey.fivekings.CardView"
                 android:id="@+id/discardPile"
                 android:layout_width="72dp"
                 android:layout_height="96dp"
@@ -93,7 +94,8 @@
                 android:layout_alignParentLeft="false"
                 android:layout_alignParentTop="false"
                 android:layout_below="@+id/current_round"
-                android:layout_toRightOf="@+id/spacer"/>
+                android:layout_toRightOf="@+id/spacer"
+                />
 
         </RelativeLayout>
     </LinearLayout>
@@ -106,12 +108,6 @@
         android:id="@+id/play_area"
         android:paddingTop="10dp"
         android:layout_below="@+id/score_and_piles">
-
-        <TextView
-            android:id="@+id/game_info_line"
-            android:layout_width="fill_parent"
-            android:layout_height="wrap_content"
-            android:textAppearance="?android:attr/textAppearanceSmall"/>
 
         <TextView
             android:id="@+id/info_line"
@@ -136,7 +132,11 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:gravity="center"
-            android:layout_weight="1">
+            android:padding="5dp"
+            android:background="@drawable/dotted_border"
+            android:layout_weight="1"
+            android:layout_marginLeft="10dp"
+            android:layout_marginRight="10dp">
         </RelativeLayout>
 
 

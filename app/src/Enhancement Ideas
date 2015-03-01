@@ -1,4 +1,4 @@
-v0.1.09 Human Player
+DONE v0.1.09 Human Player
 - DONE: Set one player as "You"
     - DONE: allow clicking of DrawPile, DiscardPile
     - DONE: clickable cards in Melds and Cards
@@ -11,90 +11,111 @@ v0.1.10 Clean-up
 - DONE: Draw is empty, then redeal from Discard - make inner or static classes?
 
 ---------
->>> v0.1.11 Clean-up
+DONE v0.1.11 Clean-up
 - DONE: Clean up Hand
 - DONE: Clean up Player;
 - DONE: Edit comments
-- Fix TODO:A which are not graphics
+- DONE: Fix TODO:A which are not graphics
 - DONE: Make Hand an inner class of Player
 
 ---------
-v0.1.12
-- Remove deprecated classes and code
-- Remove commented out UI hider code
-- remove UI hiding code (including systemUIHider); possible make banner smaller or go away
+>>> v0.2.01 Graphics - Manual melding
+- DONE remove UI hiding code (left systemUIHider); possible make banner smaller or go away
+- DONE: Use Toasts (with string resources) for instructions instead of mGameInfo
+Melding/Discard:
+  DONE: Don't display partial melds - store them internally for scoring only
+  DONE: Drag to do your own melding
+  DONE: highlight discard when we're about to select it, or show Toast as we move across
+  DONE: make discard draggable; snap discard only when it reaches the pile
+- DONE: Show only computer melds when they go out, and what they discard
+- Comments changes/adds in Player/Hand
 
 ---------------------------
-v0.2.00 : Melding/Scoring/Valuation
+v0.2.02 Graphics: Clean-up
+- TODO:A's
+- BUG:A Edit of Players
+- Remove deprecated classes and code
+- reuse alpha animation
+- On "pick a card"  - run a continuous highlight loop of the two piles
+- investigate using Callback instead of Listener (does it make it easier to find card?)
+- Add button to [Meld] for you
+- can you do drag without LongClick (and somehow combine with multi-select)
+    - short Touch for select for melding (then drag to melding area)?
+    - Better [Play] and [Meld] button design (find a good image)
+    - make it a setting so we can put it in the menu later (fow now in a settings dialog?)
+- move cards from left-hand-edge
+- card dropped off screen
+- new layout is extending whole width - reset somehow to edge of meld?
+- LOTS of cleaning up in FiveKings - follow flow
+- Remove need for InfoLine with other display:
+    - dashed line outlined "Your cards"
+
+- Look at CardList implementation and consider LinkedHashSet or others which provide
+    - check for non-duplicates
+    - automatic ordering
+- Clean up Hand and Meld in Player - excessive getters?
+
+
+---------------------------
+v0.3.00 : Melding/Scoring/Valuation
 - Stuff from piece of paper / notes on iPad
     - Loop over discards - this will allow us to merge some code
+    - reuse Meld.check within meldAndEvaluate
+- if Computer is out, should just use Discard pile
 Hand:
 - Present sorted?
-- TODO's
-- have a permutations version without an added card
+- TODO:A's
+- DONE: have a permutations version without an added card
 
 Scoring/Valuation:- move to separate class
-- Move out of getHighestScoreCard
+- DONE: Move out of getHighestScoreCard
 - Card should only know about base scoring and perhaps return two different values (base score and wildcard score) - move scoring out of it
 - A hand with n melds should score higher than any hand with n-1 melds; a partial rank meld > partial sequence
 - Don't discard what others want (wild cards, or cards they picked up)
 - KD sequence is lower frequency, so not preferred over rank melds
 - On round of 5's , play to win rather than to minimize
+
 - Currently draws Discard Pile card if it lowers valuation; but should consider Draw Pile if probability of an even lower card
+    - Different scoring for when I have 1 or 2 cards unmelded (should be looking to meld to existing)
     - track what is left in DrawPile (or cheat and remember it)
     - Cheat mode where it peeks at draw pile card
+    - In the round of n, if you already have m cards in melds, then if m+3 >n then you should value a partial meld at full value
+    (because you must meld to the existing melds to go out)
 
 Permutations:
-- Can stop when we find one with Valuation=0
+- DONE: Can stop when we find one with Valuation=0
 - Look at descending sequences so we can throw them out sooner
 - Eliminate looking at other perms that are equivalent score (e.g. (K* KS KH) = (KS K* KH)) - use a hash?
 - use sorted lists
+- implement Meld.needsCheck
 
 Heuristics:
 - Add in more than one sequence
 - Loop over fullMeld and fullSequence alternatives (use perms?)
-- Discard: find largest meld; remove card
-- create separate list without wildcards - would remove the checks we have to do
-- use sorted lists
-
-- In the round of n, if you already have m cards in melds, then if m+3 >n then you should value a partial meld at full value
-    (because you must meld to the existing melds to go out)
-
-
-
+- Use Meld.check somehow? (but note the numCard breakpoint when we switched to permutations)
 
 ----------------------
-v0.3.00 Graphics
+v0.4.00 Graphics
 - make cards bigger - why aren't they expanding to fill available space
-Melding/Discard:
-    - Drag to create melds, or [Meld] button for computer version
-        - how do you show outline of meld?
-    - grey out not-real cards in partial melds
-    - highlight discard when we're about to select it, or show Toast as we move across
-    - DONE: make discard draggable; snap discard only when it reaches the pile
-    - short Touch for drag?
-    - Better [Play] and [Meld] button design (find a good image)
-- Use Toasts (with string resources) for instructions instead of infoLine/mGameInfo
 - DONE: Fix annoying menu popup problem
 - Find a suit of Stars
-- visual cue for buttons and piles (flash or change color)
 - Landscape layout
 - update scores throughout final turn
 - put deal icon next to the dealer
+- some visual indication of who went out (radio buttons)
 - DONE: Replace LinearLayouts with RelativeLayouts
 - DONE: Click on scores should allow editing names
 - DONE: Long press on [Play] should be something (new game)
-- Show only computer melds when they go out, and what they discard
-    - make it a setting so we can put it in the menu later (fow now in a settings dialog?)
 - Convert showScores to use ListView and get rid of nasty invisible fields - use set/getTag??
     - use mock fields (perhaps Computer, You) to get layout width better
     - [+] button to add Players (disable after game starts)
-    -
+    - DIsplay Radio Button next to current player? Or highlight?
+- Players show as backs of cards in semi-circle above play area
 
 
 
 ---------------
-v0.4.00: Menu
+v0.5.00: Menu
 - Instructions
 - Settings
     - Computer cheats by looking at Draw Pile

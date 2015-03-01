@@ -1,8 +1,5 @@
 package com.example.jeffrey.fivekings;
 
-import android.content.Context;
-import android.graphics.drawable.Drawable;
-
 import java.util.Comparator;
 
 /**
@@ -13,25 +10,16 @@ import java.util.Comparator;
  * 2/14/2015 Added bmp's for cards; resources are hard-coded to card rank and suit
  * 2/19/2015    Removed bitmap
  * 2/23/2015    Correctly interpret Joker String (have to explicitly get from resource)
+ * 2/26/2015    Move drawables to CardView; changed Joker back to hardcoded string
  */
 //TODO:B Intermediate and final scoring should be moved out of Card probably
-//TODO:B Create a subclass for Jokers which doesn't have rank and suit
+//TODO:B Create a subclass for Jokers which doesn't have rank and suit; fix strings then (because other names of cards are also language-dependent)
 class Card {
     static final int INTERMEDIATE_WILD_CARD_VALUE=1; //TODO:B 0.3.0: should be moved into scoring class/methods
     static final int FINAL_WILD_CARD_VALUE =20;
     static final int FINAL_JOKER_VALUE=50;
-    static final int JOKER_STRING=R.string.Joker;
+    static final String JOKER_STRING="Joker";
 
-    //static array of mapping from cards to resource IDs
-    //For now, stars are blue diamonds
-    //array of [Suits][Ranks]
-    static final int[][] sBitmapResource = {
-            {R.drawable.s3, R.drawable.s4, R.drawable.s5, R.drawable.s6, R.drawable.s7, R.drawable.s8, R.drawable.s9, R.drawable.s10, R.drawable.sj, R.drawable.sq, R.drawable.sk},
-            {R.drawable.h3, R.drawable.h4, R.drawable.h5, R.drawable.h6, R.drawable.h7, R.drawable.h8, R.drawable.h9, R.drawable.h10, R.drawable.hj, R.drawable.hq, R.drawable.hk},
-            {R.drawable.d3, R.drawable.d4, R.drawable.d5, R.drawable.d6, R.drawable.d7, R.drawable.d8, R.drawable.d9, R.drawable.d10, R.drawable.dj, R.drawable.dq, R.drawable.dk},
-            {R.drawable.c3, R.drawable.c4, R.drawable.c5, R.drawable.c6, R.drawable.c7, R.drawable.c8, R.drawable.c9, R.drawable.c10, R.drawable.cj, R.drawable.cq, R.drawable.ck},
-            {R.drawable.st3, R.drawable.st4, R.drawable.st5, R.drawable.st6, R.drawable.st7, R.drawable.st8, R.drawable.st9, R.drawable.st10, R.drawable.stj, R.drawable.stq, R.drawable.stk}
-    };
 
     //sorting for sequences (within the same suit)
     static final Comparator<Card> cardComparatorSuitFirst = new Comparator<Card>() {
@@ -75,25 +63,22 @@ class Card {
     private final String cardString;
     private final int cardValue;
     private final boolean isJoker;
-    private final Drawable drawable;
 
-    Card(Suit suit, Rank rank, Context context) {
+    Card(Suit suit, Rank rank) {
         this.suit = suit;
         this.rank = rank;
         this.cardString = rank.getString() + suit.getString();
         this.cardValue = rank.getRankValue();
         this.isJoker = false;
-        this.drawable = context.getResources().getDrawable(sBitmapResource[suit.getOrdinal()][this.getRank().getOrdinal()]);
     }
 
     //no arguments constructor is for Jokers
-    Card(Context context) {
+    Card() {
         this.isJoker = true;
         this.suit = null;
         this.rank = null;
-        this.cardString = context.getResources().getString(JOKER_STRING);
+        this.cardString = JOKER_STRING;
         this.cardValue = FINAL_JOKER_VALUE;
-        this.drawable = context.getResources().getDrawable(R.drawable.joker1);
     }
 
     //true if a rank wildcard or a Joker; false if not (or null)
@@ -135,10 +120,9 @@ class Card {
     int getRankDifference(Rank rank) {return this.getRankValue() - rank.getRankValue();}
 
 
-    Drawable getDrawable() {
-        return drawable;
+    boolean isJoker() {
+        return isJoker;
     }
-
 
     Rank getRank() {
         return this.rank;

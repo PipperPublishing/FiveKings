@@ -12,6 +12,7 @@
     <string name="Draw">Draw</string>
     <string name="Discard">Discard</string>
     <string name="startGame">Start Game</string>
+    <string name="startingGame">Starting new game</string>
     <string name="deals">%1$s dealt</string>
     <string name="nextPlayer">Next Player %s</string>
     <string name="wentOut">%1$s went out - last turns!</string>

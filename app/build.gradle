@@ -8,8 +8,8 @@ android {
         applicationId "com.example.jeffrey.fivekings"
         minSdkVersion 14
         targetSdkVersion 21
-        versionCode 111
-        versionName "0.1.11"
+        versionCode 201
+        versionName "0.2.01"
     }
 
     applicationVariants.all { variant ->

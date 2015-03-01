@@ -6,6 +6,7 @@ import android.view.View;
 
 /**
  * Created by Jeffrey on 2/23/2015.
+ * 2/26/2015    Currently does nothing, but eventually we'd like to rearrange cards when you drop one on another
  */
 class CardViewDragEventListener implements View.OnDragListener {
 
@@ -21,8 +22,6 @@ class CardViewDragEventListener implements View.OnDragListener {
         // Handles each of the expected events
         switch(action) {
             case DragEvent.ACTION_DRAG_STARTED:
-                //Grey out the card we're dragging from
-
                 // Returns false. During the current drag and drop operation, this View will
                 // not receive events again until ACTION_DRAG_ENDED is sent.
                 return false;
@@ -41,6 +40,7 @@ class CardViewDragEventListener implements View.OnDragListener {
                 return true;
 
             case DragEvent.ACTION_DRAG_ENDED:
+                cardView.clearColorFilter();
                 cardView.setEnabled(true);
                 cardView.invalidate();
                 return true;

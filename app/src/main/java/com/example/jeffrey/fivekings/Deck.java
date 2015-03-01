@@ -15,12 +15,12 @@ class Deck extends CardList {
     private Deck(Context context) {
         for (Suit suit : Suit.values()) {
             for (Rank rank : Rank.values()) {
-                this.add(new Card(suit, rank, context));
-                this.add(new Card(suit, rank, context));
+                this.add(new Card(suit, rank));
+                this.add(new Card(suit, rank));
             }
         }//end for suits
         //add six Jokers
-        for (int iJoker=1; iJoker<=6; iJoker++) this.add(new Card(context));
+        for (int iJoker=1; iJoker<=6; iJoker++) this.add(new Card());
     }
 
     static Deck getInstance(boolean doShuffle, Context context) {

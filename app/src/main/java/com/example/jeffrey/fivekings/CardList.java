@@ -28,6 +28,11 @@ class CardList extends ArrayList<Card> {
         super(cards);
     }
 
+    CardList(Card card) {
+        this();
+        this.add(card);
+    }
+
     protected boolean shuffle() {
         Collections.shuffle(this);
         return true;
@@ -60,6 +65,7 @@ class CardList extends ArrayList<Card> {
         return this;
     }
 
+    @Deprecated
     Card getHighestScoreCard(Rank wildCardRank,boolean isFinalScore) {
         Card highestScoringCard = null;
         for (Card card : this) {
