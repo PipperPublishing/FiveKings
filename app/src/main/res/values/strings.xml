@@ -22,7 +22,8 @@
     <string name="takePlayerTurn">Play %s\'s turn</string>
     <string name="showScores">Show scores</string>
     <string name="computerCardsAndMelds">%s\'s cards and melds</string>
-    <string name="yourCardsAndMelds">Your cards and melds; pick a card from the Draw or Discard pile</string>
+    <string name="yourCardsAndMelds">Pick from the Draw or Discard pile</string>
+    <string name="dragYourCards">Drag your cards here to meld them</string>
     <string name="displayScores">Displaying current scores</string>
     <string name="now_playing">Playing %s\'s round</string>
     <string name="blank"></string>

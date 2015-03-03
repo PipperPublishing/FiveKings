@@ -11,6 +11,7 @@ import android.widget.RelativeLayout;
 /**
  * Created by Jeffrey on 2/27/2015.
  * An existing meld listens for a card being dragged on top of it
+ * 3/3/2015 Fade melds even more so highlighted ones stand out
  */
 public class CurrentMeldDragListener  implements View.OnDragListener  {
     @Override
@@ -22,7 +23,7 @@ public class CurrentMeldDragListener  implements View.OnDragListener  {
 
         // Handles each of the expected events
         //TODO:A: Some way to re-use this other places as a static animation setting (perhaps an animation factory)
-        final AlphaAnimation alphaFade = new AlphaAnimation(0.5F, 0.5F);
+        final AlphaAnimation alphaFade = new AlphaAnimation(0.3F, 0.3F);
         alphaFade.setDuration(0); // Make animation instant
         alphaFade.setFillAfter(true); // Tell it to persist after the animation ends
         switch(action) {

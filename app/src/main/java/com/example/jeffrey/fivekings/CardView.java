@@ -8,12 +8,14 @@ import android.widget.ImageView;
  * Created by Jeffrey on 2/18/2015.
  * References the Card that this ImageView shows so that we can know which one was clicked
  * 2/26/2015    Move drawable for Card to CardView so we don't need context
+ * 3/3/2015     Set INTRINSIC_WIDTH as soon as we start building CardViews
  */
 class CardView extends ImageView {
     private final Card card;
     private final int viewIndex; //index in layout
 
     static final int sBitmapCardBack = R.drawable.b2fv;
+    static int INTRINSIC_WIDTH=-1;
 
     //static array of mapping from cards to resource IDs
     //For now, stars are blue diamonds
@@ -26,13 +28,13 @@ class CardView extends ImageView {
             {R.drawable.st3, R.drawable.st4, R.drawable.st5, R.drawable.st6, R.drawable.st7, R.drawable.st8, R.drawable.st9, R.drawable.st10, R.drawable.stj, R.drawable.stq, R.drawable.stk}
     };
 
-
     CardView(Context c, Card card, int viewIndex) {
         super(c);
         this.card = card;
         if (card.isJoker()) setImageDrawable(c.getResources().getDrawable(R.drawable.joker1));
         else setImageDrawable(c.getResources().getDrawable(sBitmapResource[card.getSuit().getOrdinal()][card.getRank().getOrdinal()]));
         this.viewIndex = viewIndex;
+        if (INTRINSIC_WIDTH == -1) INTRINSIC_WIDTH = c.getResources().getDrawable(R.drawable.joker1).getIntrinsicWidth();
     }
     //for card back
     CardView(Context c, int resource) {

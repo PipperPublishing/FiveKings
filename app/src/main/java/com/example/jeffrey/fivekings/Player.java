@@ -22,6 +22,7 @@ import java.util.Iterator;
  * 2/26/2015    getUnMelded returns melds and singles unrolled into one CardList for display
  * 2/27/2015    Added addToMeld and makeNewMeld; include checking for dropping back onto itself
  * 2/28/2015    Added Meld definition to record valuation (tells us whether it's a valid meld)
+ * 3/3/2015     Added static method to check if a CardList is a valid meld
 
  */
 class Player {
@@ -818,9 +819,15 @@ class Player {
             this.needToCheck = false;
             this.valuation = 0;
         }
+
     }//end class Meld
 
     /* STATIC METHODS */
+    static boolean isValidMeld(CardList cl) {
+        if (!(cl instanceof Meld)) return false;
+        return ((Meld)cl).isValidMeld;
+    }
+
     private static String getString(ArrayList<Meld> meldsOrUnMelds) {
         StringBuilder meldedString = new StringBuilder();
         if (null != meldsOrUnMelds) {

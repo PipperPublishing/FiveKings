@@ -19,7 +19,7 @@ DONE v0.1.11 Clean-up
 - DONE: Make Hand an inner class of Player
 
 ---------
->>> v0.2.01 Graphics - Manual melding
+DONE v0.2.01 Graphics - Manual melding
 - DONE remove UI hiding code (left systemUIHider); possible make banner smaller or go away
 - DONE: Use Toasts (with string resources) for instructions instead of mGameInfo
 Melding/Discard:
@@ -28,31 +28,27 @@ Melding/Discard:
   DONE: highlight discard when we're about to select it, or show Toast as we move across
   DONE: make discard draggable; snap discard only when it reaches the pile
 - DONE: Show only computer melds when they go out, and what they discard
-- Comments changes/adds in Player/Hand
 
 ---------------------------
-v0.2.02 Graphics: Clean-up
-- TODO:A's
-- BUG:A Edit of Players
-- Remove deprecated classes and code
-- reuse alpha animation
-- On "pick a card"  - run a continuous highlight loop of the two piles
-- investigate using Callback instead of Listener (does it make it easier to find card?)
-- Add button to [Meld] for you
-- can you do drag without LongClick (and somehow combine with multi-select)
-    - short Touch for select for melding (then drag to melding area)?
-    - Better [Play] and [Meld] button design (find a good image)
-    - make it a setting so we can put it in the menu later (fow now in a settings dialog?)
-- move cards from left-hand-edge
-- card dropped off screen
-- new layout is extending whole width - reset somehow to edge of meld?
-- LOTS of cleaning up in FiveKings - follow flow
-- Remove need for InfoLine with other display:
-    - dashed line outlined "Your cards"
+v0.2.02 Graphics: Clearer melding
+- DONE: Comments changes/adds in Player/Hand
+- DONE: can you do drag without LongClick (and somehow combine with multi-select)
+    - DONE: short Touch for select for melding (then drag to melding area)?
+- DONE: move cards from left-hand-edge
+- DONE: new layout is extending whole width - reset somehow to edge of meld?
 
-- Look at CardList implementation and consider LinkedHashSet or others which provide
-    - check for non-duplicates
-    - automatic ordering
+- reuse alpha animation
+DONE On "pick a card"  - animation of cards lifting off
+
+
+-----------------------------
+v0.2.03 Graphics - [Meld] button + Clean-up
+- BUG:A Edit of Players
+- TODO:A's
+- Remove deprecated classes and code
+- Add button to [Meld] for you
+- Better [Play] and [Meld] button design (find a good image)
+- LOTS of cleaning up in FiveKings - follow flow
 - Clean up Hand and Meld in Player - excessive getters?
 
 
@@ -81,6 +77,9 @@ Scoring/Valuation:- move to separate class
     - Cheat mode where it peeks at draw pile card
     - In the round of n, if you already have m cards in melds, then if m+3 >n then you should value a partial meld at full value
     (because you must meld to the existing melds to go out)
+- Guard against human trying to put all cards in one meld (and it working!)
+    - if it's *not* a meld, can we bail early? (depends which mode we're testing in)
+
 
 Permutations:
 - DONE: Can stop when we find one with Valuation=0
@@ -95,8 +94,19 @@ Heuristics:
 - Use Meld.check somehow? (but note the numCard breakpoint when we switched to permutations)
 
 ----------------------
+v0.3.01
+- Look at CardList implementation and consider LinkedHashSet or others which provide
+    - check for non-duplicates
+    - automatic ordering
+
+
+
+
+-------------------
 v0.4.00 Graphics
+- investigate using Callback instead of Listener (does it make it easier to find card?)
 - make cards bigger - why aren't they expanding to fill available space
+- Background watermark: Drag your melds into here (or equivalent)
 - DONE: Fix annoying menu popup problem
 - Find a suit of Stars
 - Landscape layout
@@ -111,7 +121,7 @@ v0.4.00 Graphics
     - [+] button to add Players (disable after game starts)
     - DIsplay Radio Button next to current player? Or highlight?
 - Players show as backs of cards in semi-circle above play area
-
+- Animation when a cqard is picked from Draw or Discard
 
 
 ---------------

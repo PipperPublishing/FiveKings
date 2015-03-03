@@ -8,10 +8,12 @@ import android.os.Bundle;
 import android.util.Log;
 import android.view.Gravity;
 import android.view.LayoutInflater;
+import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewGroup;
 import android.view.animation.AlphaAnimation;
 import android.view.animation.Animation;
+import android.view.animation.AnimationUtils;
 import android.widget.Button;
 import android.widget.CheckBox;
 import android.widget.ImageButton;
@@ -21,19 +23,10 @@ import android.widget.TableRow;
 import android.widget.TextView;
 import android.widget.Toast;
 
-import com.example.jeffrey.fivekings.util.SystemUiHider;
-
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
-
-/**
- * An example full-screen activity that shows and hides the system UI (i.e.
- * status bar and navigation/system bar) with user interaction.
- *
- * @see SystemUiHider
- */
 /* HISTORY
     2/10/2015   Display each round every time Play button is pressed
     2/12/2015   Display each player's hands and top of Discard Pile
@@ -50,14 +43,20 @@ import java.util.List;
                 Removed Toast/display for current round (have lots of hints in UI already)
                 Moved UI element initialization into onCreate
                 Create nested melds (RelativeLayouts) inside mCurrent Melds - findViewByIndex now has an extra loop
+    3/1/2015    Use onTouch to start Drag rather than OnLongClick
+    3/3/2015    Put dashed line border around melds; use invisible background to preset correct width
+                Note that Layouts wrap content around child views *without* Translation (Translation does not adjust parent view width)
+                TODO:A Is there a different parameter for positioning FrameLayouts relative to each other?
+    3/3/2015    Set CARD_OFFSET_RATIO to be 20% of INTRINSIC_WIDTH (preset in CardView)
+    3/3/2015    Vibrate Discard and Draw Piles to show you are meant to draw - replace InfoLine with Toast on first few rounds
  */
 
 public class FiveKings extends Activity {
-    static final float CARD_OFFSET =25.0f;
-    static final float ADDITIONAL_MELD_OFFSET = 20.0f;
-    static final float CARD_WIDTH = 50.0f;
+    static final float CARD_OFFSET_RATIO = 0.18f;
+    static final float MELD_OFFSET_RATIO = 0.3f;
     static final int TOAST_X_OFFSET = 20;
     static final int TOAST_Y_OFFSET = +250;
+    static final Rank HELP_ROUNDS=Rank.THREE;
 
     // Dynamic elements of the interface
     private Game mGame=null;
@@ -195,8 +194,9 @@ public class FiveKings extends Activity {
             syncDiscardMeldsCards(null);
 
             if (mGame.getPlayer().isHuman()) {
-                mInfoLine.setText(resFormat(R.string.yourCardsAndMelds, mGame.getPlayer().getName()));
+                showGameInfoToast(resFormat(R.string.yourCardsAndMelds, mGame.getPlayer().getName()));
                 enablePlayDisableDrawDiscard(false);
+                animatePiles();
                 mGame.setGameState(GameState.TAKE_HUMAN_TURN);
             }
             else {
@@ -327,22 +327,42 @@ public class FiveKings extends Activity {
     }
 
     /* COMMON METHODS FOR MANAGING UI ELEMENTS */
-    //TODO:A: Also enable/disable dragging of discard when not human on discard step
-    private void enablePlayDisableDrawDiscard(boolean enable) {
+    //TODO:A: Also enablePlayButton/disable dragging of discard when not human on discard step
+    private void enablePlayDisableDrawDiscard(boolean enablePlayButton) {
         if (this.mPlayButton != null) {
-            this.mPlayButton.setEnabled(enable);
-            this.mPlayButton.setVisibility(enable ? View.VISIBLE : View.INVISIBLE);
+            this.mPlayButton.setEnabled(enablePlayButton);
+            this.mPlayButton.setVisibility(enablePlayButton ? View.VISIBLE : View.INVISIBLE);
         }
-        if (this.mDrawPileButton != null) this.mDrawPileButton.setEnabled(!enable);
-        if (this.mDiscardPile != null) this.mDiscardPile.setClickable(!enable);
+        if (this.mDrawPileButton != null) {
+            this.mDrawPileButton.setEnabled(!enablePlayButton);
+            if (enablePlayButton) mDrawPileButton.clearAnimation();
+        }
+        if (this.mDiscardPile != null) {
+            this.mDiscardPile.setClickable(!enablePlayButton);
+            if (enablePlayButton) mDiscardPile.clearAnimation();
+        }
+
     }
     private void enablePlayDisableDrawDiscard(boolean enablePlay, boolean enablePiles) {
         enablePlayDisableDrawDiscard(enablePlay);
-        if (this.mDrawPileButton != null) this.mDrawPileButton.setEnabled(enablePiles);
-        if (this.mDiscardPile != null) this.mDiscardPile.setClickable(enablePiles);
+        if (this.mDrawPileButton != null) {
+            this.mDrawPileButton.setEnabled(enablePiles);
+            if (!enablePiles) mDrawPileButton.clearAnimation();
+        }
+        if (this.mDiscardPile != null) {
+            this.mDiscardPile.setClickable(enablePiles);
+            if (!enablePiles) mDiscardPile.clearAnimation();
+        }
+    }
+
+    private void animatePiles() {
+        Animation spinCardAnimation = AnimationUtils.loadAnimation(this, R.anim.card_spin);
+        this.mDrawPileButton.startAnimation(spinCardAnimation);
+        this.mDiscardPile.startAnimation(spinCardAnimation);
+
         //cycle alpha animation to show you can pick from them - hack until we can do highlighting
         //TODO:A This is not showing up at all
-        final AlphaAnimation alphaFade = new AlphaAnimation(0.0F, 1.0F);
+        /*final AlphaAnimation alphaFade = new AlphaAnimation(0.0F, 1.0F);
         if (enablePiles) {
             alphaFade.setDuration(1000); // Make animation instant
             alphaFade.setRepeatCount(Animation.INFINITE);
@@ -354,6 +374,7 @@ public class FiveKings extends Activity {
             mDrawPileButton.clearAnimation();
             mDiscardPile.clearAnimation();
         }
+        */
     }
 
     private void syncDiscardMeldsCards(StringBuilder turnInfo) {
@@ -364,13 +385,20 @@ public class FiveKings extends Activity {
         //don't show computer cards unless SHOW_ALL_CARDS is set or final round
         if (mGame.getPlayer().isHuman() || Game.SHOW_ALL_CARDS
                 ||((GameState.TAKE_COMPUTER_TURN == mGame.getGameState()) && (mGame.getPlayerWentOut()!=null))) {
-            int iBase = showCards(mGame.getPlayer().getHandUnMelded(),  mCurrentCards, 0);
-            showCards(mGame.getPlayer().getHandMelded(), mCurrentMelds, iBase);
+            int iBase = showCards(mGame.getPlayer().getHandUnMelded(),  mCurrentCards, 0, false);
+            showCards(mGame.getPlayer().getHandMelded(), mCurrentMelds, iBase, true);
         }
         else {
             showCardBacks(mGame.getRoundOf().getRankValue(), mCurrentCards, mCurrentMelds);
         }
-        mInfoLine.setText(turnInfo);
+        if (turnInfo != null) showGameInfoToast(turnInfo.toString());
+    }
+
+    private void showGameInfoToast(String mText) {
+        if ((mGame.getRoundOf().getOrdinal() <= HELP_ROUNDS.getOrdinal()) && (mText.length() > 0)) {
+            mGameInfoToast.setText(mText);
+            mGameInfoToast.show();
+        }
     }
 
     //open Add Player dialog
@@ -397,12 +425,9 @@ public class FiveKings extends Activity {
             cv.bringToFront();
             cv.setClickable(false);
             cardLayers.add(cv);
-            xOffset += CARD_OFFSET;
+            xOffset += (CARD_OFFSET_RATIO * CardView.INTRINSIC_WIDTH);
         }
-        //bit of a hack: we now adjust everything by - 1/2*(width of stacked image) to center it
-        // add CARD_WIDTH because the total width of the stacked image is sum(offsets) + CARD_WIDTH
-        // subtract CARD_OFFSET and ADDITIONAL_MELD_OFFSET because we added these at the end of the loop (but they're not in the layout)
-        xOffset = xOffset - CARD_OFFSET - ADDITIONAL_MELD_OFFSET + CARD_WIDTH;
+        xOffset -= (CARD_OFFSET_RATIO * CardView.INTRINSIC_WIDTH);
         if (!cardLayers.isEmpty()) {
             for (CardView cv : cardLayers) {
                 cv.setTranslationX(cv.getTranslationX()-0.5f*xOffset);
@@ -411,32 +436,50 @@ public class FiveKings extends Activity {
         }
     }
 
-    //show melds and unmelded as ImageViews
-    //TODO:A Don't need to set listeners for non-Human cards
-    private int showCards(ArrayList<CardList> meldLists, RelativeLayout relativeLayout, int iViewBase) {
-        ArrayList<CardView> cardLayers = new ArrayList<>(Game.MAX_CARDS);
-        float xCardOffset=0f;
-        float xMeldOffset=0f;
+    //TODO:A Don't need to set listeners for non-Human cards or on Final round
+    private int showCards(ArrayList<CardList> meldLists, RelativeLayout relativeLayout, int iViewBase, boolean showBorder) {
+        int xMeldOffset=0;
+        int xCardOffset=0;
+        int yMeldOffset= (int) (+MELD_OFFSET_RATIO * CardView.INTRINSIC_WIDTH);
         int iView=iViewBase;
         relativeLayout.removeAllViews();
+
         for (CardList cardList : meldLists) {
+            if (cardList.isEmpty()) continue;
             RelativeLayout nestedLayout = new RelativeLayout(this);
             nestedLayout.setTag(cardList); //so we can retrieve which meld a card is dragged onto
-            nestedLayout.setLayoutParams(relativeLayout.getLayoutParams());
-            nestedLayout.setTranslationX(xMeldOffset);
-            xMeldOffset += ADDITIONAL_MELD_OFFSET;
+            //Create and add an invisible view that fills the necessary space for all cards in this meld
+            CardView cvTemplate = new CardView(this, CardView.sBitmapCardBack );
+            cvTemplate.setVisibility(View.INVISIBLE);
+            //the final width is the first card + the offsets of the others
+            cvTemplate.setMinimumWidth((int) (CardView.INTRINSIC_WIDTH + (cardList.size() - 1) * CARD_OFFSET_RATIO * CardView.INTRINSIC_WIDTH));
+            nestedLayout.addView(cvTemplate);
+            nestedLayout.setTranslationX(xMeldOffset+xCardOffset);
+            nestedLayout.setTranslationY(yMeldOffset);
+            xMeldOffset += (MELD_OFFSET_RATIO * CardView.INTRINSIC_WIDTH) + xCardOffset;
+            yMeldOffset = -yMeldOffset;
+
+
+            if (showBorder) {
+                //if this is actually a validated meld, outline in solid green
+                if (Player.isValidMeld(cardList))
+                    nestedLayout.setBackgroundDrawable(getResources().getDrawable(R.drawable.solid_green_border));
+                else
+                    nestedLayout.setBackgroundDrawable(getResources().getDrawable(R.drawable.dashed_border));
+            }
+            xCardOffset=0;
             for (Card card : cardList.getCards()) {
                 CardView cv = new CardView(this, card, iView );
                 cv.setTag(iView); //allows us to pass the index into the dragData without dealing with messy object passing
                 iView++;
                 cv.setTranslationX(xCardOffset);
-                xCardOffset += CARD_OFFSET;
+                xCardOffset += (CARD_OFFSET_RATIO * CardView.INTRINSIC_WIDTH);
                 cv.bringToFront();
                 cv.setClickable(false); //TODO:A: Allow selection by clicking for multi-drag?
                 cv.setOnDragListener(new CardViewDragEventListener() );
-                cv.setOnLongClickListener(new View.OnLongClickListener() {
-                    // Defines the one method for the interface, which is called when the View is long-clicked
-                    public boolean onLongClick(View v) {
+                cv.setOnTouchListener(new View.OnTouchListener() {
+                    public boolean onTouch(View v, MotionEvent event) {
+                        if (event.getAction() != MotionEvent.ACTION_DOWN) return false;
                         // Create a new ClipData using the tag as a label, the plain text MIME type, and
                         // the string containing the View index. This will create a new ClipDescription object within the
                         // ClipData, and set its MIME type entry to "text/plain"
@@ -457,17 +500,16 @@ public class FiveKings extends Activity {
                     }//end onClick
                 });
 
-                cardLayers.add(cv);
                 nestedLayout.addView(cv);
-                nestedLayout.setOnDragListener(new CurrentMeldDragListener());
             }//end cards in meld
+            nestedLayout.setOnDragListener(new CurrentMeldDragListener());
             relativeLayout.addView(nestedLayout);
         }
         //bit of a hack: we now adjust everything by - 1/2*(width of stacked image) to center it
         // add CARD_WIDTH because the total width of the stacked image is sum(offsets) + CARD_WIDTH
-        // subtract CARD_OFFSET and ADDITIONAL_MELD_OFFSET because we added these at the end of the loop (but they're not in the layout)
+        // subtract CARD_OFFSET_RATIO and MELD_OFFSET_RATIO because we added these at the end of the loop (but they're not in the layout)
         //TODO:A: This is wrong now that we are using nested layouts
-       /* xCardOffset = xCardOffset - CARD_OFFSET - ADDITIONAL_MELD_OFFSET + CARD_WIDTH;
+       /* xCardOffset = xCardOffset - CARD_OFFSET_RATIO - MELD_OFFSET_RATIO + CARD_WIDTH;
         if (!cardLayers.isEmpty()) {
             for (CardView cv : cardLayers) {
                 cv.setTranslationX(cv.getTranslationX() - 0.5f * xCardOffset);
