@@ -23,6 +23,7 @@ import java.util.Iterator;
  * 2/27/2015    Added addToMeld and makeNewMeld; include checking for dropping back onto itself
  * 2/28/2015    Added Meld definition to record valuation (tells us whether it's a valid meld)
  * 3/3/2015     Added static method to check if a CardList is a valid meld
+ * 3/4/2015     Removed meldAndEvaluate (replaced with checkMeldsAndEvaluate)
 
  */
 class Player {
@@ -51,7 +52,7 @@ class Player {
         this.roundScore = 0;
         this.bestDiscard = null;
         this.hand = new Hand(drawPile, roundOf);
-        //TODO:A should sort
+        //TODO:B should sort?
         // TODO:B AutoMeld if requested
         if (!this.isHuman) hand.meldAndEvaluate(usePermutations, false);
         return true;
@@ -95,11 +96,7 @@ class Player {
         }
     }
 
-    //this version just melds the current hand
-    @Deprecated
-    void meldAndEvaluate(boolean usePermutations, boolean isFinalScore) {
-        hand.meldAndEvaluate(usePermutations, isFinalScore);
-    }
+
 
     //Human player uses this version which adds the addedCard (the card a human picked) and checks the melds
     void addAndEvaluate(boolean usePermutations, boolean isFinalRound, Card addedCard) {
@@ -108,14 +105,6 @@ class Player {
             checkMeldsAndEvaluate(isFinalRound);
             return;
         }
-
-/*
-        CardList cardsWithAdded = new CardList(hand.cards);
-        cardsWithAdded.add(addedCard);
-        Hand testHand = new Hand(this.hand, cardsWithAdded);
-        testHand.addAndEvaluate(usePermutations, isFinalScore);
-        this.hand = testHand;
-*/
     }
 
     int checkMeldsAndEvaluate(boolean isFinalScore) {
@@ -178,14 +167,14 @@ class Player {
     String getMeldedString(boolean withBraces){
         StringBuilder mMelds = new StringBuilder("Melds ");
         if (withBraces) mMelds.append("{");
-        mMelds.append(hand.getMeldedString());
+        mMelds.append(getString(hand.melds));
         if (withBraces) mMelds.append("} ");
         return mMelds.toString();
     }
 
     String getPartialAndSingles(boolean withBraces) {
-        String unMelded = hand.getUnMeldedString();
-        String singles = hand.getSinglesString();
+        String unMelded = getString(hand.partialMelds);
+        String singles = hand.singles.getString();
         StringBuilder partialAndSingles = new StringBuilder();
         if (!unMelded.isEmpty()) {
             partialAndSingles.append("Potential melds ");
@@ -582,14 +571,6 @@ class Player {
             else return this.intermediateValue;
         }
 
-        private String getMeldedString() { return getString(this.melds);}
-
-        private String getUnMeldedString() {return getString(this.partialMelds);}
-
-        private String getSinglesString() {
-            return singles.getString();
-        }
-
         private ArrayList<Meld> getMelded() {
             return melds;
         }
@@ -615,11 +596,6 @@ class Player {
             CardList sortedCards = new CardList(singles);
             Collections.sort(sortedCards, Card.cardComparatorRankFirstDesc);
             return sortedCards;
-        }
-
-
-        private Rank getRoundOf() {
-            return roundOf;
         }
     }//private class Hand
 

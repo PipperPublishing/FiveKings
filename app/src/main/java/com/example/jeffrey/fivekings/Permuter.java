@@ -9,6 +9,7 @@ import java.util.ArrayList;
  *              14! (the final round) has 87,178,291,200 combinations so we cant store these
  *              (probably can't generate them all)
  * 1/29/2015    Rewrote Johnson-Trotter as loop and computes and returns next permutation (so no storage)
+ * 3/4/2015     Removed deprecated
  */
     class Permuter {
         private int[] perms;
@@ -61,7 +62,6 @@ import java.util.ArrayList;
             return null;
         }
 
-    @Deprecated
     private void JohnsonTrotterGenerate(int N, int[] perms, int[] inversePerms, int[] directions) {
         // base case - print out permutation
         ArrayList<int[]> permutations=null;
@@ -82,7 +82,6 @@ import java.util.ArrayList;
         }
     }
 
-    @Deprecated
     private void HeapAlgorithmGenerate(int[] v, int N) {
         int exchangeWith;
         //instead of this, provide some way to return this value and then restart from this point
@@ -98,18 +97,10 @@ import java.util.ArrayList;
         }
     }
 
-    @Deprecated
     private static void swap(int[] v, int i, int j) {
         int t = v[i];
         v[i] = v[j];
         v[j] = t;
     }
 
-
-    @Deprecated
-    private static int factorial(int N){
-        int fact=1;
-        for (int i=1; i<=N; i++) fact *= i;
-        return fact;
-    }
 }

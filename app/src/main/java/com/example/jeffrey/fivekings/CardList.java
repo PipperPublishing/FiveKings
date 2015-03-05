@@ -3,7 +3,6 @@ package com.example.jeffrey.fivekings;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
-import java.util.Random;
 
 /**
  * Created by Jeffrey on 1/22/2015.
@@ -13,6 +12,7 @@ import java.util.Random;
  * 2/3/2015 pushed card scoring down into Card
  * 2/5/2015 Call Collections.shuffle()
  * 2/25/2015    Deprecated myShuffle
+ * 3/4/2015 Removed deprecated methods myShuffle and getHighestScoreCard
  */
 class CardList extends ArrayList<Card> {
 
@@ -38,19 +38,6 @@ class CardList extends ArrayList<Card> {
         return true;
     }
 
-    //shuffle by randomly picking a card and moving it to the end of the list
-    @Deprecated
-    protected boolean myShuffle() {
-        Card shuffledCard;
-        Random randGenerator = new Random();
-        for (int curlenOrigCards = this.size() - 1; curlenOrigCards >= 0; curlenOrigCards--) {
-            //generate a random integer from 0..curlenOrigCards
-            shuffledCard = remove(randGenerator.nextInt(curlenOrigCards + 1));
-            if (!add(shuffledCard)) return false;
-        }
-        return true;
-    }
-
     protected Card deal() {
         return remove(0);
     }
@@ -65,16 +52,6 @@ class CardList extends ArrayList<Card> {
         return this;
     }
 
-    @Deprecated
-    Card getHighestScoreCard(Rank wildCardRank,boolean isFinalScore) {
-        Card highestScoringCard = null;
-        for (Card card : this) {
-            if (!isFinalScore && card.isWildCard(wildCardRank)) continue;
-            if ((null == highestScoringCard) || (card.getScore(wildCardRank, isFinalScore) > highestScoringCard.getScore(wildCardRank, isFinalScore)))
-                highestScoringCard = card;
-        }
-        return highestScoringCard;
-    }
 
 
     String getString() {

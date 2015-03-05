@@ -5,8 +5,9 @@ import android.content.ClipDescription;
 import android.util.Log;
 import android.view.DragEvent;
 import android.view.View;
-import android.view.animation.AlphaAnimation;
 import android.widget.RelativeLayout;
+
+import com.example.jeffrey.fivekings.util.Utilities;
 
 /**
  * Created by Jeffrey on 2/27/2015.
@@ -22,15 +23,11 @@ public class CurrentMeldDragListener  implements View.OnDragListener  {
         final int action = event.getAction();
 
         // Handles each of the expected events
-        //TODO:A: Some way to re-use this other places as a static animation setting (perhaps an animation factory)
-        final AlphaAnimation alphaFade = new AlphaAnimation(0.3F, 0.3F);
-        alphaFade.setDuration(0); // Make animation instant
-        alphaFade.setFillAfter(true); // Tell it to persist after the animation ends
         switch(action) {
             case DragEvent.ACTION_DRAG_STARTED:
                 // Determines if this View can accept the dragged data
                 if (event.getClipDescription().hasMimeType(ClipDescription.MIMETYPE_TEXT_PLAIN)) {
-                    rl.startAnimation(alphaFade);
+                    rl.startAnimation(Utilities.instantFade(0.3f, 0.3f));
                     // returns true to indicate that the View can accept the dragged data.
                     return true;
                 }
@@ -47,7 +44,7 @@ public class CurrentMeldDragListener  implements View.OnDragListener  {
                 return true;
 
             case DragEvent.ACTION_DRAG_EXITED:
-                rl.startAnimation(alphaFade);
+                rl.startAnimation(Utilities.instantFade(0.3f, 0.3f));
                 return true;
 
             case DragEvent.ACTION_DROP:

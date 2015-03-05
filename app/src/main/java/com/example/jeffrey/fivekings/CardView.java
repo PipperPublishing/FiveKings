@@ -8,14 +8,16 @@ import android.widget.ImageView;
  * Created by Jeffrey on 2/18/2015.
  * References the Card that this ImageView shows so that we can know which one was clicked
  * 2/26/2015    Move drawable for Card to CardView so we don't need context
- * 3/3/2015     Set INTRINSIC_WIDTH as soon as we start building CardViews
+ * 3/3/2015     Set INTRINSIC_WIDTH and INTRINSIC_HEIGHT as soon as we start building CardViews
+ * 3/4/2015     card can be null in which case we set null ImageDrawable as well
  */
 class CardView extends ImageView {
-    private final Card card;
+    private Card card; //TODO:A would like to make this final again
     private final int viewIndex; //index in layout
 
     static final int sBitmapCardBack = R.drawable.b2fv;
-    static int INTRINSIC_WIDTH=-1;
+    static int INTRINSIC_WIDTH = -1;
+    static int INTRINSIC_HEIGHT = -1;
 
     //static array of mapping from cards to resource IDs
     //For now, stars are blue diamonds
@@ -30,23 +32,50 @@ class CardView extends ImageView {
 
     CardView(Context c, Card card, int viewIndex) {
         super(c);
-        this.card = card;
-        if (card.isJoker()) setImageDrawable(c.getResources().getDrawable(R.drawable.joker1));
-        else setImageDrawable(c.getResources().getDrawable(sBitmapResource[card.getSuit().getOrdinal()][card.getRank().getOrdinal()]));
+        checkSetIntrinsic(c);
         this.viewIndex = viewIndex;
-        if (INTRINSIC_WIDTH == -1) INTRINSIC_WIDTH = c.getResources().getDrawable(R.drawable.joker1).getIntrinsicWidth();
+        this.card = card;
+        if (card == null) this.setImageDrawable(null);
+        else if (card.isJoker()) setImageDrawable(c.getResources().getDrawable(R.drawable.joker1));
+        else setImageDrawable(c.getResources().getDrawable(sBitmapResource[card.getSuit().getOrdinal()][card.getRank().getOrdinal()]));
     }
-    //for card back
+
+    //for card back and any other non-face-card which doesn't need viewIndex or card
     CardView(Context c, int resource) {
         super(c);
+        checkSetIntrinsic(c);
         this.card = null;
         setImageDrawable(c.getResources().getDrawable(resource));
         this.viewIndex = -1;
     }
+
     public CardView(Context c, AttributeSet attributeSet) {
         super(c, attributeSet);
-        this.card=null;
+        checkSetIntrinsic(c);
+        this.card = null;
         this.viewIndex = -1;
+    }
+
+    //Copy constructor
+    CardView(Context c, CardView cv) {
+        this(c, cv.card, -1);
+    }
+
+    void checkSetIntrinsic(Context c) {
+        if(INTRINSIC_WIDTH==-1)
+        {
+            INTRINSIC_WIDTH = c.getResources().getDrawable(R.drawable.joker1).getIntrinsicWidth();
+            INTRINSIC_HEIGHT = c.getResources().getDrawable(R.drawable.joker1).getIntrinsicHeight();
+        }
+    }
+
+    //TODO:B this is a hack because we are changing that card
+    void setCard(Context c, Card card) {
+        this.card = card;
+
+        if (card == null) this.setImageDrawable(null);
+        else if (card.isJoker()) setImageDrawable(c.getResources().getDrawable(R.drawable.joker1));
+        else setImageDrawable(c.getResources().getDrawable(sBitmapResource[card.getSuit().getOrdinal()][card.getRank().getOrdinal()]));
     }
 
     Card getCard() {

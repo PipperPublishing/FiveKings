@@ -36,7 +36,6 @@ class CurrentMeldsLayoutDragListener implements View.OnDragListener {
                 return false;
 
             case DragEvent.ACTION_DRAG_ENTERED:
-                //TODO:A: SOme way to indicate that you have reached the melding area
                 rl.invalidate();
                 return true;
 

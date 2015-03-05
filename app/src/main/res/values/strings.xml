@@ -17,13 +17,14 @@
     <string name="nextPlayer">Next Player %s</string>
     <string name="wentOut">%1$s went out - last turns!</string>
     <string name="computerTurnInfo">%1$s drew from the %3$s pile and discarded the %4$s</string>
-    <string name="humanTurnInfo">%1$s drew the %2$s from the %3$s pile; drag a discard to the Discard pile</string>    <string name="nextRound">Play %s\'s round</string>
+    <string name="humanTurnInfo">Meld your cards and then drag a discard to the Discard pile</string>
+    <string name="nextRound">Play %s\'s round</string>
     <string name="takeYourTurn">Take your turn</string>
     <string name="takePlayerTurn">Play %s\'s turn</string>
     <string name="showScores">Show scores</string>
     <string name="computerCardsAndMelds">%s\'s cards and melds</string>
     <string name="yourCardsAndMelds">Pick from the Draw or Discard pile</string>
-    <string name="dragYourCards">Drag your cards here to meld them</string>
+    <string name="dragYourCards">Drag here for a new meld</string>
     <string name="displayScores">Displaying current scores</string>
     <string name="now_playing">Playing %s\'s round</string>
     <string name="blank"></string>

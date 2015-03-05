@@ -11,7 +11,6 @@ import android.view.LayoutInflater;
 import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewGroup;
-import android.view.animation.AlphaAnimation;
 import android.view.animation.Animation;
 import android.view.animation.AnimationUtils;
 import android.widget.Button;
@@ -22,6 +21,8 @@ import android.widget.TableLayout;
 import android.widget.TableRow;
 import android.widget.TextView;
 import android.widget.Toast;
+
+import com.example.jeffrey.fivekings.util.Utilities;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -49,6 +50,9 @@ import java.util.List;
                 TODO:A Is there a different parameter for positioning FrameLayouts relative to each other?
     3/3/2015    Set CARD_OFFSET_RATIO to be 20% of INTRINSIC_WIDTH (preset in CardView)
     3/3/2015    Vibrate Discard and Draw Piles to show you are meant to draw - replace InfoLine with Toast on first few rounds
+    3/3/2015    Animate pick from Draw or Discard Piles
+                Comment out infoLine - add back in information as needed
+                Enable/Disable Draw and Discard Piles just sets clickable or not
  */
 
 public class FiveKings extends Activity {
@@ -98,7 +102,7 @@ public class FiveKings extends Activity {
         });
         mPlayButton.setOnLongClickListener(new View.OnLongClickListener() {
             public boolean onLongClick(View v) {
-                Toast.makeText(getApplicationContext(), R.string.startingGame, Toast.LENGTH_SHORT).show();
+                Toast.makeText(getApplicationContext(), R.string.startingGame, Toast.LENGTH_LONG).show();
                 mPlayButton.setText(getText(R.string.newGame));
                 mGame.setGameState(GameState.NEW_GAME);
                 playGameClicked(v);
@@ -113,7 +117,6 @@ public class FiveKings extends Activity {
         mInfoLine = (TextView) findViewById(R.id.info_line);
         mInfoLine.setTypeface(null, Typeface.ITALIC);
         mDiscardPile = (CardView)findViewById(R.id.discardPile);
-        mDiscardPile.setClickable(false);
         mDiscardPile.setOnClickListener(new View.OnClickListener() {
             public void onClick(View v) {
                 clickedDiscardPile(v);
@@ -121,7 +124,6 @@ public class FiveKings extends Activity {
         });
         mDiscardPile.setOnDragListener(new DiscardPileDragEventListener());
         mDrawPileButton = (ImageButton)findViewById(R.id.drawPile);
-        mDrawPileButton.setEnabled(false);
         mDrawPileButton.setOnClickListener(new View.OnClickListener() {
             public void onClick(View v) {
                 clickedDrawPile(v);
@@ -130,6 +132,8 @@ public class FiveKings extends Activity {
         mCurrentMelds = (RelativeLayout) findViewById(R.id.current_melds);
         mCurrentMelds.setOnDragListener(new CurrentMeldsLayoutDragListener());
         mCurrentCards = (RelativeLayout) findViewById(R.id.current_cards);
+
+        disableDrawDiscard();
 
     }//end onCreate
 
@@ -143,7 +147,8 @@ public class FiveKings extends Activity {
 
     //the Event handler for button presses on [Play]
     private void playGameClicked(View v){
-        enablePlayDisableDrawDiscard(true);
+        setWidgetsByGameState();
+
         if (null== mGame) {
             mGame = new Game(this); //also sets gameState=ROUND_START
             this.mCurrentRound.setText(resFormat(R.string.current_round,mGame.getRoundOf().getString()));
@@ -168,39 +173,44 @@ public class FiveKings extends Activity {
             this.mCurrentRound.setText(resFormat(R.string.current_round, mGame.getRoundOf().getString()));
             mInfoLine.setText(getText(R.string.blank));
             this.mPlayButton.setText(resFormat(R.string.nextPlayer, mGame.getPlayer().getName()));
+            //Show blank screen with discard pile showing
             mCurrentCards.removeAllViews();
             mCurrentMelds.removeAllViews();
-            syncDiscardMeldsCards(null);
+            showDiscardPileCard();
         }
 
         else if (GameState.TAKE_COMPUTER_TURN == mGame.getGameState()) {
             StringBuilder turnInfo = new StringBuilder(100);
-            Player playerWentOut=null;
 
             turnInfo.setLength(0);
-            playerWentOut = mGame.takeComputerTurn(getText(R.string.computerTurnInfo).toString(), turnInfo);
+            boolean useDiscardPile = mGame.takeComputerTurn(getText(R.string.computerTurnInfo).toString(), turnInfo);
+            mGameInfoToast.setText(turnInfo);
+            mGameInfoToast.show();
 
-            if (playerWentOut != null) {
-                mGameInfoToast.setText(String.format(getText(R.string.wentOut).toString(),playerWentOut.getName()));
+            if (mGame.getPlayer() == mGame.getPlayerWentOut()) {
+                mGameInfoToast.setText(String.format(getText(R.string.wentOut).toString(),mGame.getPlayerWentOut().getName()));
                 mGameInfoToast.show();
             }
-            syncDiscardMeldsCards(turnInfo);
+            animatePickUpAndDiscard(useDiscardPile);
+            syncDiscardMeldsCards();
             //returns false if we've reached the player who went out again
             if (mGame.endTurn()) this.mPlayButton.setText(resFormat(R.string.nextPlayer, mGame.getPlayer().getName()));
             else this.mPlayButton.setText(getText(R.string.showScores));
         }
 
         else if (GameState.TURN_START == mGame.getGameState()) {
-            syncDiscardMeldsCards(null);
+            syncDiscardMeldsCards();
 
             if (mGame.getPlayer().isHuman()) {
-                showGameInfoToast(resFormat(R.string.yourCardsAndMelds, mGame.getPlayer().getName()));
-                enablePlayDisableDrawDiscard(false);
+                showHint(resFormat(R.string.yourCardsAndMelds, mGame.getPlayer().getName()));
+                disablePlayButton();
+                enableDrawDiscard();
                 animatePiles();
                 mGame.setGameState(GameState.TAKE_HUMAN_TURN);
+                setWidgetsByGameState();
             }
             else {
-                mInfoLine.setText(resFormat(R.string.computerCardsAndMelds, mGame.getPlayer().getName()));
+                //mInfoLine.setText(resFormat(R.string.computerCardsAndMelds, mGame.getPlayer().getName()));
                 this.mPlayButton.setText(resFormat(R.string.takePlayerTurn, mGame.getPlayer().getName()));
                 mGame.setGameState(GameState.TAKE_COMPUTER_TURN);
             }
@@ -222,44 +232,45 @@ public class FiveKings extends Activity {
         }
     }
 
-    //Event handler for clicks on Discard Pile
-    private void clickedDiscardPile(View v) {
-        drawOrDiscard(Game.USE_DISCARD_PILE);
-    }
-
     //Event handler for clicks on Draw Pile
     private void clickedDrawPile(View v) {
-        drawOrDiscard(Game.USE_DRAW_PILE);
+        clickedDrawOrDiscard(Game.USE_DRAW_PILE);
+    }
+    //Event handler for clicks on Discard Pile
+    private void clickedDiscardPile(View v) {
+        clickedDrawOrDiscard(Game.USE_DISCARD_PILE);
     }
 
-    private void drawOrDiscard(boolean useDiscardPile) {
+    private void clickedDrawOrDiscard(boolean useDiscardPile) {
         StringBuilder turnInfo = new StringBuilder(100);
+        mGame.setGameState(GameState.HUMAN_PICKED_CARD);
+        setWidgetsByGameState();
 
         turnInfo.setLength(0);
-        mGame.takeHumanTurn(getText(R.string.humanTurnInfo).toString(), turnInfo, useDiscardPile); //also sets GameState to END_HUMAN_TURN
-        enablePlayDisableDrawDiscard(false, false); //disable drawing again from the Discard Pile
-        syncDiscardMeldsCards(turnInfo);
+        //also sets GameState to END_HUMAN_TURN
+        mGame.takeHumanTurn(getText(R.string.humanTurnInfo).toString(), turnInfo, useDiscardPile);
+        //handles animating the card off the appropriate pile and making it appear in the hand
+        animateDiscardMeldsCards(useDiscardPile);
+        showHint(turnInfo.toString());
     }
 
 
-//Event Handler for clicks on cards or melds - called from DiscardPile drag listener
+    //Event Handler for clicks on cards or melds - called from DiscardPile drag listener
     boolean discardedCard(int iCardView) {
         CardView foundCardView= findViewByIndex(iCardView);
-
+        setWidgetsByGameState();
         if (GameState.END_HUMAN_TURN == mGame.getGameState()) {
             if (!mGame.getPlayer().isHuman()) throw new RuntimeException("discardedCard: player is not Human");
             Player playerWentOut = mGame.endHumanTurn(foundCardView.getCard());
-            if (playerWentOut != null) {
+            if (mGame.getPlayer() == playerWentOut) {
                 mGameInfoToast.setText(String.format(getText(R.string.wentOut).toString(), playerWentOut.getName()));
                 mGameInfoToast.show();
             }
-            syncDiscardMeldsCards(null);
+            syncDiscardMeldsCards();
 
             //returns false if we've reached the player who went out again
             if (mGame.endTurn()) mPlayButton.setText(resFormat(R.string.nextPlayer, mGame.getPlayer().getName()));
             else mPlayButton.setText(getText(R.string.showScores));
-
-            enablePlayDisableDrawDiscard(true);
         }
         return true;
     }
@@ -273,7 +284,7 @@ public class FiveKings extends Activity {
         //create trialMeld (one card at a time for now)
 
         mGame.getPlayer().makeNewMeld(foundCardView.getCard());
-        syncDiscardMeldsCards(null);
+        syncDiscardMeldsCards();
         return true;
     }
 
@@ -284,117 +295,148 @@ public class FiveKings extends Activity {
         //add to existing meld
 
         mGame.getPlayer().addToMeld(meld, foundCardView.getCard());
-        syncDiscardMeldsCards(null);
+        syncDiscardMeldsCards();
         return true;
     }
 
 
 
-    CardView findViewByIndex(int iCardView) {
-        CardView foundCardView=null;
-        //find the view we coded with this index - have to loop thru nested layouts
-        for (int iNestedLayout = 0; iNestedLayout < mCurrentCards.getChildCount(); iNestedLayout++) {
-            RelativeLayout nestedLayout = (RelativeLayout)mCurrentCards.getChildAt(iNestedLayout);
-            if (null == nestedLayout) break;
-            for (int iView = 0; iView < nestedLayout.getChildCount(); iView++) {
-                CardView cv = (CardView) nestedLayout.getChildAt(iView);
-                if ((cv != null) && (cv.getViewIndex() == iCardView)) {
-                    foundCardView = cv;
-                    break;
-                }
-            }
-            if (foundCardView != null) break;
-        }
-        if (foundCardView == null) { //less likely, but search melded cards too
-            for (int iNestedLayout = 0; iNestedLayout < mCurrentMelds.getChildCount(); iNestedLayout++) {
-                RelativeLayout nestedLayout = (RelativeLayout) mCurrentMelds.getChildAt(iNestedLayout);
-                if (null == nestedLayout) break;
-                for (int iView = 0; iView < nestedLayout.getChildCount(); iView++) {
-                    CardView cv = (CardView) nestedLayout.getChildAt(iView);
-                    if (cv.getViewIndex() == iCardView) {
-                        foundCardView = cv;
-                        break;
-                    }
-                }
-            }
-        }
-        if (foundCardView == null) {
-            Toast.makeText(this, "No matching card found", Toast.LENGTH_SHORT).show();
-            Log.e(mGame.APP_TAG, "discardedCard: No matching card found");
-        }
-        // else Toast.makeText(this, foundCardView.getCard().getCardString() + " discarded", Toast.LENGTH_SHORT).show();
-        return foundCardView;
-    }
-
     /* COMMON METHODS FOR MANAGING UI ELEMENTS */
-    //TODO:A: Also enablePlayButton/disable dragging of discard when not human on discard step
-    private void enablePlayDisableDrawDiscard(boolean enablePlayButton) {
+    private void enablePlayButton() {
         if (this.mPlayButton != null) {
-            this.mPlayButton.setEnabled(enablePlayButton);
-            this.mPlayButton.setVisibility(enablePlayButton ? View.VISIBLE : View.INVISIBLE);
-        }
-        if (this.mDrawPileButton != null) {
-            this.mDrawPileButton.setEnabled(!enablePlayButton);
-            if (enablePlayButton) mDrawPileButton.clearAnimation();
-        }
-        if (this.mDiscardPile != null) {
-            this.mDiscardPile.setClickable(!enablePlayButton);
-            if (enablePlayButton) mDiscardPile.clearAnimation();
-        }
-
-    }
-    private void enablePlayDisableDrawDiscard(boolean enablePlay, boolean enablePiles) {
-        enablePlayDisableDrawDiscard(enablePlay);
-        if (this.mDrawPileButton != null) {
-            this.mDrawPileButton.setEnabled(enablePiles);
-            if (!enablePiles) mDrawPileButton.clearAnimation();
-        }
-        if (this.mDiscardPile != null) {
-            this.mDiscardPile.setClickable(enablePiles);
-            if (!enablePiles) mDiscardPile.clearAnimation();
+            this.mPlayButton.setEnabled(true);
+            this.mPlayButton.setVisibility(View.VISIBLE);
         }
     }
+    private void disablePlayButton() {
+        if (this.mPlayButton != null) {
+            this.mPlayButton.setEnabled(false);
+            this.mPlayButton.setVisibility(View.INVISIBLE);
+        }
+    }
+    //just prevent clicking, but for animations we need the buttons to be enabled
+    private void enableDrawDiscard() {
+        if (this.mDrawPileButton != null) {
+            this.mDrawPileButton.setEnabled(true);
+            this.mDrawPileButton.setClickable(true);
+        }
+        if (this.mDiscardPile != null) {
+            this.mDiscardPile.setEnabled(true);
+            this.mDiscardPile.setClickable(true);
+        }
+    }
+    private void disableDrawDiscard() {
+        if (this.mDrawPileButton != null) {
+            this.mDrawPileButton.setClickable(false);
+        }
+        if (this.mDiscardPile != null) {
+            this.mDiscardPile.setClickable(false);
+        }
+    }
+    private void setWidgetsByGameState() {
+        if (mGame == null) return;
+        switch (mGame.getGameState()) {
+            case NEW_GAME:
+            case ROUND_START:
+            case TURN_START:
+            case TAKE_COMPUTER_TURN:
+            case END_HUMAN_TURN:
+            case ROUND_END:
+            case GAME_END:
+            default:
+                enablePlayButton();
+                disableDrawDiscard();
+                break;
+            case TAKE_HUMAN_TURN:
+                disablePlayButton();
+                enableDrawDiscard();
+                break;
+            case HUMAN_PICKED_CARD:
+                disablePlayButton();
+                disableDrawDiscard();
+                break;
+        }
+    }
 
+    /* ANIMATION ROUTINES */
+    //shakes the Draw and Discard Piles to indicate that you should draw from them
+    //TODO:A The alpha fade applied to the DiscardPile on moving a card cancels the shake animation
     private void animatePiles() {
-        Animation spinCardAnimation = AnimationUtils.loadAnimation(this, R.anim.card_spin);
+        Animation spinCardAnimation = AnimationUtils.loadAnimation(this, R.anim.card_shake);
         this.mDrawPileButton.startAnimation(spinCardAnimation);
         this.mDiscardPile.startAnimation(spinCardAnimation);
-
-        //cycle alpha animation to show you can pick from them - hack until we can do highlighting
-        //TODO:A This is not showing up at all
-        /*final AlphaAnimation alphaFade = new AlphaAnimation(0.0F, 1.0F);
-        if (enablePiles) {
-            alphaFade.setDuration(1000); // Make animation instant
-            alphaFade.setRepeatCount(Animation.INFINITE);
-            alphaFade.setRepeatMode(Animation.REVERSE);
-            mDrawPileButton.startAnimation(alphaFade);
-            mDiscardPile.startAnimation(alphaFade);
-        }
-        else {
-            mDrawPileButton.clearAnimation();
-            mDiscardPile.clearAnimation();
-        }
-        */
     }
 
-    private void syncDiscardMeldsCards(StringBuilder turnInfo) {
-        //Show card on discard pile (changes because of this player's play)
-        //TODO:A Make DiscardPile a stacked list of clickable cards so the correct one automatically shows
-        mDiscardPile.setImageDrawable(mGame.getDiscardPileDrawable(this));
+    private void animatePickUpAndDiscard(boolean useDiscardPile) {
+        //TODO:A Nicer way to chain two animations like this
+        //Draw animation
+        Animation pickedCardAnimation = AnimationUtils.loadAnimation(this,
+                (useDiscardPile ? R.anim.from_discardpile : R.anim.from_drawpile));
 
+        pickedCardAnimation.setAnimationListener(new Animation.AnimationListener() {
+            @Override
+            public void onAnimationStart(Animation animation) { }
+
+            @Override
+            public void onAnimationEnd(Animation animation) {
+                Animation discardAnimation = AnimationUtils.loadAnimation(getApplicationContext(),R.anim.to_discardpile);
+                mDiscardPile.startAnimation(discardAnimation);
+            }
+
+            @Override
+            public void onAnimationRepeat(Animation animation) {}
+        });
+        this.mDrawPileButton.clearAnimation();
+        this.mDiscardPile.clearAnimation();
+        if (useDiscardPile) this.mDiscardPile.startAnimation(pickedCardAnimation);
+        else this.mDrawPileButton.startAnimation(pickedCardAnimation);
+    }
+
+    private void animateDiscardMeldsCards(boolean useDiscardPile) {
+        //Use the old-style Tween animation because we can define it in XML
+        //TODO:A SOme way to animate the card between two locations - right now we're guessing
+        //Use two animations meeting in the middle (from Discard/Draw and to Hand)
+        Animation pickedCardAnimation = AnimationUtils.loadAnimation(this,
+                (useDiscardPile ? R.anim.from_discardpile : R.anim.from_drawpile));
+        pickedCardAnimation.setAnimationListener(new Animation.AnimationListener() {
+            @Override
+            public void onAnimationStart(Animation animation) { }
+
+            @Override
+            public void onAnimationEnd(Animation animation) {
+                syncDiscardMeldsCards();
+            }
+
+            @Override
+            public void onAnimationRepeat(Animation animation) {}
+        });
+
+        this.mDrawPileButton.clearAnimation();
+        this.mDiscardPile.clearAnimation();
+        if (useDiscardPile) this.mDiscardPile.startAnimation(pickedCardAnimation);
+        else this.mDrawPileButton.startAnimation(pickedCardAnimation);
+    }
+
+    private void syncDiscardMeldsCards() {
+        showDiscardPileCard();
         //don't show computer cards unless SHOW_ALL_CARDS is set or final round
         if (mGame.getPlayer().isHuman() || Game.SHOW_ALL_CARDS
                 ||((GameState.TAKE_COMPUTER_TURN == mGame.getGameState()) && (mGame.getPlayerWentOut()!=null))) {
-            int iBase = showCards(mGame.getPlayer().getHandUnMelded(),  mCurrentCards, 0, false);
-            showCards(mGame.getPlayer().getHandMelded(), mCurrentMelds, iBase, true);
+            int iBase = showCards(mGame.getPlayer().getHandUnMelded(),  mCurrentCards, 0, false, mGame.getPlayer().isHuman());
+            showCards(mGame.getPlayer().getHandMelded(), mCurrentMelds, iBase, true,  mGame.getPlayer().isHuman());
         }
         else {
             showCardBacks(mGame.getRoundOf().getRankValue(), mCurrentCards, mCurrentMelds);
         }
-        if (turnInfo != null) showGameInfoToast(turnInfo.toString());
+    }
+    private void showDiscardPileCard() {
+        //TODO:B better would be card stack/list that automatically associates the right card
+        // but right now we need to change the Card/Image for a fixed CardView (which is linked into the display)
+        //this handles getDiscardPileCard == null
+        mDiscardPile.setCard(this, mGame.getDiscardPileCard());
     }
 
-    private void showGameInfoToast(String mText) {
+    private void showHint(String mText) {
         if ((mGame.getRoundOf().getOrdinal() <= HELP_ROUNDS.getOrdinal()) && (mText.length() > 0)) {
             mGameInfoToast.setText(mText);
             mGameInfoToast.show();
@@ -436,8 +478,7 @@ public class FiveKings extends Activity {
         }
     }
 
-    //TODO:A Don't need to set listeners for non-Human cards or on Final round
-    private int showCards(ArrayList<CardList> meldLists, RelativeLayout relativeLayout, int iViewBase, boolean showBorder) {
+    private int showCards(ArrayList<CardList> meldLists, RelativeLayout relativeLayout, int iViewBase, boolean showBorder, boolean isHuman) {
         int xMeldOffset=0;
         int xCardOffset=0;
         int yMeldOffset= (int) (+MELD_OFFSET_RATIO * CardView.INTRINSIC_WIDTH);
@@ -475,51 +516,53 @@ public class FiveKings extends Activity {
                 cv.setTranslationX(xCardOffset);
                 xCardOffset += (CARD_OFFSET_RATIO * CardView.INTRINSIC_WIDTH);
                 cv.bringToFront();
-                cv.setClickable(false); //TODO:A: Allow selection by clicking for multi-drag?
-                cv.setOnDragListener(new CardViewDragEventListener() );
-                cv.setOnTouchListener(new View.OnTouchListener() {
-                    public boolean onTouch(View v, MotionEvent event) {
-                        if (event.getAction() != MotionEvent.ACTION_DOWN) return false;
-                        // Create a new ClipData using the tag as a label, the plain text MIME type, and
-                        // the string containing the View index. This will create a new ClipDescription object within the
-                        // ClipData, and set its MIME type entry to "text/plain"
-                        ClipData dragData = ClipData.newPlainText("Discard", v.getTag().toString());
-                        View.DragShadowBuilder myShadow = new CardViewDragShadowBuilder(v);
+                cv.setClickable(false); //TODO:B: Allow selection by clicking for multi-drag?
+                if (isHuman) {//no dragging of computer cards
+                    cv.setOnDragListener(new CardViewDragEventListener());
+                    cv.setOnTouchListener(new View.OnTouchListener() {
+                        public boolean onTouch(View v, MotionEvent event) {
+                            if (event.getAction() != MotionEvent.ACTION_DOWN) return false;
+                            // Create a new ClipData using the tag as a label, the plain text MIME type, and
+                            // the string containing the View index. This will create a new ClipDescription object within the
+                            // ClipData, and set its MIME type entry to "text/plain"
+                            ClipData dragData = ClipData.newPlainText("Discard", v.getTag().toString());
+                            View.DragShadowBuilder myShadow = new CardViewDragShadowBuilder(v);
 
-                        final AlphaAnimation alphaFade = new AlphaAnimation(0.5F, 0.5F);
-                        alphaFade.setDuration(0); // Make animation instant
-                        alphaFade.setFillAfter(true); // Tell it to persist after the animation ends
-                        v.startAnimation(alphaFade);
-                        // Starts the drag
-                        v.startDrag(dragData,  // the data to be dragged
-                                myShadow,  // the drag shadow builder
-                                null,      // no need to use local data
-                                0          // flags (not currently used, set to 0)
-                        );
-                        return true;
-                    }//end onClick
-                });
+                            v.startAnimation(Utilities.instantFade(0.5f, 0.5f));
+                            // Starts the drag
+                            v.startDrag(dragData,  // the data to be dragged
+                                    myShadow,  // the drag shadow builder
+                                    null,      // no need to use local data
+                                    0          // flags (not currently used, set to 0)
+                            );
+                            return true;
+                        }//end onClick
+                    });
+                }//end if isHuman
 
                 nestedLayout.addView(cv);
             }//end cards in meld
-            nestedLayout.setOnDragListener(new CurrentMeldDragListener());
+            if (isHuman) nestedLayout.setOnDragListener(new CurrentMeldDragListener());
             relativeLayout.addView(nestedLayout);
         }
-        //bit of a hack: we now adjust everything by - 1/2*(width of stacked image) to center it
-        // add CARD_WIDTH because the total width of the stacked image is sum(offsets) + CARD_WIDTH
-        // subtract CARD_OFFSET_RATIO and MELD_OFFSET_RATIO because we added these at the end of the loop (but they're not in the layout)
-        //TODO:A: This is wrong now that we are using nested layouts
-       /* xCardOffset = xCardOffset - CARD_OFFSET_RATIO - MELD_OFFSET_RATIO + CARD_WIDTH;
-        if (!cardLayers.isEmpty()) {
-            for (CardView cv : cardLayers) {
-                cv.setTranslationX(cv.getTranslationX() - 0.5f * xCardOffset);
-            }
-        }*/
+        if (showBorder && isHuman) {
+            //Now add a "Drag here to create a new meld" space, although the handler will actually be the CurrentMeldLayoutListener
+            TextView newMeldSpace = new TextView(this);
+            newMeldSpace.setText(R.string.dragYourCards);
+            newMeldSpace.setLines(5);
+            //Move this a full card's space over from last card
+            newMeldSpace.setTranslationX(xMeldOffset+ CardView.INTRINSIC_WIDTH*(1-MELD_OFFSET_RATIO)+xCardOffset);
+            newMeldSpace.setTranslationY(yMeldOffset);
+            newMeldSpace.setTypeface(null, Typeface.ITALIC);
+            newMeldSpace.setBackgroundDrawable(getResources().getDrawable(R.drawable.dashed_border));
+            newMeldSpace.setEnabled(false);
+            relativeLayout.addView(newMeldSpace,CardView.INTRINSIC_WIDTH, CardView.INTRINSIC_HEIGHT);
+        }
         return iView; //used as the starting index for mCurrentMelds
     }//end showCards
 
 
-    //TODO:A Look at switching to ListView, especially since all Table Rows are the same
+    //TODO:B Look at switching to ListView, especially since all Table Rows are the same
     //Also would allow us to get rid of this hacky behavior of storing hidden fields
     //since the ListView would contain the data we needed
     private void showPlayerScores(List<Player> players) {
@@ -577,6 +620,47 @@ public class FiveKings extends Activity {
         mPlayerNametv[0].setTypeface(null, Typeface.BOLD);
         mPlayerCumScoretv[0].setTypeface(null, Typeface.BOLD);
     }//end showPlayerScores
+
+
+    CardView findViewByIndex(int iCardView) {
+        CardView foundCardView=null;
+        //find the view we coded with this index - have to loop thru nested layouts
+        for (int iNestedLayout = 0; iNestedLayout < mCurrentCards.getChildCount(); iNestedLayout++) {
+            View rl = mCurrentCards.getChildAt(iNestedLayout);
+            if ((rl == null) || !(rl instanceof RelativeLayout)) continue;
+            RelativeLayout nestedLayout = (RelativeLayout)rl;
+            for (int iView = 0; iView < nestedLayout.getChildCount(); iView++) {
+                CardView cv = (CardView) nestedLayout.getChildAt(iView);
+                if ((cv != null) && (cv.getViewIndex() == iCardView)) {
+                    foundCardView = cv;
+                    break;
+                }
+            }
+            if (foundCardView != null) break;
+        }
+        if (foundCardView == null) { //less likely, but search melded cards too
+            for (int iNestedLayout = 0; iNestedLayout < mCurrentMelds.getChildCount(); iNestedLayout++) {
+                View rl = mCurrentMelds.getChildAt(iNestedLayout);
+                //Allows for the fake "Drag here to form new meld" TextView
+                if ((rl == null) || !(rl instanceof RelativeLayout)) continue;
+                RelativeLayout nestedLayout = (RelativeLayout)rl;
+                for (int iView = 0; iView < nestedLayout.getChildCount(); iView++) {
+                    CardView cv = (CardView) nestedLayout.getChildAt(iView);
+                    if (cv.getViewIndex() == iCardView) {
+                        foundCardView = cv;
+                        break;
+                    }
+                }
+            }
+        }
+        if (foundCardView == null) {
+            Toast.makeText(this, "No matching card found", Toast.LENGTH_SHORT).show();
+            Log.e(mGame.APP_TAG, "discardedCard: No matching card found");
+        }
+        // else Toast.makeText(this, foundCardView.getCard().getCardString() + " discarded", Toast.LENGTH_SHORT).show();
+        return foundCardView;
+    }
+
 
     /* SMALL UTILITY METHODS */
     private TextView clone(TextView vFrom) {

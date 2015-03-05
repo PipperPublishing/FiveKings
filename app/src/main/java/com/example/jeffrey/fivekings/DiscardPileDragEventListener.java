@@ -5,7 +5,8 @@ import android.content.ClipDescription;
 import android.util.Log;
 import android.view.DragEvent;
 import android.view.View;
-import android.view.animation.AlphaAnimation;
+
+import com.example.jeffrey.fivekings.util.Utilities;
 
 /**
  * Created by Jeffrey on 2/21/2015 using example from http://developer.android.com/guide/topics/ui/drag-drop.html
@@ -26,15 +27,12 @@ class DiscardPileDragEventListener implements View.OnDragListener {
         final int action = event.getAction();
 
         // Handles each of the expected events
-        final AlphaAnimation alpha = new AlphaAnimation(0.5F, 0.5F);
-        alpha.setDuration(0); // Make animation instant
-        alpha.setFillAfter(true); // Tell it to persist after the animation ends
         switch(action) {
             case DragEvent.ACTION_DRAG_STARTED:
                 // Determines if this View can accept the dragged data
                 if (event.getClipDescription().hasMimeType(ClipDescription.MIMETYPE_TEXT_PLAIN)) {
                     //fades out of the draw pile
-                    cv.startAnimation(alpha);
+                    cv.startAnimation(Utilities.instantFade(0.5f, 0.5f));
                     // returns true to indicate that the View can accept the dragged data.
                     return true;
                 }
@@ -51,7 +49,7 @@ class DiscardPileDragEventListener implements View.OnDragListener {
                 return true;
 
             case DragEvent.ACTION_DRAG_EXITED:
-                cv.startAnimation(alpha);
+                cv.startAnimation(Utilities.instantFade(0.5f, 0.5f));
                 return true;
 
             case DragEvent.ACTION_DROP:

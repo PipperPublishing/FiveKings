@@ -36,20 +36,24 @@ v0.2.02 Graphics: Clearer melding
     - DONE: short Touch for select for melding (then drag to melding area)?
 - DONE: move cards from left-hand-edge
 - DONE: new layout is extending whole width - reset somehow to edge of meld?
-
-- reuse alpha animation
 DONE On "pick a card"  - animation of cards lifting off
 
 
 -----------------------------
-v0.2.03 Graphics - [Meld] button + Clean-up
-- BUG:A Edit of Players
-- TODO:A's
-- Remove deprecated classes and code
+>>> v0.2.03 Graphics - animations for pick-up + Clean-up
+DONE:TODO:A's
+DONE: Remove deprecated classes and code
+DONE: reuse alpha animation
+DONE: Clean up Hand and Meld in Player - excessive getters?
+DONE: Empty dashed line "Drag here to make a new meld"
+DONE: Animation for picking and discarding (for computer)
+
+------------------------------
+0.2.04 Graphics - [Meld] button, Clean user experience
 - Add button to [Meld] for you
-- Better [Play] and [Meld] button design (find a good image)
-- LOTS of cleaning up in FiveKings - follow flow
-- Clean up Hand and Meld in Player - excessive getters?
+- On LongPress for New Game, pop up a confirmation dialog
+- Animation that meets in the middle between piles and hand
+    - Copy CardView so that replacement cards are there after animation begins
 
 
 ---------------------------
@@ -99,16 +103,18 @@ v0.3.01
     - check for non-duplicates
     - automatic ordering
 
-
-
-
 -------------------
 v0.4.00 Graphics
+- Players Scores
+    - Bug editing
+    TODO:A Look at switching to ListView, especially since all Table Rows are the same
+- Hint overlays like Google (arrows and text)
 - investigate using Callback instead of Listener (does it make it easier to find card?)
 - make cards bigger - why aren't they expanding to fill available space
 - Background watermark: Drag your melds into here (or equivalent)
 - DONE: Fix annoying menu popup problem
 - Find a suit of Stars
+- Better [Play] and [Meld] button design (find a good image)
 - Landscape layout
 - update scores throughout final turn
 - put deal icon next to the dealer
@@ -121,7 +127,8 @@ v0.4.00 Graphics
     - [+] button to add Players (disable after game starts)
     - DIsplay Radio Button next to current player? Or highlight?
 - Players show as backs of cards in semi-circle above play area
-- Animation when a cqard is picked from Draw or Discard
+- Animation when a card is picked from Draw or Discard
+- LOTS of cleaning up in FiveKings - follow flow
 
 
 ---------------

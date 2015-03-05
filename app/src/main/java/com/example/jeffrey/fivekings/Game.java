@@ -1,7 +1,6 @@
 package com.example.jeffrey.fivekings;
 
 import android.content.Context;
-import android.graphics.drawable.Drawable;
 import android.util.Log;
 
 import java.util.ArrayList;
@@ -109,7 +108,7 @@ public class Game {
        this.gameState = GameState.END_HUMAN_TURN;
     }
 
-    Player takeComputerTurn(String turnInfoFormat, StringBuilder turnInfo) {
+    boolean takeComputerTurn(String turnInfoFormat, StringBuilder turnInfo) {
         logTurn();
 
         //improve hand by picking up from Discard pile or from Draw pile - use useDiscardPile to decide
@@ -139,7 +138,7 @@ public class Game {
         Log.d(APP_TAG, "after...... " + player.getMeldedString(true) + player.getPartialAndSingles(true) + " " + sValuationOrScore + player.getHandValueOrScore(null != playerWentOut));
 
         if ((playerWentOut == null) && player.isOut()) playerWentOut = player;
-        return playerWentOut;
+        return useDiscardPile;
     }
 
  private void logTurn() {
@@ -217,13 +216,9 @@ public class Game {
     }
 
 
-    Drawable getDiscardPileDrawable(Context c) {
-        //This is the only time when DiscardPile should be empty - when we've just picked up
-        if (drawAndDiscardPiles.discardPile.peekNext() == null) return null;
-        else {
-            CardView cv = new CardView(c,drawAndDiscardPiles.discardPile.peekNext(),0 );
-            return cv.getDrawable();
-        }
+    Card getDiscardPileCard() {
+        //Possibly null (after just picking up)
+         return drawAndDiscardPiles.discardPile.peekNext();
     }
 
     void addPlayer (String name, boolean isHuman) {
