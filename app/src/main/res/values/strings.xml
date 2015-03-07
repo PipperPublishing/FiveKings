@@ -29,6 +29,7 @@
     <string name="now_playing">Playing %s\'s round</string>
     <string name="blank"></string>
     <string name="newGame">New Game</string>
+    <string name="areYouSure">Are you sure you want to end this game and start another?</string>
     <string name="isHuman">human</string>
     <string name="isComputer">computer</string>
     <string name="addPlayersTitle">Add player</string>

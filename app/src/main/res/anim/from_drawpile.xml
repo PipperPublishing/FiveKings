@@ -14,8 +14,4 @@
         android:fromXDelta="0"
         android:toXDelta="-100%"
         android:duration="1000"/>
-    <alpha
-        android:fromAlpha="1"
-        android:toAlpha="0.3"
-        android:duration="1000"/>
 </set>

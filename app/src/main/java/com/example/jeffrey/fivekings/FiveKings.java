@@ -1,8 +1,13 @@
 package com.example.jeffrey.fivekings;
 
+import android.animation.Animator;
+import android.animation.AnimatorInflater;
+import android.animation.AnimatorSet;
 import android.app.Activity;
+import android.app.AlertDialog;
 import android.content.ClipData;
 import android.content.Context;
+import android.content.DialogInterface;
 import android.graphics.Typeface;
 import android.os.Bundle;
 import android.util.Log;
@@ -12,6 +17,7 @@ import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewGroup;
 import android.view.animation.Animation;
+import android.view.animation.AnimationSet;
 import android.view.animation.AnimationUtils;
 import android.widget.Button;
 import android.widget.CheckBox;
@@ -53,7 +59,11 @@ import java.util.List;
     3/3/2015    Animate pick from Draw or Discard Piles
                 Comment out infoLine - add back in information as needed
                 Enable/Disable Draw and Discard Piles just sets clickable or not
- */
+    3/5/2015    Improved animation to show cards picked for humans and faulty animation for Computer
+    3/6/2015    Switch to using Animator for Computer Discard
+    3/7/2015    First code for saving instance State when app gets Stopped - NOT WORKING
+                On LongClick of Play button, pop up a confirmation dialog before starting a new game
+*/
 
 public class FiveKings extends Activity {
     static final float CARD_OFFSET_RATIO = 0.18f;
@@ -97,15 +107,28 @@ public class FiveKings extends Activity {
         mPlayButton = (Button)findViewById(R.id.Play);
         mPlayButton.setOnClickListener(new View.OnClickListener() {
             public void onClick(View v) {
-                playGameClicked(v);
+                playGameClicked();
             }
         });
+        //If you longClick, can start a new Game but pops up a confirmation dialog
         mPlayButton.setOnLongClickListener(new View.OnLongClickListener() {
             public boolean onLongClick(View v) {
-                Toast.makeText(getApplicationContext(), R.string.startingGame, Toast.LENGTH_LONG).show();
-                mPlayButton.setText(getText(R.string.newGame));
-                mGame.setGameState(GameState.NEW_GAME);
-                playGameClicked(v);
+                new AlertDialog.Builder(v.getContext())
+                        .setIcon(android.R.drawable.ic_dialog_alert)
+                        .setTitle(R.string.newGame)
+                        .setMessage(R.string.areYouSure)
+                        .setPositiveButton(R.string.newGame, new DialogInterface.OnClickListener()
+                        {
+                            @Override
+                            public void onClick(DialogInterface dialog, int which) {
+                                Toast.makeText(getApplicationContext(), R.string.startingGame, Toast.LENGTH_LONG).show();
+                                mPlayButton.setText(getText(R.string.newGame));
+                                if (mGame != null) mGame.setGameState(GameState.NEW_GAME);
+                                playGameClicked();
+                            }
+                        })
+                        .setNegativeButton("No", null)
+                        .show();
                 return true;
             }
         });
@@ -137,6 +160,23 @@ public class FiveKings extends Activity {
 
     }//end onCreate
 
+    static final String ROUND_OF="ROUND_OF";
+
+
+    @Override
+    public void onSaveInstanceState(Bundle savedInstanceState) {
+        savedInstanceState.putInt(ROUND_OF, mGame.getRoundOf().ordinal());
+
+
+        super.onSaveInstanceState(savedInstanceState);
+    }
+    @Override
+    public void onRestoreInstanceState(Bundle savedInstanceState) {
+        super.onRestoreInstanceState(savedInstanceState);
+
+        //savedInstanceState.getInt(ROUND_OF, mGame.getRoundOf().ordinal());
+    }
+
  /*   EVENT HANDLERS*/
     //Event handler for [Save] in add player dialog
  public void addEditPlayerClicked(String playerName, boolean isHuman, boolean addingFlag, int iPlayer) {
@@ -146,7 +186,7 @@ public class FiveKings extends Activity {
  }
 
     //the Event handler for button presses on [Play]
-    private void playGameClicked(View v){
+    private void playGameClicked(){
         setWidgetsByGameState();
 
         if (null== mGame) {
@@ -157,14 +197,16 @@ public class FiveKings extends Activity {
             showAddPlayers();
         }
 
-        //User pressed [New Game] button
+        //User pressed [New Game] button (currently by long-pressing Play)
         else if (GameState.NEW_GAME == mGame.getGameState()) {
             mGame.init();
+            this.mCurrentRound.setText(resFormat(R.string.current_round, mGame.getRoundOf().getString()));
             mInfoLine.setText(getText(R.string.blank));
             this.mPlayButton.setText(resFormat(R.string.nextRound, mGame.getRoundOf().getString()));
             mCurrentCards.removeAllViews();
             mCurrentMelds.removeAllViews();
             showPlayerScores(mGame.getPlayers());
+            showAddPlayers();
         }
 
         //starting a round
@@ -172,7 +214,7 @@ public class FiveKings extends Activity {
             mGame.initRound();
             this.mCurrentRound.setText(resFormat(R.string.current_round, mGame.getRoundOf().getString()));
             mInfoLine.setText(getText(R.string.blank));
-            this.mPlayButton.setText(resFormat(R.string.nextPlayer, mGame.getPlayer().getName()));
+            this.mPlayButton.setText(resFormat(R.string.nextPlayer, mGame.getNextPlayer(null).getName()));
             //Show blank screen with discard pile showing
             mCurrentCards.removeAllViews();
             mCurrentMelds.removeAllViews();
@@ -183,7 +225,7 @@ public class FiveKings extends Activity {
             StringBuilder turnInfo = new StringBuilder(100);
 
             turnInfo.setLength(0);
-            boolean useDiscardPile = mGame.takeComputerTurn(getText(R.string.computerTurnInfo).toString(), turnInfo);
+            boolean pickedDiscardPile = mGame.takeComputerTurn(getText(R.string.computerTurnInfo).toString(), turnInfo);
             mGameInfoToast.setText(turnInfo);
             mGameInfoToast.show();
 
@@ -191,14 +233,13 @@ public class FiveKings extends Activity {
                 mGameInfoToast.setText(String.format(getText(R.string.wentOut).toString(),mGame.getPlayerWentOut().getName()));
                 mGameInfoToast.show();
             }
-            animatePickUpAndDiscard(useDiscardPile);
-            syncDiscardMeldsCards();
-            //returns false if we've reached the player who went out again
-            if (mGame.endTurn()) this.mPlayButton.setText(resFormat(R.string.nextPlayer, mGame.getPlayer().getName()));
-            else this.mPlayButton.setText(getText(R.string.showScores));
+            //at this point the DiscardPile still shows the old card
+            //animate... also calls syncDiscardCardsMelds and checkEndRound() in the OnAnimationEnd listener
+            animateComputerPickUpAndDiscard(pickedDiscardPile); // also calls syncDiscardCardsMelds
         }
 
         else if (GameState.TURN_START == mGame.getGameState()) {
+            mGame.rotatePlayer();
             syncDiscardMeldsCards();
 
             if (mGame.getPlayer().isHuman()) {
@@ -249,8 +290,9 @@ public class FiveKings extends Activity {
         turnInfo.setLength(0);
         //also sets GameState to END_HUMAN_TURN
         mGame.takeHumanTurn(getText(R.string.humanTurnInfo).toString(), turnInfo, useDiscardPile);
+        //at this point the DiscardPile still shows the old card if you picked it
         //handles animating the card off the appropriate pile and making it appear in the hand
-        animateDiscardMeldsCards(useDiscardPile);
+        animateHumanPickUp(useDiscardPile);
         showHint(turnInfo.toString());
     }
 
@@ -269,14 +311,14 @@ public class FiveKings extends Activity {
             syncDiscardMeldsCards();
 
             //returns false if we've reached the player who went out again
-            if (mGame.endTurn()) mPlayButton.setText(resFormat(R.string.nextPlayer, mGame.getPlayer().getName()));
-            else mPlayButton.setText(getText(R.string.showScores));
+            mGame.checkEndRound();
+            if (GameState.ROUND_END == mGame.getGameState()) mPlayButton.setText(getText(R.string.showScores));
+            else mPlayButton.setText(resFormat(R.string.nextPlayer, mGame.getNextPlayer(null).getName()));
         }
         return true;
     }
 
     //makeNewMeld is called if you drag onto the mCurrentMelds layout - we're creating a new meld
-    // later we'll allow moving between melds and reordering the cards
     //to add to a existing meld, drag to an existing meld
     boolean makeNewMeld(int iCardView) {
         CardView foundCardView= findViewByIndex(iCardView);
@@ -367,61 +409,150 @@ public class FiveKings extends Activity {
         this.mDiscardPile.startAnimation(spinCardAnimation);
     }
 
-    private void animatePickUpAndDiscard(boolean useDiscardPile) {
-        //TODO:A Nicer way to chain two animations like this
-        //Draw animation
-        Animation pickedCardAnimation = AnimationUtils.loadAnimation(this,
-                (useDiscardPile ? R.anim.from_discardpile : R.anim.from_drawpile));
+    private void animateHumanPickUp(boolean pickedDiscardPile) {
+        final RelativeLayout drawAndDiscardPiles = (RelativeLayout)findViewById(R.id.draw_and_discard_piles);
+        final CardView pileCardView;
+        final RelativeLayout.LayoutParams pileLp = new RelativeLayout.LayoutParams(mDiscardPile.getLayoutParams());
 
-        pickedCardAnimation.setAnimationListener(new Animation.AnimationListener() {
-            @Override
-            public void onAnimationStart(Animation animation) { }
+        if (pickedDiscardPile) {
+            //mDiscardPile still shows the old card if we used it, so we can copy it and then update the pile underneath
+            //create a copy of the Discard pile and position over the current Discard Pile
+            pileCardView = new CardView(this,mDiscardPile);
+            pileLp.addRule(RelativeLayout.ALIGN_LEFT,mDiscardPile.getId());
+            pileLp.addRule(RelativeLayout.ALIGN_BOTTOM,mDiscardPile.getId());
+            pileCardView.setLayoutParams(pileLp);
+            //show the card underneath the one we are animating
+            showDiscardPileCard();
+        }
+        else {
+            //create a copy of the top Draw pile card and position over the current pile
+            //doesn't show the card until it appears in your hand
+            pileCardView = new CardView(this, mGame.getDrawnCard(),-1);
+            pileLp.addRule(RelativeLayout.ALIGN_LEFT,mDrawPileButton.getId());
+            pileLp.addRule(RelativeLayout.ALIGN_BOTTOM,mDrawPileButton.getId());
+            pileCardView.setLayoutParams(pileLp);
+        }
+        drawAndDiscardPiles.addView(pileCardView);
 
-            @Override
-            public void onAnimationEnd(Animation animation) {
-                Animation discardAnimation = AnimationUtils.loadAnimation(getApplicationContext(),R.anim.to_discardpile);
-                mDiscardPile.startAnimation(discardAnimation);
-            }
-
-            @Override
-            public void onAnimationRepeat(Animation animation) {}
-        });
         this.mDrawPileButton.clearAnimation();
         this.mDiscardPile.clearAnimation();
-        if (useDiscardPile) this.mDiscardPile.startAnimation(pickedCardAnimation);
-        else this.mDrawPileButton.startAnimation(pickedCardAnimation);
-    }
-
-    private void animateDiscardMeldsCards(boolean useDiscardPile) {
         //Use the old-style Tween animation because we can define it in XML
-        //TODO:A SOme way to animate the card between two locations - right now we're guessing
-        //Use two animations meeting in the middle (from Discard/Draw and to Hand)
-        Animation pickedCardAnimation = AnimationUtils.loadAnimation(this,
-                (useDiscardPile ? R.anim.from_discardpile : R.anim.from_drawpile));
-        pickedCardAnimation.setAnimationListener(new Animation.AnimationListener() {
+        //TODO: Use two animations meeting in the middle (from Discard/Draw and to Hand)
+        //For Computer this is pick, bounce, and discard; for Human it is pick and bounce card
+        final AnimationSet pickAndBounce = new AnimationSet(false);
+        final Animation pickedCardAnimation = AnimationUtils.loadAnimation(this,
+                (pickedDiscardPile ? R.anim.from_discardpile : R.anim.from_drawpile));
+        final Animation bounceAnimation = AnimationUtils.loadAnimation(this,R.anim.card_bounce);
+        pickAndBounce.addAnimation(pickedCardAnimation);
+        pickAndBounce.addAnimation(bounceAnimation);
+        pickAndBounce.setAnimationListener(new Animation.AnimationListener() {
             @Override
-            public void onAnimationStart(Animation animation) { }
+            public void onAnimationStart(Animation animation) {
+            }
 
             @Override
             public void onAnimationEnd(Animation animation) {
                 syncDiscardMeldsCards();
+                drawAndDiscardPiles.removeView(pileCardView);
             }
 
             @Override
-            public void onAnimationRepeat(Animation animation) {}
+            public void onAnimationRepeat(Animation animation) {
+            }
         });
 
-        this.mDrawPileButton.clearAnimation();
-        this.mDiscardPile.clearAnimation();
-        if (useDiscardPile) this.mDiscardPile.startAnimation(pickedCardAnimation);
-        else this.mDrawPileButton.startAnimation(pickedCardAnimation);
+        pileCardView.startAnimation(pickAndBounce);
+
+/*      //attempt to use Overlays, but it didn't show
+        ViewGroup vg = (ViewGroup)mDrawPileButton.getParent();
+        ViewOverlay vo = mDrawPileButton.getOverlay();
+        Drawable drawPileDrawable =mDrawPileButton.getDrawable();
+        vo.add(drawPileDrawable);
+        ViewGroupOverlay vgo = vg.getOverlay();
+        vgo.add(discardPileCardView);
+        vgo.add(drawPileCardView);
+*/
     }
+    private void animateComputerPickUpAndDiscard(boolean pickedDiscardPile) {
+        final RelativeLayout drawAndDiscardPiles = (RelativeLayout)findViewById(R.id.draw_and_discard_piles);
+        final CardView pileCardView;
+        final RelativeLayout.LayoutParams pileLp = new RelativeLayout.LayoutParams(mDiscardPile.getLayoutParams());
+
+        final CardView discardCardView = new CardView(this, mGame.getPlayer().getDiscard(),-1);
+        final RelativeLayout.LayoutParams discardLp = new RelativeLayout.LayoutParams(mDiscardPile.getLayoutParams());
+        discardLp.addRule(RelativeLayout.ALIGN_LEFT,mDiscardPile.getId());
+        discardLp.addRule(RelativeLayout.ALIGN_BOTTOM,mDiscardPile.getId());
+        discardCardView.setLayoutParams(discardLp);
+        discardCardView.setAlpha(0.0f); //start it off invisible so we can animate it into view
+        drawAndDiscardPiles.addView(discardCardView);
+
+        //Create the fake card we will animate
+        if (pickedDiscardPile) {
+            //mDiscardPile still shows the old card if we used it, so we can copy it and then update the pile underneath
+            //create a copy of the Discard pile and position over the current Discard Pile
+            pileCardView = new CardView(this,mDiscardPile);
+            pileLp.addRule(RelativeLayout.ALIGN_LEFT,mDiscardPile.getId());
+            pileLp.addRule(RelativeLayout.ALIGN_BOTTOM,mDiscardPile.getId());
+            pileCardView.setLayoutParams(pileLp);
+            //show the card underneath the one we are animating
+            showDiscardPileCard();
+        }
+        else {
+            //create a copy of the top Draw pile card and position over the current pile
+            //doesn't show the card until it appears in your hand
+            pileCardView = new CardView(this, CardView.sBitmapCardBack);
+            pileLp.addRule(RelativeLayout.ALIGN_LEFT,mDrawPileButton.getId());
+            pileLp.addRule(RelativeLayout.ALIGN_BOTTOM,mDrawPileButton.getId());
+            pileCardView.setLayoutParams(pileLp);
+        }
+        drawAndDiscardPiles.addView(pileCardView);
+
+        //Use Animator animation because for Computer we animate pickup to hand
+        //and then discard to Discard Pile (could be two different cards)
+        final AnimatorSet pickAndDiscard = new AnimatorSet();
+        final Animator pickedCardAnimator = AnimatorInflater.loadAnimator(this,
+                (pickedDiscardPile ? R.animator.from_discardpile : R.animator.from_drawpile));
+        pickedCardAnimator.setTarget(pileCardView);
+        final Animator discardAnimator = AnimatorInflater.loadAnimator(this, R.animator.to_discardpile);
+        discardAnimator.setTarget(discardCardView);
+        pickAndDiscard.play(discardAnimator).after(pickedCardAnimator);
+        pickAndDiscard.addListener(new Animator.AnimatorListener() {
+            @Override
+            public void onAnimationStart(Animator animator) {
+            }
+
+            @Override
+            public void onAnimationEnd(Animator animator) {
+                drawAndDiscardPiles.removeView(discardCardView);
+                drawAndDiscardPiles.removeView(pileCardView);
+                mGame.endTurn();
+                syncDiscardMeldsCards();
+                mGame.checkEndRound();
+
+                if (GameState.ROUND_END == mGame.getGameState())
+                    mPlayButton.setText(getText(R.string.showScores));
+                else
+                    mPlayButton.setText(resFormat(R.string.nextPlayer, mGame.getNextPlayer(null).getName()));
+            }
+
+            @Override
+            public void onAnimationRepeat(Animator animator) {
+            }
+
+            @Override
+            public void onAnimationCancel(Animator animator) {
+            }
+        });
+        pickAndDiscard.start();
+
+    }//end animateComputerPickUpAndDiscard
+
 
     private void syncDiscardMeldsCards() {
         showDiscardPileCard();
         //don't show computer cards unless SHOW_ALL_CARDS is set or final round
-        if (mGame.getPlayer().isHuman() || Game.SHOW_ALL_CARDS
-                ||((GameState.TAKE_COMPUTER_TURN == mGame.getGameState()) && (mGame.getPlayerWentOut()!=null))) {
+        if (mGame.getPlayer().isHuman() || Game.SHOW_ALL_CARDS || ((mGame.getPlayerWentOut() != null)
+                    &&((mGame.getGameState() == GameState.TAKE_COMPUTER_TURN) || (mGame.getGameState() == GameState.ROUND_END)))) {
             int iBase = showCards(mGame.getPlayer().getHandUnMelded(),  mCurrentCards, 0, false, mGame.getPlayer().isHuman());
             showCards(mGame.getPlayer().getHandMelded(), mCurrentMelds, iBase, true,  mGame.getPlayer().isHuman());
         }

@@ -15,7 +15,7 @@ DONE v0.1.11 Clean-up
 - DONE: Clean up Hand
 - DONE: Clean up Player;
 - DONE: Edit comments
-- DONE: Fix TODO:A which are not graphics
+- DONE: Fix  which are not graphics
 - DONE: Make Hand an inner class of Player
 
 ---------
@@ -40,8 +40,8 @@ DONE On "pick a card"  - animation of cards lifting off
 
 
 -----------------------------
->>> v0.2.03 Graphics - animations for pick-up + Clean-up
-DONE:TODO:A's
+v0.2.03 Graphics - animations for pick-up + Clean-up
+DONE: A;s
 DONE: Remove deprecated classes and code
 DONE: reuse alpha animation
 DONE: Clean up Hand and Meld in Player - excessive getters?
@@ -49,15 +49,34 @@ DONE: Empty dashed line "Drag here to make a new meld"
 DONE: Animation for picking and discarding (for computer)
 
 ------------------------------
-0.2.04 Graphics - [Meld] button, Clean user experience
-- Add button to [Meld] for you
-- On LongPress for New Game, pop up a confirmation dialog
-- Animation that meets in the middle between piles and hand
-    - Copy CardView so that replacement cards are there after animation begins
+>>> 0.2.04 Graphics - On Long Press for New Game pop up a confirmation dialog. Improve computer animations
+- DONE: On LongPress for New Game, pop up a confirmation dialog
+- NOT DONE: Animation that meets in the middle between piles and hand
+    - DONE: Copy CardView so that replacement cards are there after animation begins
+    - DONE: Bounce the card you picked when it reaches your hand
+- DONE: When Computer picks from Discard Pile, next card shows
+-------------------------------
+0.2.05 Graphics: Deal animation, fix Add/Edit Players and Players Scores area
+- Deal animation
+- Players Scores
+    - Bug editing
+    TODO:A Look at switching to ListView, especially since all Table Rows are the same
+- update scores throughout final turn
+- put deal icon next to the dealer
+- some visual indication of who went out (radio buttons)
+- Convert showScores to use ListView and get rid of nasty invisible fields - use set/getTag??
+    - use mock fields (perhaps Computer, You) to get layout width better
+    - [+] button to add Players (disable after game starts)
+    - DIsplay Radio Button next to current player? Or highlight?
+-
+- Landscape layout
+
 
 
 ---------------------------
 v0.3.00 : Melding/Scoring/Valuation
+- Add button to [Meld] for you (with a number of times you can use it?)
+    - or only in first few rounds
 - Stuff from piece of paper / notes on iPad
     - Loop over discards - this will allow us to merge some code
     - reuse Meld.check within meldAndEvaluate
@@ -105,34 +124,25 @@ v0.3.01
 
 -------------------
 v0.4.00 Graphics
-- Players Scores
-    - Bug editing
-    TODO:A Look at switching to ListView, especially since all Table Rows are the same
+- DONE: On New Game, should clear Scores when you get to Round 3
 - Hint overlays like Google (arrows and text)
 - investigate using Callback instead of Listener (does it make it easier to find card?)
 - make cards bigger - why aren't they expanding to fill available space
-- Background watermark: Drag your melds into here (or equivalent)
+- DONE: Background watermark: Drag your melds into here (or equivalent)
 - DONE: Fix annoying menu popup problem
 - Find a suit of Stars
 - Better [Play] and [Meld] button design (find a good image)
-- Landscape layout
-- update scores throughout final turn
-- put deal icon next to the dealer
-- some visual indication of who went out (radio buttons)
 - DONE: Replace LinearLayouts with RelativeLayouts
 - DONE: Click on scores should allow editing names
 - DONE: Long press on [Play] should be something (new game)
-- Convert showScores to use ListView and get rid of nasty invisible fields - use set/getTag??
-    - use mock fields (perhaps Computer, You) to get layout width better
-    - [+] button to add Players (disable after game starts)
-    - DIsplay Radio Button next to current player? Or highlight?
-- Players show as backs of cards in semi-circle above play area
-- Animation when a card is picked from Draw or Discard
+ Players show as backs of cards in semi-circle above play area
+- DONE: Animation when a card is picked from Draw or Discard
 - LOTS of cleaning up in FiveKings - follow flow
 
 
 ---------------
 v0.5.00: Menu
+- [Meld] button? With count? (goes away after you use it up)
 - Instructions
 - Settings
     - Computer cheats by looking at Draw Pile
@@ -146,7 +156,7 @@ v0.5.00: Menu
 - About with Version number and contact information
 
 -----------------
-v0.5.00 Graphics
+v0.5.01 Graphics
 - Different layouts and resources for different screen sizes
 
 -----------------

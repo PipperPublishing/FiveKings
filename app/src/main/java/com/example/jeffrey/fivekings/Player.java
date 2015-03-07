@@ -227,6 +227,10 @@ class Player {
         return isHuman;
     }
 
+    void setBestDiscard(Card bestDiscard) {
+        this.bestDiscard = bestDiscard;
+    }
+
     /** INNER CLASS: Hand
      * Created by Jeffrey on 1/22/2015.
      * Initial version handling of permutations (each call): nPn-1=n!, where n=round+1
