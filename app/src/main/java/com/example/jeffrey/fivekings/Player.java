@@ -1,5 +1,6 @@
 package com.example.jeffrey.fivekings;
 
+import android.content.Context;
 import android.util.Log;
 
 import java.util.ArrayList;
@@ -24,6 +25,8 @@ import java.util.Iterator;
  * 2/28/2015    Added Meld definition to record valuation (tells us whether it's a valid meld)
  * 3/3/2015     Added static method to check if a CardList is a valid meld
  * 3/4/2015     Removed meldAndEvaluate (replaced with checkMeldsAndEvaluate)
+ * 3/7/2015     Zero round score in initGame so that display shows correctly
+ *              and split updateRoundScore out so it can be called in endTurn
 
  */
 class Player {
@@ -36,6 +39,8 @@ class Player {
     private Hand hand;
     private Card bestDiscard;
 
+    private PlayerLayout playerLayout; //representation on-screen including score etc
+
     Player(String name, boolean isHuman) {
         this.name = name;
         this.isHuman = isHuman;
@@ -44,7 +49,8 @@ class Player {
     }
 
     boolean initGame() {
-        cumulativeScore = 0;
+        this.cumulativeScore = 0;
+        this.roundScore = 0; //only zero this here because we display all scores at the start of a new game
         return true;
     }
 
@@ -52,9 +58,8 @@ class Player {
         this.roundScore = 0;
         this.bestDiscard = null;
         this.hand = new Hand(drawPile, roundOf);
-        //TODO:B should sort?
-        // TODO:B AutoMeld if requested
         if (!this.isHuman) hand.meldAndEvaluate(usePermutations, false);
+        else hand.calculateValue(false);
         return true;
     }
 
@@ -66,8 +71,9 @@ class Player {
     };
 
     boolean isOut() {
-        return (hand.getValueOrScore(true) == 0);
+        return ((hand != null) && (hand.getValueOrScore(true) == 0));
     }
+
     //Computer has to use this version which loops through possible discards to find the best one
     boolean findBestHand(boolean usePermutations, boolean isFinalScore, Card addedCard) {
         bestDiscard = null;
@@ -146,12 +152,37 @@ class Player {
 
     void update(String updatedName, boolean isHuman) {
         this.name = updatedName;
+        this.playerLayout.updateName(updatedName);
         this.isHuman = isHuman;
     }
 
+    PlayerLayout addPlayerLayout(Context c, int iPlayer, int numPlayers)  {
+        this.playerLayout = new PlayerLayout(c, this.name, iPlayer, numPlayers);
+        return this.playerLayout;
+    }
+
+    void removePlayerLayout() {
+        this.playerLayout = null;
+    }
+
+    void updatePlayerLayout(boolean isCurrent, boolean withScores) {
+        //set the border depending on the player state
+        this.playerLayout.resetToPlain();
+        if (isCurrent) this.playerLayout.showAsCurrent();
+        if (this.isOut()) this.playerLayout.showAsOut();
+
+        this.playerLayout.showRoundScore(this.roundScore, withScores);
+        if (withScores) this.playerLayout.updateCumulativeScore(this.cumulativeScore);
+        this.playerLayout.invalidate();
+    }
+
     //Player GETTERS and SETTERS
-    int addToCumulativeScore() {
+    int updateRoundScore() {
         roundScore = hand.getValueOrScore(true);
+        return roundScore;
+    }
+
+    int addToCumulativeScore() {
         cumulativeScore += roundScore;
         return cumulativeScore;
     }
@@ -199,11 +230,16 @@ class Player {
         return roundScore;
     }
 
+    PlayerLayout getPlayerLayout() {
+        return playerLayout;
+    }
+
     ArrayList<CardList> getHandMelded() {
         ArrayList<CardList> combined = new ArrayList<>();
         combined.addAll(hand.getMelded());
         return combined;
     }
+
 
     //TODO:A: Not unrolling these right now (Human doesn't see this)
     //because otherwise we don't know what to add back to

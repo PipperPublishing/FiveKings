@@ -21,7 +21,7 @@
     <string name="nextRound">Play %s\'s round</string>
     <string name="takeYourTurn">Take your turn</string>
     <string name="takePlayerTurn">Play %s\'s turn</string>
-    <string name="showScores">Show scores</string>
+    <string name="addScores">Add scores</string>
     <string name="computerCardsAndMelds">%s\'s cards and melds</string>
     <string name="yourCardsAndMelds">Pick from the Draw or Discard pile</string>
     <string name="dragYourCards">Drag here for a new meld</string>
@@ -38,5 +38,6 @@
     <string name="add">Add</string>
     <string name="save">Save</string>
     <string name="close">Close</string>
+    <string name="genericString">%s</string>
 
 </resources>

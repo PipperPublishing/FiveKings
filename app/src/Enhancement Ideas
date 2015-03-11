@@ -49,34 +49,41 @@ DONE: Empty dashed line "Drag here to make a new meld"
 DONE: Animation for picking and discarding (for computer)
 
 ------------------------------
->>> 0.2.04 Graphics - On Long Press for New Game pop up a confirmation dialog. Improve computer animations
+DONE 0.2.04 Graphics - On Long Press for New Game pop up a confirmation dialog. Improve computer animations
 - DONE: On LongPress for New Game, pop up a confirmation dialog
 - NOT DONE: Animation that meets in the middle between piles and hand
     - DONE: Copy CardView so that replacement cards are there after animation begins
     - DONE: Bounce the card you picked when it reaches your hand
 - DONE: When Computer picks from Discard Pile, next card shows
 -------------------------------
-0.2.05 Graphics: Deal animation, fix Add/Edit Players and Players Scores area
-- Deal animation
+>>> 0.3.01 Graphics: Deal animation, fix Edit Players and Players Scores area
+- DONE: Deal animation
+    - DONE Make dealt cards permanent, including name, score, who dealt, who's out
 - Players Scores
-    - Bug editing
-    TODO:A Look at switching to ListView, especially since all Table Rows are the same
-- update scores throughout final turn
-- put deal icon next to the dealer
-- some visual indication of who went out (radio buttons)
-- Convert showScores to use ListView and get rid of nasty invisible fields - use set/getTag??
-    - use mock fields (perhaps Computer, You) to get layout width better
+DONE    - update scores throughout final turn (animation to show it going into card)
+    - DONE (dashed line shows): put deal icon next to the dealer
+    - DONE (green border and name): some visual indication of who went out (radio buttons) - green check mark?
+  - DONE: Convert showScores to use ListView and get rid of nasty invisible fields - use set/getTag??
+    - DONE: DIsplay Radio Button next to current player? Or highlight?
+    - DONE: Correct translation to hands in semi-circle
+ - DONE: For human, grey out and show hand
+    - on [Next Round] button, alpha on hand-cards to 0 or 0.1
+    - DONE: On dealing, animate alpha to 1 after first card dealt
+--------------
+0.3.02 Fix Add Players bug
+- Instead of using Intrinsic width, should use actual laid out width etc
+    - dialog closes after each add
     - [+] button to add Players (disable after game starts)
-    - DIsplay Radio Button next to current player? Or highlight?
--
-- Landscape layout
-
+    - DONE: shows players immediately when you start and adds new ones as you add them
+    - Check fixed edit Players bug (was changing wrong player)
+    - DONE: click on name to change
+- Make all method parameters final
+- Add a [Play Human player] to expose your cards if there's more than one human player
+- Animate score from cards to hand
 
 
 ---------------------------
-v0.3.00 : Melding/Scoring/Valuation
-- Add button to [Meld] for you (with a number of times you can use it?)
-    - or only in first few rounds
+v0.4.00 : Melding/Scoring/Valuation
 - Stuff from piece of paper / notes on iPad
     - Loop over discards - this will allow us to merge some code
     - reuse Meld.check within meldAndEvaluate
@@ -87,7 +94,6 @@ Hand:
 - DONE: have a permutations version without an added card
 
 Scoring/Valuation:- move to separate class
-- DONE: Move out of getHighestScoreCard
 - Card should only know about base scoring and perhaps return two different values (base score and wildcard score) - move scoring out of it
 - A hand with n melds should score higher than any hand with n-1 melds; a partial rank meld > partial sequence
 - Don't discard what others want (wild cards, or cards they picked up)
@@ -103,9 +109,7 @@ Scoring/Valuation:- move to separate class
 - Guard against human trying to put all cards in one meld (and it working!)
     - if it's *not* a meld, can we bail early? (depends which mode we're testing in)
 
-
 Permutations:
-- DONE: Can stop when we find one with Valuation=0
 - Look at descending sequences so we can throw them out sooner
 - Eliminate looking at other perms that are equivalent score (e.g. (K* KS KH) = (KS K* KH)) - use a hash?
 - use sorted lists
@@ -116,32 +120,46 @@ Heuristics:
 - Loop over fullMeld and fullSequence alternatives (use perms?)
 - Use Meld.check somehow? (but note the numCard breakpoint when we switched to permutations)
 
+Previously Done:
+    - DONE: Move out of getHighestScoreCard
+    - DONE: Permuations Can stop when we find one with Valuation=0
+
 ----------------------
-v0.3.01
+v0.4.01
 - Look at CardList implementation and consider LinkedHashSet or others which provide
     - check for non-duplicates
     - automatic ordering
+- Look at Player list in Game for better encapsulation
 
 -------------------
-v0.4.00 Graphics
-- DONE: On New Game, should clear Scores when you get to Round 3
+v0.5.00 Graphics
+- Animate open hands into view from mini-hands
 - Hint overlays like Google (arrows and text)
 - investigate using Callback instead of Listener (does it make it easier to find card?)
 - make cards bigger - why aren't they expanding to fill available space
-- DONE: Background watermark: Drag your melds into here (or equivalent)
-- DONE: Fix annoying menu popup problem
 - Find a suit of Stars
+- Add button to [Meld] for you (with a number of times you can use it?)
+    - or only in first few rounds
 - Better [Play] and [Meld] button design (find a good image)
-- DONE: Replace LinearLayouts with RelativeLayouts
-- DONE: Click on scores should allow editing names
-- DONE: Long press on [Play] should be something (new game)
- Players show as backs of cards in semi-circle above play area
-- DONE: Animation when a card is picked from Draw or Discard
+    - replace button at bottom of screen with spinner or arrow to click
 - LOTS of cleaning up in FiveKings - follow flow
+- Slide out hand animation
+- Touch Computer hand to play it
+- Landscape layout: isn't switching automatically when I turn the device
+
+Previously Done:
+    - DONE: On New Game, should clear Scores when you get to Round 3
+    - DONE: Background watermark: Drag your melds into here (or equivalent)
+    - DONE: Fix annoying menu popup problem
+    - DONE: Replace LinearLayouts with RelativeLayouts
+    - DONE: Click on scores should allow editing names
+    - DONE: Long press on [Play] should be something (new game)
+    - DONE: Players show as backs of cards in semi-circle above play area
+    - DONE: Animation when a card is picked from Draw or Discard
 
 
 ---------------
-v0.5.00: Menu
+v0.6.00: Menu
 - [Meld] button? With count? (goes away after you use it up)
 - Instructions
 - Settings

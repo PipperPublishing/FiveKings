@@ -14,7 +14,7 @@ import com.example.jeffrey.fivekings.util.Utilities;
  * An existing meld listens for a card being dragged on top of it
  * 3/3/2015 Fade melds even more so highlighted ones stand out
  */
-public class CurrentMeldDragListener  implements View.OnDragListener  {
+class CurrentMeldDragListener  implements View.OnDragListener  {
     @Override
     public boolean onDrag(View v, DragEvent event) {
         RelativeLayout rl = (RelativeLayout)v;

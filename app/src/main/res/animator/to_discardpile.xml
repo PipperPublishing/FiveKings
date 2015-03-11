@@ -1,23 +1,28 @@
 <?xml version="1.0" encoding="utf-8"?>
 <set xmlns:android="http://schemas.android.com/apk/res/android"
-     android:interpolator="@android:anim/accelerate_decelerate_interpolator"
+     android:interpolator="@android:anim/decelerate_interpolator"
     android:ordering="together">
     <objectAnimator
-        android:propertyName="translationX"
+        android:propertyName="scaleX"
         android:duration="1000"
-        android:valueFrom="-200.0f"
-        android:valueTo="0.0f"
+        android:valueFrom="0.66"
+        android:valueTo="1.0"
         android:valueType="floatType"/>
     <objectAnimator
-        android:propertyName="translationY"
+        android:propertyName="scaleY"
         android:duration="1000"
-        android:valueFrom="+300.0f"
-        android:valueTo="0.0f"
+        android:valueFrom="0.66"
+        android:valueTo="1.0"
         android:valueType="floatType"/>
+    <objectAnimator
+        android:propertyName="rotation"
+        android:duration="1000"
+        android:valueFrom="0.0"
+        android:valueTo="360.0"/>
     <objectAnimator
         android:propertyName="alpha"
         android:duration="100"
-        android:valueFrom="0.0f"
-        android:valueTo="1.0f"
+        android:valueFrom="0.0"
+        android:valueTo="1.0"
         android:valueType="floatType"/>
 </set>
