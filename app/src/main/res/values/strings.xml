@@ -34,10 +34,14 @@
     <string name="isComputer">computer</string>
     <string name="addPlayersTitle">Add player</string>
     <string name="editPlayersTitle">Edit player</string>
+    <string name="confirmDelete">Confirm delete player</string>
+    <string name="areYouSureDelete">Are you sure you want to delete player "%s"?</string>
+    <string name="yesDelete">Yes, delete</string>
     <string name="playerName">Name</string>
     <string name="add">Add</string>
     <string name="save">Save</string>
     <string name="close">Close</string>
+    <string name="delete">Delete</string>
     <string name="genericString">%s</string>
 
 </resources>

@@ -7,6 +7,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.Iterator;
+import java.util.List;
 
 /**
  * Created by Jeffrey on 1/22/2015.
@@ -27,6 +28,7 @@ import java.util.Iterator;
  * 3/4/2015     Removed meldAndEvaluate (replaced with checkMeldsAndEvaluate)
  * 3/7/2015     Zero round score in initGame so that display shows correctly
  *              and split updateRoundScore out so it can be called in endTurn
+ * 3/11/2015    Moved updatePlayerLayout to PlayerLayout as "update"
 
  */
 class Player {
@@ -163,17 +165,6 @@ class Player {
 
     void removePlayerLayout() {
         this.playerLayout = null;
-    }
-
-    void updatePlayerLayout(boolean isCurrent, boolean withScores) {
-        //set the border depending on the player state
-        this.playerLayout.resetToPlain();
-        if (isCurrent) this.playerLayout.showAsCurrent();
-        if (this.isOut()) this.playerLayout.showAsOut();
-
-        this.playerLayout.showRoundScore(this.roundScore, withScores);
-        if (withScores) this.playerLayout.updateCumulativeScore(this.cumulativeScore);
-        this.playerLayout.invalidate();
     }
 
     //Player GETTERS and SETTERS
@@ -917,5 +908,20 @@ class Player {
         return isFinalRound ? finalScore : (int)intermediateValue;
     }
 
+    static void updatePlayerHands(final List<Player> players, final Player currentPlayer) {
+        for (Player player: players) {
+            if (player.getPlayerLayout() == null) continue;
+            player.getPlayerLayout().update(currentPlayer == player, player.isOut(),
+                    player.getRoundScore(), player.getCumulativeScore());
+        }
+    }
+
+    static void resetAndUpdatePlayerHands(final List<Player> players, final Player currentPlayer) {
+        for (Player player : players) {
+            player.getPlayerLayout().setPlayedInFinalRound(false);
+            player.getPlayerLayout().setGreyedOut(true);
+        }
+        updatePlayerHands(players, currentPlayer);
+    }
 
 }

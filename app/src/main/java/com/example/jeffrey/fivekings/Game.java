@@ -142,7 +142,7 @@ public class Game {
  }
 
     //TODO: A merge with endTurn and checkEndRound
-    Player endHumanTurn(Card discard) {
+    Player endHumanTurn(final Card discard) {
         currentPlayer.setBestDiscard(discard);     //not previously set until we dragged the discard
         return endTurn();
     }
@@ -207,7 +207,7 @@ public class Game {
     /* UTILITIES FOR LIST OF PLAYERS */
     //TODO:B would make more sense to extend List and add these methods - would allow us to encapsulte player/next player
     //int parameter returns that player
-    Player getPlayer(int iPlayer) {
+    Player getPlayer(final int iPlayer) {
         return players.get(iPlayer);
     }
 
@@ -215,8 +215,11 @@ public class Game {
         return players.indexOf(this.currentPlayer);
     }
 
-    void addPlayer (String name, boolean isHuman) {
+    void addPlayer (final String name, final boolean isHuman) {
         this.players.add(new Player(name, isHuman));
+    }
+    void deletePlayer(int iPlayer) {
+        this.players.remove(iPlayer);
     }
     void updatePlayer(String name, boolean isHuman, int iPlayer) {
         this.players.get(iPlayer).update(name, isHuman);

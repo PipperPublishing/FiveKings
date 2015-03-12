@@ -56,7 +56,7 @@ DONE 0.2.04 Graphics - On Long Press for New Game pop up a confirmation dialog. 
     - DONE: Bounce the card you picked when it reaches your hand
 - DONE: When Computer picks from Discard Pile, next card shows
 -------------------------------
->>> 0.3.01 Graphics: Deal animation, fix Edit Players and Players Scores area
+DONE 0.3.01 Graphics: Deal animation, fix Edit Players and Players Scores area
 - DONE: Deal animation
     - DONE Make dealt cards permanent, including name, score, who dealt, who's out
 - Players Scores
@@ -70,17 +70,19 @@ DONE    - update scores throughout final turn (animation to show it going into c
     - on [Next Round] button, alpha on hand-cards to 0 or 0.1
     - DONE: On dealing, animate alpha to 1 after first card dealt
 --------------
-0.3.02 Fix Add Players bug
-- Instead of using Intrinsic width, should use actual laid out width etc
-    - dialog closes after each add
-    - [+] button to add Players (disable after game starts)
-    - DONE: shows players immediately when you start and adds new ones as you add them
-    - Check fixed edit Players bug (was changing wrong player)
-    - DONE: click on name to change
-- Make all method parameters final
-- Add a [Play Human player] to expose your cards if there's more than one human player
-- Animate score from cards to hand
+DONE 0.3.02 Fix Add Players bug
+    - DONE dialog closes after each add
+>>>   DONE  extra mini-hand to add Players (disable after game starts)
+    - DONE: Check fixed edit Players bug (was changing wrong player)
+- BUGS:
+    - DONE: Computer hints that it's already out on the deal with green
+    - DONE: At start of round, reset mini-hands to greyed out
+    - DONE: have a PlayerLayout setting that turns on or off roundScore display - reset every round (not something we pass each time)
+        - DONE: turn it on after we have added the score
 
+Previously Done:
+    - DONE: click on name to change
+    - DONE: shows players immediately when you start and adds new ones as you add them
 
 ---------------------------
 v0.4.00 : Melding/Scoring/Valuation
@@ -131,9 +133,36 @@ v0.4.01
     - automatic ordering
 - Look at Player list in Game for better encapsulation
 
+----------------------
+v0.5.00: Menu
+- [Meld] button? With count? (goes away after you use it up)
+- Instructions
+- Settings
+    - Computer cheats by looking at Draw Pile
+    - Show other players cards with/except for next player after you
+- Play
+    - Start a new game with new players
+
+- Add an extra click to expose your cards if human players are next to each other
+    - just use normal [Play Turn] button currently used for Computer hands
+    - remove [Next Button] , except for Humans
+    - replace [Play Computer] with touching the cards or some other gesture
+
+- Hibernate state if forced to
+- Clean up Game state flow and handling
+- Look at use of Static and Inner classes
+- About with Version number and contact information
+
+
 -------------------
-v0.5.00 Graphics
+v0.6.00 Graphics
+- Celebrate on final result! Show score table at end - possibly with round-by-round scores?
+    - DONE: make a particularly big round score Red when it's scored
+    - other comments like Phase 10: pick up a discard and say "Thanks! I really needed that" or "Ouch!"
 - Animate open hands into view from mini-hands
+- Animate dealing discard (use z-axis flip of card over?)
+- Fix translation using exact positions on screen
+    - Instead of using Intrinsic width, should use actual laid out width etc
 - Hint overlays like Google (arrows and text)
 - investigate using Callback instead of Listener (does it make it easier to find card?)
 - make cards bigger - why aren't they expanding to fill available space
@@ -158,24 +187,10 @@ Previously Done:
     - DONE: Animation when a card is picked from Draw or Discard
 
 
----------------
-v0.6.00: Menu
-- [Meld] button? With count? (goes away after you use it up)
-- Instructions
-- Settings
-    - Computer cheats by looking at Draw Pile
-    - Show other players cards with/except for next player after you
-- Play
-    - Start a new game with new players
-
-- Hibernate state if forced to
-- Clean up Game state flow and handling
-- Look at use of Static and Inner classes
-- About with Version number and contact information
 
 -----------------
-v0.5.01 Graphics
-- Different layouts and resources for different screen sizes
+v0.6.01 Graphics
+- Modify single layout dynamically if you switch to landscape mode
 
 -----------------
 v1.1.01 Optimization

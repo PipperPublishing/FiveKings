@@ -6,10 +6,10 @@ android {
 
     defaultConfig {
         applicationId "com.example.jeffrey.fivekings"
-        minSdkVersion 14
+        minSdkVersion 11
         targetSdkVersion 21
-        versionCode 301
-        versionName "0.3.01-alpha"
+        versionCode 302
+        versionName "0.3.02-alpha"
     }
 
     applicationVariants.all { variant ->
