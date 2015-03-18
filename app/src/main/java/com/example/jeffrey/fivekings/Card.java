@@ -11,23 +11,19 @@ import java.util.Comparator;
  * 2/19/2015    Removed bitmap
  * 2/23/2015    Correctly interpret Joker String (have to explicitly get from resource)
  * 2/26/2015    Move drawables to CardView; changed Joker back to hardcoded string
+ * 3/13/2015    Moved cardScore to Player.calculateCardScore (because it involves Final vs not Final)
+ * 3/13/2015    Subclassed Jokers
  */
-//TODO:B Intermediate and final scoring should be moved out of Card probably
-//TODO:B Create a subclass for Jokers which doesn't have rank and suit; fix strings then (because other names of cards are also language-dependent)
 class Card {
-    static final int INTERMEDIATE_WILD_CARD_VALUE=1; //TODO:B 0.3.0: should be moved into scoring class/methods
-    static final int FINAL_WILD_CARD_VALUE =20;
-    static final int FINAL_JOKER_VALUE=50;
-    static final String JOKER_STRING="Joker";
-
+    private static final int WILD_CARD_VALUE =20;
 
     //sorting for sequences (within the same suit)
     static final Comparator<Card> cardComparatorSuitFirst = new Comparator<Card>() {
         @Override
         public int compare(Card card1, Card card2) {
-            if (card1.isJoker && card2.isJoker) return 0;
-            if (card1.isJoker) return card2.getRankValue();
-            if (card2.isJoker) return -card1.getRankValue();
+            if (card1.isJoker() && card2.isJoker()) return 0;
+            if (card1.isJoker()) return card2.getRankValue();
+            if (card2.isJoker()) return -card1.getRankValue();
             int suitCmp = card1.suit.compareTo(card2.suit);
             if (suitCmp != 0) return suitCmp;
             return card1.rank.compareTo(card2.rank);
@@ -37,9 +33,9 @@ class Card {
     static final Comparator<Card> cardComparatorRankFirstDesc = new Comparator<Card>() {
         @Override
         public int compare(Card card1, Card card2) {
-            if (card1.isJoker && card2.isJoker) return 0;
-            if (card1.isJoker) return card2.getRankValue();
-            if (card2.isJoker) return -card1.getRankValue();
+            if (card1.isJoker() && card2.isJoker()) return 0;
+            if (card1.isJoker()) return card2.getRankValue();
+            if (card2.isJoker()) return -card1.getRankValue();
             int rankCmp = -card1.rank.compareTo(card2.rank);
             if (rankCmp != 0) return rankCmp;
             return card1.suit.compareTo(card2.suit);
@@ -49,9 +45,9 @@ class Card {
     static final Comparator<Card> cardComparatorRankFirstAsc = new Comparator<Card>() {
         @Override
         public int compare(Card card1, Card card2) {
-            if (card1.isJoker && card2.isJoker) return 0;
-            if (card1.isJoker) return -card2.getRankValue();
-            if (card2.isJoker) return card1.getRankValue();
+            if (card1.isJoker() && card2.isJoker()) return 0;
+            if (card1.isJoker()) return -card2.getRankValue();
+            if (card2.isJoker()) return card1.getRankValue();
             int rankCmp = card1.rank.compareTo(card2.rank);
             if (rankCmp != 0) return rankCmp;
             return card1.suit.compareTo(card2.suit);
@@ -60,74 +56,56 @@ class Card {
 
     private final Suit suit;
     private final Rank rank;
-    private final String cardString;
-    private final int cardValue;
-    private final boolean isJoker;
+    protected String cardString;
+    protected int cardValue;
 
-    Card(Suit suit, Rank rank) {
+    Card(final Suit suit, final Rank rank) {
         this.suit = suit;
         this.rank = rank;
-        this.cardString = rank.getString() + suit.getString();
-        this.cardValue = rank.getRankValue();
-        this.isJoker = false;
-    }
-
-    //no arguments constructor is for Jokers
-    Card() {
-        this.isJoker = true;
-        this.suit = null;
-        this.rank = null;
-        this.cardString = JOKER_STRING;
-        this.cardValue = FINAL_JOKER_VALUE;
-    }
-
-    //true if a rank wildcard or a Joker; false if not (or null)
-    boolean isWildCard(Rank wildCardRank){
-        return ((wildCardRank != null) && (isJoker || (rank == wildCardRank)));
-    }
-
-    //by default, wildcards have value INTERMEDIATE_WILDCARD_VALUE so that there is incentive to meld them
-    //but not incentive to discard them
-    //In final scoring they have full value (20 for rank wildcards, and 50 for Jokers)
-    int getScore(Rank wildCardRank, boolean isFinal) {
-        int cardScore=0;
-        //if final, then rank wildCard=20, Joker=50, otherwise Rank value
-        if (isFinal) {
-            if (!isJoker && isWildCard(wildCardRank)) cardScore = FINAL_WILD_CARD_VALUE;
-            else cardScore = this.cardValue; //includes final Joker value
+        if ((rank != null) && (suit != null)) {
+            this.cardString = rank.getString() + suit.getString();
+            this.cardValue = rank.getRankValue();
         }
-        //if intermediate, then any wildcard=1 (including Jokers), otherwise Rank value
-        else cardScore = (isWildCard(wildCardRank) ? INTERMEDIATE_WILD_CARD_VALUE : this.cardValue);
-        return cardScore;
     }
 
-    //should not get called with Jokers
+
+    //true if a rank wildcard ; false if not (or null)
+    //Jokers handled in subclass
+    boolean isWildCard(final Rank wildCardRank){
+        return ((wildCardRank != null) && (rank == wildCardRank));
+    }
+
     int getRankValue() {
         if (null == rank) throw new RuntimeException("getRankValue: called with rank==null");
         return rank.getRankValue();
     }
 
-    String getCardString() {return this.cardString;}
+    final boolean isSameRank(final Card card) { return this.rank == card.rank; }
+    final boolean isSameRank(final Rank rank) { return this.rank == rank;}
 
-    boolean isSameRank(Card card) { return this.rank == card.rank; }
-    boolean isSameRank(Rank rank) { return this.rank == rank;}
-
-    boolean isSameSuit(Suit suit) {return this.suit == suit;}
+    final boolean isSameSuit(final Suit suit) {return this.suit == suit;}
 
     //TODO:C use compare method instead
-    int getRankDifference(Card card) {return this.getRankValue() - card.getRankValue();}
+    final int getRankDifference(final Card card) {return this.getRankValue() - card.getRankValue();}
 
-    int getRankDifference(Rank rank) {return this.getRankValue() - rank.getRankValue();}
+    final int getRankDifference(final Rank rank) {return this.getRankValue() - rank.getRankValue();}
 
-
+    /* GETTERS and SETTERS */
     boolean isJoker() {
-        return isJoker;
+        return false;
     }
 
-    Rank getRank() {
+    final String getCardString() {return this.cardString;}
+
+    final Rank getRank() {
         return this.rank;
     }
-    Suit getSuit() {
+    final Suit getSuit() {
         return this.suit;
+    }
+
+    int getCardValue(final Rank wildCardRank) {
+        if (this.isWildCard(wildCardRank)) return WILD_CARD_VALUE;
+        else return cardValue;
     }
 }

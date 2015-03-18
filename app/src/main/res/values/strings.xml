@@ -37,6 +37,7 @@
     <string name="confirmDelete">Confirm delete player</string>
     <string name="areYouSureDelete">Are you sure you want to delete player "%s"?</string>
     <string name="yesDelete">Yes, delete</string>
+    <string name="cantAdd">You can\'t add players after the Round of 3\'s; start a new game instead</string>
     <string name="playerName">Name</string>
     <string name="add">Add</string>
     <string name="save">Save</string>

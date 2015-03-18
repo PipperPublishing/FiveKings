@@ -85,31 +85,51 @@ Previously Done:
     - DONE: shows players immediately when you start and adds new ones as you add them
 
 ---------------------------
-v0.4.00 : Melding/Scoring/Valuation
-- Stuff from piece of paper / notes on iPad
-    - Loop over discards - this will allow us to merge some code
-    - reuse Meld.check within meldAndEvaluate
-- if Computer is out, should just use Discard pile
+DONE v0.4.01 : Melding/Scoring/Valuation
+
 Hand:
-- Present sorted?
-- TODO:A's
-- DONE: have a permutations version without an added card
+- NOT DONE: Present sorted?
 
 Scoring/Valuation:- move to separate class
-- Card should only know about base scoring and perhaps return two different values (base score and wildcard score) - move scoring out of it
-- A hand with n melds should score higher than any hand with n-1 melds; a partial rank meld > partial sequence
-- Don't discard what others want (wild cards, or cards they picked up)
-- KD sequence is lower frequency, so not preferred over rank melds
-- On round of 5's , play to win rather than to minimize
+- DONE: Card should only know about base scoring and perhaps return two different values (base score and wildcard score) - move scoring out of it
+- DONE: A hand with n melds should score higher than any hand with n-1 melds;
+- DONE: On round of 5's , play to win rather than to minimize
+- DONE: Stuff from piece of paper / notes on iPad
+- DONE: Currently draws Discard Pile card if it lowers valuation; but should consider Draw Pile if probability of an even lower card
+    - DONE: Different scoring for when I have 1 or 2 cards unmelded (should be looking to meld to existing)
 
-- Currently draws Discard Pile card if it lowers valuation; but should consider Draw Pile if probability of an even lower card
-    - Different scoring for when I have 1 or 2 cards unmelded (should be looking to meld to existing)
-    - track what is left in DrawPile (or cheat and remember it)
-    - Cheat mode where it peeks at draw pile card
-    - In the round of n, if you already have m cards in melds, then if m+3 >n then you should value a partial meld at full value
-    (because you must meld to the existing melds to go out)
-- Guard against human trying to put all cards in one meld (and it working!)
-    - if it's *not* a meld, can we bail early? (depends which mode we're testing in)
+- DONE: use isTestBetterThanBest in considering permutations
+    - >>> override 1/2 value for partial melds ??(necessary? now that we are promoting other measures)
+
+Previously Done:
+    - DONE: Move out of getHighestScoreCard
+    - DONE: Permuations Can stop when we find one with Valuation=0
+    - DONE: Loop over discards - this will allow us to merge some code
+    - DONE: reuse Meld.check within meldAndEvaluate
+-     DONE: have a permutations version without an added card
+
+
+-----------------------
+v0.4.02 Bug fixes and clean-up
+- TODO:A's (especially in scoring)
+- Lint warnings
+- More final parameters
+
+- BUG:A Is deciding to use Discard Pile when it has 3+ unmelded cards - should probably use Draw Pile
+BUG:A Doesn't build on short meld?
+BUG:A: Also that Permutations doesn't produce melds with X-X-X-Wild (same as above?)
+BUG:A Heuristics is throwing away wildcard when you have a partial meld of 4-4 and only full melds;
+BUG:A Permutations won't draw the Y from Discard Pile when you have X-X-Jok + Y-Y;
+BUG:A Heuristics won't build a sequence X-Y-Jok-Z
+BUG:A Strategy won't pick up 9 from Discard pile to 999 when it has KQ unmelded? (#unmelded already rates higher)
+BUG:A Permutations won't build a K onto T*Q
+
+Both (but especially permutations)
+- Meld: Mark what type of meld it is: full/partial, sequence/rank
+- Make Meld a standalone class?
+>>>- a partial rank meld > partial sequence > partial sequence at one end = broken sequence
+>>> A rank meld > rank meld with wildcards > sequence meld
+- Don't discard what others want (wild cards, or cards they picked up)
 
 Permutations:
 - Look at descending sequences so we can throw them out sooner
@@ -118,21 +138,31 @@ Permutations:
 - implement Meld.needsCheck
 
 Heuristics:
-- Add in more than one sequence
+>>> Add in more than one sequence and longer sequences than 3
 - Loop over fullMeld and fullSequence alternatives (use perms?)
-- Use Meld.check somehow? (but note the numCard breakpoint when we switched to permutations)
+>>> Use Meld.check somehow?
+    - note the numCard breakpoint when we switched to permutations and don't look for sequences bigger than this
+    - should allow us to build bigger sequences
 
-Previously Done:
-    - DONE: Move out of getHighestScoreCard
-    - DONE: Permuations Can stop when we find one with Valuation=0
+
+
+
 
 ----------------------
-v0.4.01
+v0.4.03
+- comments from Catherine
+    - Cancel dealing animation if you press button
+- BUG:A When you continue with a new game, the old Layouts are not all removed
 - Look at CardList implementation and consider LinkedHashSet or others which provide
     - check for non-duplicates
     - automatic ordering
 - Look at Player list in Game for better encapsulation
+    - track what is left in DrawPile (or cheat and remember it)
+    - Cheat mode where it peeks at draw pile card
+    //BUG:A: This doesn't handle if removed player is the dealer
 
+- Guard against human trying to put all cards in one meld (and it working!)
+    - if it's *not* a meld, can we bail early? (depends which mode we're testing in)
 ----------------------
 v0.5.00: Menu
 - [Meld] button? With count? (goes away after you use it up)
