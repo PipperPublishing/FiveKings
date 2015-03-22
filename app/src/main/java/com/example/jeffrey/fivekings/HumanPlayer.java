@@ -14,7 +14,7 @@ class HumanPlayer extends Player {
     }
 
     @Override
-    final boolean initAndDealNewHand(final DrawAndDiscardPiles.DrawPile drawPile,final Rank roundOf, final Hand.MeldMethod method) {
+    final boolean initAndDealNewHand(final Deck.DrawPile drawPile,final Rank roundOf, final MeldedCardList.MeldMethod method) {
         super.initAndDealNewHand(drawPile, roundOf, method);
         this.hand.calculateValueAndScore(false);
         return true;
@@ -26,17 +26,18 @@ class HumanPlayer extends Player {
         checkMeldsAndEvaluate(isFinalRound);
     }
 
+    @Override
     final int checkMeldsAndEvaluate(final boolean isFinalRound) {
         //sets the valuation of each meld (0 for a valid meld)
-        for (Hand.Meld meld : hand.melds) meld.check(isFinalRound);
-        this.hand.calculateValueAndScore(isFinalRound);
-        return this.hand.getValueOrScore(isFinalRound);
+        //throws away the decomposition, because correct melding is the HumanPlayer's responsibility
+        //This allows for later implementation of automatic melding
+        return hand.checkMeldsAndEvaluate(isFinalRound);
     }
 
     private boolean addCardToHand(final Card card) {
         if (card != null) {
             checkHandSize();
-            hand.add(card); //calls syncCardsAndMelds
+            hand.addAndSync(card); //calls syncCardsAndMelds
         }
         return (card != null);
     }
@@ -56,8 +57,9 @@ class HumanPlayer extends Player {
         return true;
     }
     final void addToMeld(final CardList meld, Card card) {
-        ((Hand.Meld)meld).addTo(card);
+        ((MeldedCardList.Meld)meld).addTo(card);
     }
 
+    @Override
     final boolean isHuman() {return true;}
 }

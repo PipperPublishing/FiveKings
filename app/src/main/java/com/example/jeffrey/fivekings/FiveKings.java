@@ -829,7 +829,7 @@ public class FiveKings extends Activity {
 
             if (showBorder) {
                 //if this is actually a validated meld, outline in solid green
-                if (Hand.isValidMeld(cardList))
+                if (MeldedCardList.isValidMeld(cardList))
                     nestedLayout.setBackgroundDrawable(getResources().getDrawable(R.drawable.solid_green_border));
                 else
                     nestedLayout.setBackgroundDrawable(getResources().getDrawable(R.drawable.dashed_border));

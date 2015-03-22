@@ -115,51 +115,28 @@ v0.4.02 Bug fixes and clean-up
 - Lint warnings
 - More final parameters
 
-- BUG:A Is deciding to use Discard Pile when it has 3+ unmelded cards - should probably use Draw Pile
-BUG:A Doesn't build on short meld?
-BUG:A: Also that Permutations doesn't produce melds with X-X-X-Wild (same as above?)
-BUG:A Heuristics is throwing away wildcard when you have a partial meld of 4-4 and only full melds;
-BUG:A Permutations won't draw the Y from Discard Pile when you have X-X-Jok + Y-Y;
-BUG:A Heuristics won't build a sequence X-Y-Jok-Z
-BUG:A Strategy won't pick up 9 from Discard pile to 999 when it has KQ unmelded? (#unmelded already rates higher)
-BUG:A Permutations won't build a K onto T*Q
+TESTING
 
 Both (but especially permutations)
-- Meld: Mark what type of meld it is: full/partial, sequence/rank
+DONE: Meld: Mark what type of meld it is: full/partial, sequence/rank
 - Make Meld a standalone class?
->>>- a partial rank meld > partial sequence > partial sequence at one end = broken sequence
->>> A rank meld > rank meld with wildcards > sequence meld
-- Don't discard what others want (wild cards, or cards they picked up)
-
-Permutations:
-- Look at descending sequences so we can throw them out sooner
-- Eliminate looking at other perms that are equivalent score (e.g. (K* KS KH) = (KS K* KH)) - use a hash?
-- use sorted lists
-- implement Meld.needsCheck
-
-Heuristics:
->>> Add in more than one sequence and longer sequences than 3
-- Loop over fullMeld and fullSequence alternatives (use perms?)
->>> Use Meld.check somehow?
-    - note the numCard breakpoint when we switched to permutations and don't look for sequences bigger than this
-    - should allow us to build bigger sequences
-
-
-
+DONE: a partial rank meld >> partial sequence > partial sequence at one end = broken sequence
+DONE: A rank meld > rank meld with wildcards > sequence meld
 
 
 ----------------------
 v0.4.03
+- change takeComputerTurn and takeHumanTurn to Player methods
 - comments from Catherine
     - Cancel dealing animation if you press button
-- BUG:A When you continue with a new game, the old Layouts are not all removed
+- BUG:A When you continue with a new game, or delete a player sometimes the old Layouts are not all removed
 - Look at CardList implementation and consider LinkedHashSet or others which provide
     - check for non-duplicates
     - automatic ordering
 - Look at Player list in Game for better encapsulation
     - track what is left in DrawPile (or cheat and remember it)
     - Cheat mode where it peeks at draw pile card
-    //BUG:A: This doesn't handle if removed player is the dealer
+- BUG:A: This doesn't handle if removed player is the dealer
 
 - Guard against human trying to put all cards in one meld (and it working!)
     - if it's *not* a meld, can we bail early? (depends which mode we're testing in)
@@ -186,6 +163,7 @@ v0.5.00: Menu
 
 -------------------
 v0.6.00 Graphics
+- FiveKings bugs/todo's
 - Celebrate on final result! Show score table at end - possibly with round-by-round scores?
     - DONE: make a particularly big round score Red when it's scored
     - other comments like Phase 10: pick up a discard and say "Thanks! I really needed that" or "Ouch!"
@@ -222,6 +200,30 @@ Previously Done:
 v0.6.01 Graphics
 - Modify single layout dynamically if you switch to landscape mode
 
+----------------
+v0.7.01 Scoring and Valuation
+- Look at melding "potential" of single unmelded cards you keep (not just partial melds)
+- Don't discard what others want (wild cards, or cards they picked up)
+Permutations:
+- Look at descending sequences so we can throw them out sooner
+- Eliminate looking at other perms that are equivalent score (e.g. (K* KS KH) = (KS K* KH)) - use a hash?
+- ??use sorted lists
+- implement Meld.needsCheck
+BUG:A Check if still true? Heuristics is throwing away wildcard when you have a partial meld of 4-4 and only full melds;
+BUG:A Permutations won't build a K onto T*Q
+
+Heuristics:
+BUG:A Heuristics won't build a sequence X-Y-Jok-Z; not looking at this - use meld.check?
+Add in more than one sequence and longer sequences than 3
+- Loop over fullMeld and fullSequence alternatives (use perms?)
+Use Meld.check somehow?
+    - note the numCard breakpoint when we switched to permutations and don't look for sequences bigger than this
+    - should allow us to build bigger sequences
+
 -----------------
 v1.1.01 Optimization
 - Use multi-threading to preprocess computer hands while waiting for button presses
+
+======================
+QUESTIONS:
+1. When to use a Base Class vs. an Interface? Abstract Class vs. Interface vs Base Class? Is Virtual Class something different?

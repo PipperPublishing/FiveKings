@@ -1,7 +1,6 @@
 package com.example.jeffrey.fivekings;
 
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 
 /**
@@ -13,6 +12,7 @@ import java.util.List;
  * 2/5/2015 Call Collections.shuffle()
  * 2/25/2015    Deprecated myShuffle
  * 3/4/2015 Removed deprecated methods myShuffle and getHighestScoreCard
+ * 3/21/2015    Moved  shuffle(), deal(), peekNext should be moved to the Deck/DrawPile/DiscardPile class via CardDealing interface
  */
 class CardList extends ArrayList<Card> {
 
@@ -28,31 +28,15 @@ class CardList extends ArrayList<Card> {
         super(cards);
     }
 
+    @Deprecated
     CardList(Card card) {
         this();
         this.add(card);
     }
 
-    protected boolean shuffle() {
-        Collections.shuffle(this);
-        return true;
-    }
-
-    protected Card deal() {
-        return remove(0);
-    }
-
-    //TODO:B: Is this an interface? is not meaningful in the base class (but is called by DrawPile)
-    protected Card peekNext() {
-        return (0== this.size() ? null : this.get(0));
-    }
-
-
     List<Card> getCards() {
         return this;
     }
-
-
 
     String getString() {
         if (this.isEmpty()) return "";

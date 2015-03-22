@@ -36,6 +36,7 @@ import java.util.List;
  *              currentPlayer etc.
  *              - Introduce enum PileDecision and Player.MeldMethod
  * 3/16/2015    Removed USE_DRAW_PILE, USE_DISCARD_PILE
+ * TODO:A Change takeComputerTurn and takeHumanTurn to Player methods
  *
  */
 public class Game {
@@ -56,16 +57,15 @@ public class Game {
     private Card drawnCard;
     private long roundStartTime, roundStopTime;
 
-    private DrawAndDiscardPiles drawAndDiscardPiles;
-    private Hand.MeldMethod method = Hand.MeldMethod.PERMUTATIONS;
+    private MeldedCardList.MeldMethod method = MeldedCardList.MeldMethod.PERMUTATIONS;
     private GameState gameState=null;
 
     Game(final Context fkActivity) {
         this.deck = Deck.getInstance(true);
         this.players = new ArrayList<Player>(){{
-            add(new EvaluationComputerPlayer("Evaluation"));
-            add(new StrategyComputerPlayer("Strategy 1"));
-            add(new StrategyComputerPlayer("Strategy 2"));
+            add(new EvaluationComputerPlayer("Easy"));
+            add(new StrategyComputerPlayer("Expert 1"));
+            add(new StrategyComputerPlayer("Expert 2"));
             add(new HumanPlayer("You"));
         }};
         init();
@@ -77,8 +77,15 @@ public class Game {
         this.dealer = players.get(0);
         for (Player player : this.players) player.initGame();
         this.roundOf = Rank.getLowestRank();
-        this.method= Hand.MeldMethod.PERMUTATIONS;
+        this.method= MeldedCardList.MeldMethod.PERMUTATIONS;
         this.gameState = GameState.ROUND_START;
+
+        currentPlayer=null;
+        playerWentOut=null;
+        drawnCard=null;
+        roundStartTime = 0;
+        roundStopTime = 0;
+
         return true;
     }
 
@@ -90,11 +97,11 @@ public class Game {
         //shuffle the deck- possibly should also be part of DrawAndDiscardPiles
         deck.shuffle();
         //creates the draw and discard piles and copies the deck to the drawPile (by adding the cards)
-        drawAndDiscardPiles = new DrawAndDiscardPiles(deck);
+        deck.initDrawAndDiscardPile();
         //deal cards for each player - we just ignore who the "dealer" is, since the deck is guaranteed random
-        for (Player curPlayer : players) curPlayer.initAndDealNewHand(drawAndDiscardPiles.drawPile, this.roundOf, this.method);
+        for (Player curPlayer : players) curPlayer.initAndDealNewHand(deck.drawPile, this.roundOf, this.method);
         //turn up next card onto discard pile - note that the *top* card is actually the last element in the list
-        drawAndDiscardPiles.dealToDiscard();
+        deck.dealToDiscard();
 
         this.playerWentOut = null;
         this.currentPlayer = dealer; //TURN_START now rotates player to current+1
@@ -105,7 +112,7 @@ public class Game {
     void takeHumanTurn(final String turnInfoFormat, final StringBuilder turnInfo, final PileDecision drawOrDiscardPile) {
         logTurn();
 
-        drawnCard = (drawOrDiscardPile==PileDecision.DISCARD_PILE) ?  drawAndDiscardPiles.discardPile.deal() : drawAndDiscardPiles.drawPile.deal();
+        drawnCard = (drawOrDiscardPile==PileDecision.DISCARD_PILE) ?  deck.discardPile.deal() : deck.drawPile.deal();
         ((HumanPlayer)currentPlayer).addAndEvaluate((playerWentOut != null), drawnCard);
         turnInfo.append(String.format(turnInfoFormat, currentPlayer.getName(), drawnCard.getCardString(),
                 (drawOrDiscardPile==PileDecision.DISCARD_PILE) ? "Discard" : "Draw"));
@@ -124,21 +131,21 @@ public class Game {
         //if Auto/Computer, then we test whether discard improves score/valuation
         final long playerStartTime = System.currentTimeMillis();
         final PileDecision pickFrom = ((EvaluationComputerPlayer)currentPlayer).tryDiscardOrDrawPile(this.method, (playerWentOut != null),
-                drawAndDiscardPiles.discardPile.peekNext(),drawAndDiscardPiles.drawPile.peekNext());
+                deck.discardPile.peekNext(), deck.drawPile.peekNext());
         //now actually deal the card
         if (pickFrom == PileDecision.DISCARD_PILE) {
-            this.drawnCard = drawAndDiscardPiles.discardPile.deal();
+            this.drawnCard = deck.discardPile.deal();
             turnInfo.append(String.format(turnInfoFormat, currentPlayer.getName(), drawnCard.getCardString(),
                     "Discard", currentPlayer.getHandDiscard().getCardString()));
         }else { //DRAW_PILE
             //if we decided to not use the Discard pile, then we need to find discard and best hand with drawPile card
-            this.drawnCard = drawAndDiscardPiles.drawPile.deal();
+            this.drawnCard = deck.drawPile.deal();
             turnInfo.append(String.format(turnInfoFormat, currentPlayer.getName(), drawnCard.getCardString(),
                     "Draw", currentPlayer.getHandDiscard().getCardString()));
         }
         final long playerStopTime = System.currentTimeMillis();
-        if (this.method == Hand.MeldMethod.PERMUTATIONS)
-            this.method = ((playerStopTime - playerStartTime) < PERMUTATION_THRESHOLD) ? Hand.MeldMethod.PERMUTATIONS : Hand.MeldMethod.HEURISTICS;
+        if (this.method == MeldedCardList.MeldMethod.PERMUTATIONS)
+            this.method = ((playerStopTime - playerStartTime) < PERMUTATION_THRESHOLD) ? MeldedCardList.MeldMethod.PERMUTATIONS : MeldedCardList.MeldMethod.HEURISTICS;
 
         Log.d(APP_TAG, turnInfo.toString());
         //Moved actual discard into endTurn so we can do animation at same time
@@ -148,7 +155,7 @@ public class Game {
  private void logTurn() {
 
      //Use final scoring (wild cards at full value) on last-licks turn (when a player has gone out)
-     if (this.method == Hand.MeldMethod.PERMUTATIONS)
+     if (this.method == MeldedCardList.MeldMethod.PERMUTATIONS)
          Log.d(Game.APP_TAG, "Player " + currentPlayer.getName() + ": Using Permutations");
      else Log.d(Game.APP_TAG, "Player " + currentPlayer.getName() + ": Using Heuristics");
      String sValuationOrScore = (null == playerWentOut) ? "Valuation=" : "Score=";
@@ -158,7 +165,7 @@ public class Game {
 
     Player endTurn() {
         //remove discard from player's hand and add to discardPile
-        drawAndDiscardPiles.discardPile.add(this.currentPlayer.discardFromHand(this.currentPlayer.getHandDiscard()));
+        deck.discardPile.add(this.currentPlayer.discardFromHand(this.currentPlayer.getHandDiscard()));
         //only HumanPlayer does anything
         currentPlayer.checkMeldsAndEvaluate(playerWentOut != null);
 
@@ -208,7 +215,7 @@ public class Game {
 
     Card getDiscardPileCard() {
         //Possibly null (after just picking up)
-         return drawAndDiscardPiles.discardPile.peekNext();
+         return deck.discardPile.peekNext();
     }
 
     /* UTILITIES FOR LIST OF PLAYERS */
