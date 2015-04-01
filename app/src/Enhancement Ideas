@@ -125,27 +125,42 @@ DONE: A rank meld > rank meld with wildcards > sequence meld
 
 
 ----------------------
-v0.4.03
-- change takeComputerTurn and takeHumanTurn to Player methods
+>>> v0.4.03 Clean Up and Refactoring
+DONE: change takeComputerTurn and takeHumanTurn to Player methods
 - comments from Catherine
-    - Cancel dealing animation if you press button
-- BUG:A When you continue with a new game, or delete a player sometimes the old Layouts are not all removed
+    * DONE: don't like "add scores" phrasing
+    * everything is so small?
+    * DONE: too many spins when discarding -- hard to see what card is
+    * DONE: watching it deal is gonna get boring
+    * why is it so hard to discard?
+    * DONE: why can't I just play each turn in one button except for mine
+        - move Take Turn button to clicking on the actual player (which should be jiggling)
+DONE: Move [Play] button to clicking on the next player (bouncing or shaking)
+    - change Toast in first few rounds to help
+DONE:    * can't see the horrific red scores
+DONE: Look at Player list in Game for better encapsulation
+DONE: When you continue with a new game sometimes the old Layouts are not all removed
+DONE: This doesn't handle if removed player is the dealer
+
+----------------------
+v0.4.04 Clean-up
+- TODO:A's!!!
+- Improve logic flow and understandability of FiveKings, Game, PlayerLayout etc
+    - push player Hand updates to individual players rather than mass updates of screen
 - Look at CardList implementation and consider LinkedHashSet or others which provide
     - check for non-duplicates
     - automatic ordering
-- Look at Player list in Game for better encapsulation
-    - track what is left in DrawPile (or cheat and remember it)
-    - Cheat mode where it peeks at draw pile card
-- BUG:A: This doesn't handle if removed player is the dealer
-
-- Guard against human trying to put all cards in one meld (and it working!)
-    - if it's *not* a meld, can we bail early? (depends which mode we're testing in)
-----------------------
+- cancel animation if I get bored with dealing
+        - if you just touch the screen or the Play button
+- For Humans, don't show cards until second touch of card (before show card backs)
+- Hourglass or spinner to indicate it is thinking
+addWildcardsAndRecord: wildCards.isEmpty and isFinalTurn - not really a bug
+- Eliminate ROUND_END
+------------------------
 v0.5.00: Menu
-- [Meld] button? With count? (goes away after you use it up)
+
 - Instructions
 - Settings
-    - Computer cheats by looking at Draw Pile
     - Show other players cards with/except for next player after you
 - Play
     - Start a new game with new players
@@ -166,6 +181,8 @@ v0.6.00 Graphics
 - FiveKings bugs/todo's
 - Celebrate on final result! Show score table at end - possibly with round-by-round scores?
     - DONE: make a particularly big round score Red when it's scored
+    - DONE: outline hands in Red or Yellow (just like in Green)
+    - explode cards/hands into multi-color confetti
     - other comments like Phase 10: pick up a discard and say "Thanks! I really needed that" or "Ouch!"
 - Animate open hands into view from mini-hands
 - Animate dealing discard (use z-axis flip of card over?)
@@ -177,11 +194,13 @@ v0.6.00 Graphics
 - Find a suit of Stars
 - Add button to [Meld] for you (with a number of times you can use it?)
     - or only in first few rounds
-- Better [Play] and [Meld] button design (find a good image)
+    - [Meld] button? With count? (goes away after you use it up)
+    - Guard against human trying to put all cards in one meld (and it working!)
+        - if it's *not* a meld, can we bail early? (depends which mode we're testing in)- Better [Play] and [Meld] button design (find a good image)
     - replace button at bottom of screen with spinner or arrow to click
 - LOTS of cleaning up in FiveKings - follow flow
 - Slide out hand animation
-- Touch Computer hand to play it
+DONE: Touch Computer hand to play it
 - Landscape layout: isn't switching automatically when I turn the device
 
 Previously Done:
@@ -211,6 +230,9 @@ Permutations:
 - implement Meld.needsCheck
 BUG:A Check if still true? Heuristics is throwing away wildcard when you have a partial meld of 4-4 and only full melds;
 BUG:A Permutations won't build a K onto T*Q
+
+    - track what is left in DrawPile (or cheat and remember it)
+    - Cheat mode where it peeks at draw pile card (in Settings)
 
 Heuristics:
 BUG:A Heuristics won't build a sequence X-Y-Jok-Z; not looking at this - use meld.check?

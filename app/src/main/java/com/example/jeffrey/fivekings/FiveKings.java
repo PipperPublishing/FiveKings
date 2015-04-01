@@ -78,6 +78,12 @@ import java.util.List;
     3/11/2015   v0.3.02: Add Delete player option in Edit dialog
                 Add a transparent card with a plus on it next to the final player
     3/12/2015   Impact of subclassing of Player->HumanPlayer and ComputerPlayer
+    3/22/2015   Impact of encapsulating all player management in PlayerList
+    3/31/2015   Removed mCurrentRound (showing it on the moved Play button)
+                Moved clickedDrawOrDiscard to Game
+                Relayout miniHands on add/delete of players
+                Moved common code to endTurnCheckRound
+                Replaced syncDisplay with updateHandsAndCards
 */
 
 public class FiveKings extends Activity {
@@ -85,8 +91,10 @@ public class FiveKings extends Activity {
     static final float MELD_OFFSET_RATIO = 0.3f;
     //static final int TOAST_X_OFFSET = 20;
     //static final int TOAST_Y_OFFSET = +600;
-    static final Rank HELP_ROUNDS=Rank.THREE;
+    static final Rank HELP_ROUNDS=Rank.FOUR;
     static final float ALMOST_TRANSPARENT_ALPHA=0.1f;
+    static final float HALF_TRANSPARENT_ALPHA=0.5f;
+    static final float THIRD_TRANSPARENT_ALPHA=0.3f;
 
     private static final int LONG_ANIMATION=2000;
     private static final int MEDIUM_ANIMATION=500;
@@ -95,7 +103,6 @@ public class FiveKings extends Activity {
     // Dynamic elements of the interface
     private Game mGame=null;
     private Button mPlayButton;
-    private TextView mCurrentRound;
     private TableLayout mScoreDetail;
     private View mScoreDetailView;
     private Toast mGameInfoToast;
@@ -148,32 +155,33 @@ public class FiveKings extends Activity {
             }
         });
 
-        mCurrentRound = (TextView)findViewById(R.id.current_round);
         mGameInfoToast = Toast.makeText(this, R.string.blank,Toast.LENGTH_SHORT);
         mDiscardPile = (CardView)findViewById(R.id.discardPile);
         mDiscardPile.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                clickedDrawOrDiscard(Game.PileDecision.DISCARD_PILE);
+                mGame.clickedDrawOrDiscard(FiveKings.this, Game.PileDecision.DISCARD_PILE);
             }
         });
         mDiscardPile.setOnDragListener(new DiscardPileDragEventListener());
+
         mDrawPile = (CardView)findViewById(R.id.drawPile);
         mDrawPile.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                clickedDrawOrDiscard(Game.PileDecision.DRAW_PILE);
+                mGame.clickedDrawOrDiscard(FiveKings.this, Game.PileDecision.DRAW_PILE);
             }
         });
+
         mCurrentMelds = (RelativeLayout) findViewById(R.id.current_melds);
         mCurrentMelds.setOnDragListener(new CurrentMeldsLayoutDragListener());
         mCurrentCards = (RelativeLayout) findViewById(R.id.current_cards);
 
-        PlayerLayout addPlayerLayout = new PlayerLayout(this);
+        PlayerMiniHandLayout addPlayerMiniHandLayout = new PlayerMiniHandLayout(this);
         final RelativeLayout fullScreenContent = (RelativeLayout)findViewById(R.id.fullscreen_content);
-        fullScreenContent.addView(addPlayerLayout);
+        fullScreenContent.addView(addPlayerMiniHandLayout);
 
-        disableDrawDiscard();
+        disableDrawDiscardClick();
 
     }//end onCreate
 
@@ -192,37 +200,40 @@ public class FiveKings extends Activity {
 
     }
 
- /*   EVENT HANDLERS*/
+
+
+    /*------------------*/
+    /*   EVENT HANDLERS*/
+    /*------------------*/
     //Event handler for [Save] in add player dialog
     public void addEditPlayerClicked(final String playerName, final boolean isHuman, final boolean addingFlag, final int iPlayerUpdate) {
          //if we add a player, we need to remove and re-add the hand layouts
-         if (addingFlag) {
-             if ((mGame != null) && (mGame.getRoundOf() != null) && (mGame.getRoundOf() != Rank.getLowestRank())) {
-                 Log.e(Game.APP_TAG,"Can't add players after Round of 3's");
-                 return;
-             }
-             if (mGame != null) mGame.addPlayer(playerName, isHuman);
-             removeAndAddPlayerHands(null);
-         }
-         else {
-             mGame.updatePlayer(playerName, isHuman, iPlayerUpdate);
-             Player.updatePlayerHands(mGame.getPlayers(), mGame.getCurrentPlayer());
-         }
+        if (mGame != null) {
+            if (addingFlag) {
+                if ((mGame.getRoundOf() != null) && (mGame.getRoundOf() != Rank.getLowestRank())) {
+                    Log.e(Game.APP_TAG, "Can't add players after Round of 3's");
+                    return;
+                }
+                mGame.addPlayer(playerName, isHuman);
+                mGame.relayoutPlayerMiniHands(this);
+            } else {
+                mGame.updatePlayer(playerName, isHuman, iPlayerUpdate);
+                mGame.updatePlayerMiniHands();
+            }
+        }
     }
     public void deletePlayerClicked(final int iPlayerToDelete) {
         //pop up an alert to verify
         new AlertDialog.Builder(this)
                 .setIcon(android.R.drawable.ic_dialog_alert)
                 .setTitle(R.string.confirmDelete)
-                .setMessage(resFormat(R.string.areYouSureDelete, mGame.getPlayer(iPlayerToDelete).getName()))
+                .setMessage(resFormat(R.string.areYouSureDelete, mGame.getPlayerByIndex(iPlayerToDelete).getName()))
                 .setPositiveButton(R.string.yesDelete, new DialogInterface.OnClickListener()
                 {
                     @Override
                     public void onClick(DialogInterface dialog, int which) {
                         //have to be careful of order and save the layout to delete from the screen
-                        PlayerLayout deletedPlayerLayout = mGame.getPlayer(iPlayerToDelete).getPlayerLayout();
-                        mGame.deletePlayer(iPlayerToDelete);
-                        removeAndAddPlayerHands(deletedPlayerLayout);
+                        mGame.deletePlayer(iPlayerToDelete, FiveKings.this);
                     }
                 })
                 .setNegativeButton("No", null)
@@ -234,19 +245,21 @@ public class FiveKings extends Activity {
         setWidgetsByGameState();
 
         if (null== mGame) {
-            mGame = new Game(this); //also sets gameState=ROUND_START
-            this.mCurrentRound.setText(resFormat(R.string.current_round,mGame.getRoundOf().getString()));
+            mGame = new Game(); //also sets gameState=ROUND_START
             this.mPlayButton.setText(resFormat(R.string.nextRound, mGame.getRoundOf().getString()));
+            mGame.relayoutPlayerMiniHands(this);
             showAddPlayers();
         }
 
-        //User pressed [New Game] button (currently by long-pressing Play)
+
+        //User pressed [New Game] button (currently by long-pressing Play), or be finishing a previous game
         else if (GameState.NEW_GAME == mGame.getGameState()) {
+            mGame.removePlayerMiniHands(this); // have to do this before we reset the players
             mGame.init();
-            this.mCurrentRound.setText(resFormat(R.string.current_round, mGame.getRoundOf().getString()));
             this.mPlayButton.setText(resFormat(R.string.nextRound, mGame.getRoundOf().getString()));
             mCurrentCards.removeAllViews();
             mCurrentMelds.removeAllViews();
+            mGame.relayoutPlayerMiniHands(this);
             showAddPlayers();
         }
 
@@ -255,50 +268,10 @@ public class FiveKings extends Activity {
             mGame.initRound();
             mCurrentCards.removeAllViews();
             mCurrentMelds.removeAllViews();
-            Player.resetAndUpdatePlayerHands(mGame.getPlayers(), mGame.getCurrentPlayer());
-            //TODO:A When do we pass variables vs. just reference in the method??
-            animateDealing(mGame.getRoundOf().getRankValue(), mGame.getPlayers());
-
-            this.mCurrentRound.setText(resFormat(R.string.current_round, mGame.getRoundOf().getString()));
-            this.mPlayButton.setText(resFormat(R.string.nextPlayer, mGame.getNextPlayer().getName()));
+            mGame.resetPlayerMiniHandsToRoundStart();
+            animateDealing(mGame.getRoundOf().getRankValue(), mGame.numPlayers());
+            this.mPlayButton.setText(resFormat(R.string.current_round, mGame.getRoundOf().getString()));
             //Show blank screen with discard pile showing - now in onAnimationEnd
-        }
-
-        else if (GameState.TAKE_COMPUTER_TURN == mGame.getGameState()) {
-            StringBuilder turnInfo = new StringBuilder(100);
-
-            turnInfo.setLength(0);
-            Game.PileDecision pickedFrom = mGame.takeComputerTurn(getText(R.string.computerTurnInfo).toString(), turnInfo);
-            showHint(turnInfo.toString());
-
-            //at this point the DiscardPile still shows the old card
-            //animate... also calls syncDisplay and checkEndRound() in the OnAnimationEnd listener
-            animateComputerPickUpAndDiscard(mGame.getCurrentPlayerIndex(), pickedFrom); // also calls syncDiscardCardsMelds
-        }
-
-        else if (GameState.TURN_START == mGame.getGameState()) {
-            mGame.rotatePlayer();
-            syncDisplay();
-
-            if (mGame.getCurrentPlayer().isHuman()) {
-                showHint(resFormat(R.string.yourCardsAndMelds, mGame.getCurrentPlayer().getName()));
-                disablePlayButton();
-                enableDrawDiscard();
-                animatePiles();
-                mGame.setGameState(GameState.TAKE_HUMAN_TURN);
-                setWidgetsByGameState();
-            }
-            else {
-                this.mPlayButton.setText(resFormat(R.string.takePlayerTurn, mGame.getCurrentPlayer().getName()));
-                mGame.setGameState(GameState.TAKE_COMPUTER_TURN);
-            }
-        }//end TURN_START
-
-        else if (GameState.ROUND_END == mGame.getGameState()) {
-            mGame.endRound();
-            showHint(resFormat(R.string.displayScores, null));
-            Player.updatePlayerHands(mGame.getPlayers(), mGame.getCurrentPlayer());
-            if (GameState.ROUND_START == mGame.getGameState()) this.mPlayButton.setText(resFormat(R.string.nextRound,mGame.getRoundOf().getString()));
         }
 
         else if (GameState.GAME_END == mGame.getGameState()) {
@@ -309,36 +282,16 @@ public class FiveKings extends Activity {
     }
 
 
-    private void clickedDrawOrDiscard(final Game.PileDecision drawOrDiscardPile) {
-        StringBuilder turnInfo = new StringBuilder(100);
-        mGame.setGameState(GameState.HUMAN_PICKED_CARD);
-        setWidgetsByGameState();
-
-        turnInfo.setLength(0);
-        //also sets GameState to END_HUMAN_TURN
-        mGame.takeHumanTurn(getText(R.string.humanTurnInfo).toString(), turnInfo, drawOrDiscardPile);
-        //at this point the DiscardPile still shows the old card if you picked it
-        //handles animating the card off the appropriate pile and making it appear in the hand
-        animateHumanPickUp(drawOrDiscardPile);
-        showHint(turnInfo.toString());
-    }
-
-
-    //Event Handler for clicks on cards or melds - called from DiscardPile drag listener
+    /*---------------------------------------------------*/
+    /* Event Handlers for clicks/drags on cards or melds */
+    /*---------------------------------------------------*/
     boolean discardedCard(final int iCardView) {
         CardView foundCardView= findViewByIndex(iCardView);
         setWidgetsByGameState();
-        //TODO:A Code in here could be merged with that in onAnimationEnd for computer discard
-        //including moving setDiscard out of findBestHand up to this level
-        //does it need to be set earlier for the Computer?
         if (GameState.END_HUMAN_TURN == mGame.getGameState()) {
             if (!mGame.getCurrentPlayer().isHuman()) throw new RuntimeException("discardedCard: player is not Human");
-            mGame.getCurrentPlayer().setHandDiscard(foundCardView.getCard());
-            if (mGame.endTurn() != null) animateRoundScore(mGame.getCurrentPlayer());
-            syncDisplay();
-            mGame.checkEndRound();
-            if (GameState.ROUND_END == mGame.getGameState()) mPlayButton.setText(getText(R.string.addScores));
-            else mPlayButton.setText(resFormat(R.string.nextPlayer, mGame.getNextPlayer().getName()));
+            mGame.setHandDiscard(foundCardView.getCard());
+            endTurnCheckRound(true);
         }
         return true;
     }
@@ -351,7 +304,7 @@ public class FiveKings extends Activity {
         //create trialMeld (one card at a time for now)
 
         ((HumanPlayer)mGame.getCurrentPlayer()).makeNewMeld(foundCardView.getCard());
-        syncDisplay();
+        updateHandsAndCards(true, false);
         return true;
     }
 
@@ -362,27 +315,65 @@ public class FiveKings extends Activity {
         //add to existing meld
 
         ((HumanPlayer)mGame.getCurrentPlayer()).addToMeld(meld, foundCardView.getCard());
-        syncDisplay();
+        updateHandsAndCards(true, false); //SHOW is true because this is a human hand
         return true;
     }
 
+    private CardView findViewByIndex(final int iCardView) {
+        CardView foundCardView=null;
+        //find the view we coded with this index - have to loop thru nested layouts
+        for (int iNestedLayout = 0; iNestedLayout < mCurrentCards.getChildCount(); iNestedLayout++) {
+            View rl = mCurrentCards.getChildAt(iNestedLayout);
+            if ((rl == null) || !(rl instanceof RelativeLayout)) continue;
+            RelativeLayout nestedLayout = (RelativeLayout)rl;
+            for (int iView = 0; iView < nestedLayout.getChildCount(); iView++) {
+                CardView cv = (CardView) nestedLayout.getChildAt(iView);
+                if ((cv != null) && (cv.getViewIndex() == iCardView)) {
+                    foundCardView = cv;
+                    break;
+                }
+            }
+            if (foundCardView != null) break;
+        }
+        if (foundCardView == null) { //less likely, but search melded cards too
+            for (int iNestedLayout = 0; iNestedLayout < mCurrentMelds.getChildCount(); iNestedLayout++) {
+                View rl = mCurrentMelds.getChildAt(iNestedLayout);
+                //Allows for the fake "Drag here to form new meld" TextView
+                if ((rl == null) || !(rl instanceof RelativeLayout)) continue;
+                RelativeLayout nestedLayout = (RelativeLayout)rl;
+                for (int iView = 0; iView < nestedLayout.getChildCount(); iView++) {
+                    CardView cv = (CardView) nestedLayout.getChildAt(iView);
+                    if (cv.getViewIndex() == iCardView) {
+                        foundCardView = cv;
+                        break;
+                    }
+                }
+            }
+        }
+        if (foundCardView == null) {
+            Toast.makeText(this, "No matching card found", Toast.LENGTH_SHORT).show();
+            Log.e(Game.APP_TAG, "discardedCard: No matching card found");
+        }
+        // else Toast.makeText(this, foundCardView.getCard().getCardString() + " discarded", Toast.LENGTH_SHORT).show();
+        return foundCardView;
+    }
 
 
-    /* COMMON METHODS FOR MANAGING UI ELEMENTS */
+    /*---------------------------------------------------*/
+    /* COMMON METHODS FOR ENABLING/DISABLING UI ELEMENTS */
+    /*---------------------------------------------------*/
     private void enablePlayButton() {
         if (this.mPlayButton != null) {
             this.mPlayButton.setEnabled(true);
-            this.mPlayButton.setVisibility(View.VISIBLE);
         }
     }
     private void disablePlayButton() {
         if (this.mPlayButton != null) {
             this.mPlayButton.setEnabled(false);
-            this.mPlayButton.setVisibility(View.INVISIBLE);
         }
     }
     //just prevent clicking, but for animations we need the buttons to be enabled
-    private void enableDrawDiscard() {
+    private void enableDrawDiscardClick() {
         if (this.mDrawPile != null) {
             this.mDrawPile.setEnabled(true);
             this.mDrawPile.setClickable(true);
@@ -392,7 +383,7 @@ public class FiveKings extends Activity {
             this.mDiscardPile.setClickable(true);
         }
     }
-    private void disableDrawDiscard() {
+    void disableDrawDiscardClick() {
         if (this.mDrawPile != null) {
             this.mDrawPile.setClickable(false);
         }
@@ -400,53 +391,55 @@ public class FiveKings extends Activity {
             this.mDiscardPile.setClickable(false);
         }
     }
-    private void setWidgetsByGameState() {
+
+
+    void setWidgetsForHuman(final String playerName) {
+        showHint(resFormat(R.string.yourCardsAndMelds, playerName));
+        disablePlayButton();
+        enableDrawDiscardClick();
+        animatePiles();
+    }
+
+    void setWidgetsByGameState() {
         if (mGame == null) return;
         switch (mGame.getGameState()) {
-            case TAKE_COMPUTER_TURN:
-                disablePlayButton();
-                disableDrawDiscard();
-                break;
-            case TAKE_HUMAN_TURN:
-                disablePlayButton();
-                enableDrawDiscard();
-                mGame.getCurrentPlayer().getPlayerLayout().setGreyedOut(true);
-                break;
+            case ROUND_START:
+            case TURN_START:
+            case TAKE_TURN:
             case HUMAN_PICKED_CARD:
                 disablePlayButton();
-                disableDrawDiscard();
+                disableDrawDiscardClick();
                 break;
             case END_HUMAN_TURN:
                 enablePlayButton();
-                disableDrawDiscard();
-                mGame.getCurrentPlayer().getPlayerLayout().setGreyedOut(false);
+                disableDrawDiscardClick();
+                mGame.getCurrentPlayer().getPlayerMiniHandLayout().setGreyedOut(false);
                 break;
 
             case NEW_GAME:
-            case ROUND_START:
-            case TURN_START:
             case ROUND_END:
             case GAME_END:
             default:
                 enablePlayButton();
-                disableDrawDiscard();
+                disableDrawDiscardClick();
                 break;
         }
     }
 
+    /*--------------------*/
     /* ANIMATION ROUTINES */
-    private void animateDealing(final int numCards, final List<Player> players) {
+    /*--------------------*/
+    private void animateDealing(final int numCards, final int numPlayers) {
 
-        final int numPlayers = players.size();
         final RelativeLayout fullScreenContent = (RelativeLayout)findViewById(R.id.fullscreen_content);
         mDrawPile.setVisibility(View.INVISIBLE);
         mDiscardPile.setVisibility(View.INVISIBLE);
 
         //the template card that animates from the center point to the hands
-        final CardView deck = new CardView(this, CardView.sBitmapCardBack);
-        final CardView dealtCardView = new CardView(this, CardView.sBitmapCardBack);
-        final RelativeLayout.LayoutParams pileLp = new RelativeLayout.LayoutParams((int)(CardView.INTRINSIC_WIDTH*PlayerLayout.DECK_SCALING),
-                                                                                    (int)(CardView.INTRINSIC_HEIGHT*PlayerLayout.DECK_SCALING));
+        final CardView deck = new CardView(this, CardView.sBlueBitmapCardBack);
+        final CardView dealtCardView = new CardView(this, CardView.sBlueBitmapCardBack);
+        final RelativeLayout.LayoutParams pileLp = new RelativeLayout.LayoutParams((int)(CardView.INTRINSIC_WIDTH* PlayerMiniHandLayout.DECK_SCALING),
+                                                                                    (int)(CardView.INTRINSIC_HEIGHT* PlayerMiniHandLayout.DECK_SCALING));
         pileLp.addRule(RelativeLayout.CENTER_HORIZONTAL);
         deck.setLayoutParams(pileLp);
         fullScreenContent.addView(deck);
@@ -464,6 +457,9 @@ public class FiveKings extends Activity {
                 mDrawPile.setVisibility(View.VISIBLE);
                 mDiscardPile.setVisibility(View.VISIBLE);
                 showDiscardPileCard();
+                mGame.updatePlayerMiniHands();
+                setWidgetsByGameState();
+                animatePlayerMiniHand(mGame.getNextPlayer().getPlayerMiniHandLayout());
             }
 
             @Override
@@ -487,13 +483,13 @@ public class FiveKings extends Activity {
                 dealtCardAnimator = dealtCardAnimator.clone();
                 dealtCardAnimator.setTarget(dealtCardView);
                 //offsets where the cards are dealt according to player
-                ObjectAnimator playerOffsetXAnimator = ObjectAnimator.ofFloat(dealtCardView, "TranslationX", mGame.getPlayer(iPlayer).getPlayerLayout().getTranslationX());
-                ObjectAnimator playerOffsetYAnimator = ObjectAnimator.ofFloat(dealtCardView, "TranslationY", mGame.getPlayer(iPlayer).getPlayerLayout().getTranslationY());
+                ObjectAnimator playerOffsetXAnimator = ObjectAnimator.ofFloat(dealtCardView, "TranslationX", mGame.getPlayerByIndex(iPlayer).getPlayerMiniHandLayout().getTranslationX());
+                ObjectAnimator playerOffsetYAnimator = ObjectAnimator.ofFloat(dealtCardView, "TranslationY", mGame.getPlayerByIndex(iPlayer).getPlayerMiniHandLayout().getTranslationY());
                 if (lastDealtCardAnimator == null) dealSet.play(dealtCardAnimator).with(playerOffsetXAnimator).with(playerOffsetYAnimator);
                 else dealSet.play(dealtCardAnimator).with(playerOffsetXAnimator).with(playerOffsetYAnimator).after(lastDealtCardAnimator);
                 //if this is the first card, then add an alpha animation to show the blank hand space being replaces by a card
                 if (iCard == 0) {
-                    CardView playerHandCard = mGame.getPlayer(iPlayer).getPlayerLayout().getCardView();
+                    CardView playerHandCard = mGame.getPlayerByIndex(iPlayer).getPlayerMiniHandLayout().getCardView();
                     alphaAnimator = ObjectAnimator.ofFloat(playerHandCard,"Alpha",ALMOST_TRANSPARENT_ALPHA, 1.0f);
                     alphaAnimator.setDuration(SHORT_ANIMATION);
                     dealSet.play(dealtCardAnimator).with(alphaAnimator);
@@ -517,7 +513,7 @@ public class FiveKings extends Activity {
         this.mDiscardPile.startAnimation(spinCardAnimation);
     }
 
-    private void animateHumanPickUp(final Game.PileDecision pickedPile) {
+    void animateHumanPickUp(final Game.PileDecision pickedPile) {
         final RelativeLayout drawAndDiscardPiles = (RelativeLayout)findViewById(R.id.draw_and_discard_piles);
         final CardView pileCardView;
         final RelativeLayout.LayoutParams pileLp = new RelativeLayout.LayoutParams(mDiscardPile.getLayoutParams());
@@ -561,7 +557,7 @@ public class FiveKings extends Activity {
 
             @Override
             public void onAnimationEnd(Animation animation) {
-                syncDisplay();
+                updateHandsAndCards(true, false); //true because this is human
                 drawAndDiscardPiles.removeView(pileCardView);
             }
 
@@ -574,7 +570,7 @@ public class FiveKings extends Activity {
     }
 
 
-    private void animateComputerPickUpAndDiscard(final int iPlayer, final Game.PileDecision pickedFrom) {
+    void animateComputerPickUpAndDiscard(final PlayerMiniHandLayout playerMiniHandLayout, final Game.PileDecision pickedFrom) {
         final RelativeLayout drawAndDiscardPiles = (RelativeLayout)findViewById(R.id.draw_and_discard_piles);
         final CardView pileCardView;
         final RelativeLayout.LayoutParams pileLp = new RelativeLayout.LayoutParams(mDiscardPile.getLayoutParams());
@@ -601,7 +597,7 @@ public class FiveKings extends Activity {
         else {
             //create a copy of the top Draw pile card and position over the current pile
             //doesn't show the card until it appears in your hand
-            pileCardView = new CardView(this, CardView.sBitmapCardBack);
+            pileCardView = new CardView(this, CardView.sBlueBitmapCardBack);
             pileLp.addRule(RelativeLayout.ALIGN_LEFT, mDrawPile.getId());
             pileLp.addRule(RelativeLayout.ALIGN_BOTTOM, mDrawPile.getId());
             pileCardView.setLayoutParams(pileLp);
@@ -615,11 +611,11 @@ public class FiveKings extends Activity {
                 (pickedFrom == Game.PileDecision.DISCARD_PILE ? R.animator.from_discardpile : R.animator.from_drawpile));
         pickedCardAnimator.setTarget(pileCardView);
 
-        final float translationX = mGame.getPlayer(iPlayer).getPlayerLayout().getTranslationX();
+        final float translationX = playerMiniHandLayout.getTranslationX();
         //These translations need to be adjusted according to whether we are drawing from Draw or Discard pile (+ an adjustment for the gap)
-        float adjustmentX = (float)(0.5 * CardView.INTRINSIC_WIDTH * PlayerLayout.DECK_SCALING + 10f);
+        float adjustmentX = (float)(0.5 * CardView.INTRINSIC_WIDTH * PlayerMiniHandLayout.DECK_SCALING + 10f);
         adjustmentX = (pickedFrom == Game.PileDecision.DISCARD_PILE ? -adjustmentX : +adjustmentX);
-        final float translationY = mGame.getPlayer(iPlayer).getPlayerLayout().getTranslationY();
+        final float translationY = playerMiniHandLayout.getTranslationY();
         final ObjectAnimator pickedCardXAnimator = ObjectAnimator.ofFloat(pileCardView, "TranslationX",translationX+adjustmentX );
         pickedCardXAnimator.setDuration(MEDIUM_ANIMATION);
         final ObjectAnimator pickedCardYAnimator = ObjectAnimator.ofFloat(pileCardView, "TranslationY", translationY);
@@ -628,7 +624,7 @@ public class FiveKings extends Activity {
 
         final Animator discardAnimator = AnimatorInflater.loadAnimator(this, R.animator.to_discardpile);
         discardAnimator.setTarget(discardCardView);
-        adjustmentX = (float)(-0.5 * CardView.INTRINSIC_WIDTH * PlayerLayout.DECK_SCALING );
+        adjustmentX = (float)(-0.5 * CardView.INTRINSIC_WIDTH * PlayerMiniHandLayout.DECK_SCALING );
         final ObjectAnimator discardXAnimator = ObjectAnimator.ofFloat(discardCardView, "TranslationX",translationX+adjustmentX,0f );
         discardXAnimator.setDuration(1000);
         final ObjectAnimator discardYAnimator = ObjectAnimator.ofFloat(discardCardView, "TranslationY", translationY,0f);
@@ -645,15 +641,7 @@ public class FiveKings extends Activity {
                 //remove extra cards created for the purpose of animation
                 drawAndDiscardPiles.removeView(discardCardView);
                 drawAndDiscardPiles.removeView(pileCardView);
-                if (mGame.endTurn() != null) animateRoundScore(mGame.getCurrentPlayer());
-                syncDisplay();
-                mGame.checkEndRound();
-
-                if (GameState.ROUND_END == mGame.getGameState())
-                    mPlayButton.setText(getText(R.string.addScores));
-                else
-                    mPlayButton.setText(resFormat(R.string.nextPlayer, mGame.getNextPlayer().getName()));
-                enablePlayButton();
+                endTurnCheckRound(Game.SHOW_ALL_CARDS);
             }
 
             @Override
@@ -670,16 +658,15 @@ public class FiveKings extends Activity {
 
     //show the score at 5x size, animating to the player hand
     void animateRoundScore(final Player currentPlayer) {
-        //can't animate the roundScore without showing it
-        currentPlayer.getPlayerLayout().setPlayedInFinalRound(true);
+        //set roundScore to visible and show it in AnimationStart
 
-        final TextView roundScoreView = currentPlayer.getPlayerLayout().getRoundScoreView();
+        final TextView roundScoreView = currentPlayer.getPlayerMiniHandLayout().getRoundScoreView();
         final AnimatorSet scaleAndTranslateSet = new AnimatorSet();
         final Animator scaleAnimator = AnimatorInflater.loadAnimator(this,R.animator.scale_score);
         scaleAnimator.setTarget(roundScoreView);
 
-        final float translationX = currentPlayer.getPlayerLayout().getTranslationX();
-        final float translationY = currentPlayer.getPlayerLayout().getTranslationY();
+        final float translationX = currentPlayer.getPlayerMiniHandLayout().getTranslationX();
+        final float translationY = currentPlayer.getPlayerMiniHandLayout().getTranslationY();
         //translate from the middle of the screen in X, and about 400f in Y (TODO:A measure from melds)
         final ObjectAnimator scoreXAnimator = ObjectAnimator.ofFloat(roundScoreView, "TranslationX", -translationX, 0f);
         final ObjectAnimator scoreYAnimator = ObjectAnimator.ofFloat(roundScoreView, "TranslationY", +400f, 0f);
@@ -688,10 +675,13 @@ public class FiveKings extends Activity {
         scaleAndTranslateSet.addListener(new Animator.AnimatorListener() {
                  @Override
                  public void onAnimationStart(Animator animator) {
+                     currentPlayer.updatePlayerMiniHand(true);
                  }
 
                  @Override
                  public void onAnimationEnd(Animator animator) {
+                     currentPlayer.addToCumulativeScore();
+                     currentPlayer.updatePlayerMiniHand(true); //to show cumulative score when roundScore arrives
                  }
 
                  @Override
@@ -708,86 +698,63 @@ public class FiveKings extends Activity {
         scaleAndTranslateSet.start();
     }
 
-
-    /* METHODS FOR SETTING UP PIECES OF THE DISPLAY */
-    void removeAndAddPlayerHands(PlayerLayout deletedPlayerLayout) {
-        if (mGame != null) {
-            final RelativeLayout fullScreenContent = (RelativeLayout)findViewById(R.id.fullscreen_content);
-            //remove the old ones first (with a new/deleted  player they have to be relaid out)
-            //this one won't be deleted because we deleted it from the player list
-            if (null != deletedPlayerLayout) fullScreenContent.removeView(deletedPlayerLayout);
-            for (int iPlayer = 0; iPlayer < mGame.getPlayers().size(); iPlayer++) {
-                PlayerLayout playerLayout = mGame.getPlayer(iPlayer).getPlayerLayout();
-                fullScreenContent.removeView(playerLayout);
-                mGame.getPlayer(iPlayer).removePlayerLayout();
-                fullScreenContent.addView(mGame.getPlayer(iPlayer).addPlayerLayout(this, iPlayer, mGame.getPlayers().size()));
-            }
-        }
+    void animatePlayerMiniHand(PlayerMiniHandLayout playerMiniHandLayout) {
+        final Animation bounceAnimation = AnimationUtils.loadAnimation(this,R.anim.hand_click_me);
+        playerMiniHandLayout.getCardView().startAnimation(bounceAnimation);
     }
 
 
-    //set background of player hands, visible discard, and cards/melds
-    private void syncDisplay() {
+    void endTurnCheckRound(boolean showCards) {
+        mGame.endTurn();
+        updateHandsAndCards(showCards, mGame.isFinalTurn());
+        if (mGame.isFinalTurn()) animateRoundScore(mGame.getCurrentPlayer());
+        mGame.checkEndRound();
+        if (GameState.ROUND_START == mGame.getGameState()) {
+            mPlayButton.setText(resFormat(R.string.nextRound,mGame.getRoundOf().getString()));
+            showHint(resFormat(R.string.displayScores, null));
+            mGame.updatePlayerMiniHands();
+            enablePlayButton();
+        }
+        else if (GameState.TURN_START == mGame.getGameState()) {
+            animatePlayerMiniHand(mGame.getNextPlayer().getPlayerMiniHandLayout());
+        }
+        else if (GameState.GAME_END == mGame.getGameState()) {
+            mPlayButton.setText(R.string.newGame);
+            enablePlayButton();
+        }
+    }
+
+    /*----------------------------------------------*/
+    /* SHOW CONTENTS OF YOUR HAND                   */
+    /*----------------------------------------------*/
+    void updateHandsAndCards(final boolean showCardsAlways, boolean afterFinalTurn) {
         showDiscardPileCard();
         //automatically shows all round scores if final round
-        Player.updatePlayerHands(mGame.getPlayers(), mGame.getCurrentPlayer());
+        mGame.updatePlayerMiniHands();
 
         if (mGame.getCurrentPlayer() == mGame.getPlayerWentOut()) {
             mGameInfoToast.setText(String.format(getText(R.string.wentOut).toString(),mGame.getPlayerWentOut().getName()));
             mGameInfoToast.show();
         }
-        //don't show computer cards unless SHOW_ALL_CARDS is set or final round
-        if (mGame.getCurrentPlayer().isHuman() || Game.SHOW_ALL_CARDS || ((mGame.getPlayerWentOut() != null)
-                    &&((mGame.getGameState() == GameState.TAKE_COMPUTER_TURN) || (mGame.getGameState() == GameState.ROUND_END)))) {
-            int iBase = showCards(mGame.getCurrentPlayer().getHandUnMelded(),  mCurrentCards, 0, false, mGame.getCurrentPlayer().isHuman());
-            showCards(mGame.getCurrentPlayer().getHandMelded(), mCurrentMelds, iBase, true,  mGame.getCurrentPlayer().isHuman());
-        }
-        else {
+        //showCards is true if being called from Human Player or by Computer Player with SHOW_ALL_CARDS set
+        if (showCardsAlways || afterFinalTurn) {
+            int iBase = showCards(mGame.getCurrentPlayer().getHandUnMelded(), mCurrentCards, 0, false, mGame.getCurrentPlayer().isHuman());
+            showCards(mGame.getCurrentPlayer().getHandMelded(), mCurrentMelds, iBase, true, mGame.getCurrentPlayer().isHuman());
+        }else {
             //now just clears the cards&melds area
             showNothing(mGame.getRoundOf().getRankValue(), mCurrentCards, mCurrentMelds);
         }
     }
-    private void showDiscardPileCard() {
-        //TODO:B better would be card stack/list that automatically associates the right card
-        // but right now we need to change the Card/Image for a fixed CardView (which is linked into the display)
-        //this handles getDiscardPileCard == null
-        mDiscardPile.setCard(this, mGame.getDiscardPileCard());
-    }
 
-    private void showHint(final String mText) {
-        if ((mGame.getRoundOf() != null) && (mGame.getRoundOf().getOrdinal() <= HELP_ROUNDS.getOrdinal()) && (mText.length() > 0)) {
-            mGameInfoToast.setText(mText);
-            mGameInfoToast.show();
-        }
-    }
-
-    //open Add Player dialog
-    void showAddPlayers() {
-        if ((mGame != null) && (mGame.getRoundOf() != null) && (mGame.getRoundOf() != Rank.getLowestRank())) {
-            mGameInfoToast.setText(R.string.cantAdd);
-            mGameInfoToast.show();
-        }else {
-            removeAndAddPlayerHands(null); //will call again if we actually add any players
-            //pop open the Players dialog for the names
-            EnterPlayersDialogFragment epdf = EnterPlayersDialogFragment.newInstance(null, false, true, -1);
-            epdf.show(getFragmentManager(), null);
-        }
-    }
-
-    void showEditPlayer(final String oldPlayerName, final boolean oldIsHuman, final int iPlayer) {
-        EnterPlayersDialogFragment epdf = EnterPlayersDialogFragment.newInstance(oldPlayerName, oldIsHuman, false, iPlayer);
-        epdf.show(getFragmentManager(),null);
-    }
-
-    //just show the backs of the cards
+    //shows nothing (mini-hand has the draw or discard)
     private void showNothing(final int numCards, final RelativeLayout cardsLayout, final RelativeLayout meldsLayout) {
         cardsLayout.removeAllViews();
         meldsLayout.removeAllViews();
-        /*
+        /* show just the backs of cards
         ArrayList<CardView> cardLayers = new ArrayList<>(Game.MAX_CARDS);
         float xOffset=0f;
         for (int iCard=0; iCard<numCards; iCard++) {
-            CardView cv = new CardView(this, CardView.sBitmapCardBack );
+            CardView cv = new CardView(this, CardView.sBlueBitmapCardBack );
             cv.setTranslationX(xOffset);
             cv.bringToFront();
             cv.setClickable(false);
@@ -807,7 +774,7 @@ public class FiveKings extends Activity {
     private int showCards(final ArrayList<CardList> meldLists, final RelativeLayout relativeLayout, final int iViewBase, final boolean showBorder, final boolean isHuman) {
         int xMeldOffset=0;
         int xCardOffset=0;
-        int yMeldOffset= (int) (+MELD_OFFSET_RATIO * CardView.INTRINSIC_WIDTH);
+        int yMeldOffset= (int) (+MELD_OFFSET_RATIO * CardView.INTRINSIC_HEIGHT);
         int iView=iViewBase;
         relativeLayout.removeAllViews();
 
@@ -816,7 +783,7 @@ public class FiveKings extends Activity {
             RelativeLayout nestedLayout = new RelativeLayout(this);
             nestedLayout.setTag(cardList); //so we can retrieve which meld a card is dragged onto
             //Create and add an invisible view that fills the necessary space for all cards in this meld
-            CardView cvTemplate = new CardView(this, CardView.sBitmapCardBack );
+            CardView cvTemplate = new CardView(this, CardView.sBlueBitmapCardBack);
             cvTemplate.setVisibility(View.INVISIBLE);
             //the final width is the first card + the offsets of the others
             cvTemplate.setMinimumWidth((int) (CardView.INTRINSIC_WIDTH + (cardList.size() - 1) * CARD_OFFSET_RATIO * CardView.INTRINSIC_WIDTH));
@@ -887,6 +854,64 @@ public class FiveKings extends Activity {
         return iView; //used as the starting index for mCurrentMelds
     }//end showCards
 
+
+
+    private void showDiscardPileCard() {
+        //TODO:B better would be card stack/list that automatically associates the right card
+        // but right now we need to change the Card/Image for a fixed CardView (which is linked into the display)
+        //this handles getDiscardPileCard == null
+        mDiscardPile.setCard(this, mGame.getDiscardPileCard());
+    }
+
+    void showHint(final String mText) {
+        if ((mGame.getRoundOf() != null) && (mGame.getRoundOf().getOrdinal() <= HELP_ROUNDS.getOrdinal()) && (mText.length() > 0)) {
+            mGameInfoToast.setText(mText);
+            mGameInfoToast.show();
+        }
+    }
+
+    //open Add Player dialog
+    void showAddPlayers() {
+        if ((mGame != null) && (mGame.getRoundOf() != null) && (mGame.getRoundOf() != Rank.getLowestRank())) {
+            mGameInfoToast.setText(R.string.cantAdd);
+            mGameInfoToast.show();
+        }else {
+            //pop open the Players dialog for the names
+            EnterPlayersDialogFragment epdf = EnterPlayersDialogFragment.newInstance(null, false, true, -1);
+            epdf.show(getFragmentManager(), null);
+        }
+    }
+
+    void showEditPlayer(final String oldPlayerName, final boolean oldIsHuman, final int iPlayer) {
+        EnterPlayersDialogFragment epdf = EnterPlayersDialogFragment.newInstance(oldPlayerName, oldIsHuman, false, iPlayer);
+        epdf.show(getFragmentManager(),null);
+    }
+
+    /* GETTER * Yuck */
+
+    Game getmGame() {
+        return mGame;
+    }
+
+    /* SMALL UTILITY METHODS */
+    private TextView clone(final TextView vFrom) {
+        final TextView vTo = new TextView(this);
+        cloneLayout(vFrom, vTo);
+        return vTo;
+    }
+
+    static private void cloneLayout(final TextView vFrom, final TextView vTo) {
+        vTo.setLayoutParams(vFrom.getLayoutParams());
+        vTo.setPadding(vFrom.getPaddingLeft(), vFrom.getPaddingTop(), vFrom.getPaddingRight(), vFrom.getPaddingBottom());
+    }
+
+    private String resFormat(final int resource, final String param) {
+        return String.format(getText(resource).toString(),param);
+    }
+
+
+    /* DEPRECATED METHODS */
+    //Keeping this code in case we reintroduce and end-of-game score list
     @Deprecated
     private void showPlayerScores2(List<Player> players) {
 
@@ -945,65 +970,27 @@ public class FiveKings extends Activity {
     }//end showPlayerScores
 
 
-    CardView findViewByIndex(final int iCardView) {
-        CardView foundCardView=null;
-        //find the view we coded with this index - have to loop thru nested layouts
-        for (int iNestedLayout = 0; iNestedLayout < mCurrentCards.getChildCount(); iNestedLayout++) {
-            View rl = mCurrentCards.getChildAt(iNestedLayout);
-            if ((rl == null) || !(rl instanceof RelativeLayout)) continue;
-            RelativeLayout nestedLayout = (RelativeLayout)rl;
-            for (int iView = 0; iView < nestedLayout.getChildCount(); iView++) {
-                CardView cv = (CardView) nestedLayout.getChildAt(iView);
-                if ((cv != null) && (cv.getViewIndex() == iCardView)) {
-                    foundCardView = cv;
-                    break;
-                }
-            }
-            if (foundCardView != null) break;
+
+    //set background of player hands, visible discard, and cards/melds
+    @Deprecated
+    void syncDisplay() {
+        showDiscardPileCard();
+        //automatically shows all round scores if final round
+        mGame.updatePlayerMiniHands();
+
+        if (mGame.getCurrentPlayer() == mGame.getPlayerWentOut()) {
+            mGameInfoToast.setText(String.format(getText(R.string.wentOut).toString(),mGame.getPlayerWentOut().getName()));
+            mGameInfoToast.show();
         }
-        if (foundCardView == null) { //less likely, but search melded cards too
-            for (int iNestedLayout = 0; iNestedLayout < mCurrentMelds.getChildCount(); iNestedLayout++) {
-                View rl = mCurrentMelds.getChildAt(iNestedLayout);
-                //Allows for the fake "Drag here to form new meld" TextView
-                if ((rl == null) || !(rl instanceof RelativeLayout)) continue;
-                RelativeLayout nestedLayout = (RelativeLayout)rl;
-                for (int iView = 0; iView < nestedLayout.getChildCount(); iView++) {
-                    CardView cv = (CardView) nestedLayout.getChildAt(iView);
-                    if (cv.getViewIndex() == iCardView) {
-                        foundCardView = cv;
-                        break;
-                    }
-                }
-            }
+        //don't show computer cards unless SHOW_ALL_CARDS is set or final round
+        if (mGame.getCurrentPlayer().isHuman() || Game.SHOW_ALL_CARDS || ((mGame.getPlayerWentOut() != null)
+                &&((mGame.getGameState() == GameState.TAKE_TURN) || (mGame.getGameState() == GameState.ROUND_END)))) {
+            int iBase = showCards(mGame.getCurrentPlayer().getHandUnMelded(),  mCurrentCards, 0, false, mGame.getCurrentPlayer().isHuman());
+            showCards(mGame.getCurrentPlayer().getHandMelded(), mCurrentMelds, iBase, true,  mGame.getCurrentPlayer().isHuman());
         }
-        if (foundCardView == null) {
-            Toast.makeText(this, "No matching card found", Toast.LENGTH_SHORT).show();
-            Log.e(Game.APP_TAG, "discardedCard: No matching card found");
+        else {
+            //now just clears the cards&melds area
+            showNothing(mGame.getRoundOf().getRankValue(), mCurrentCards, mCurrentMelds);
         }
-        // else Toast.makeText(this, foundCardView.getCard().getCardString() + " discarded", Toast.LENGTH_SHORT).show();
-        return foundCardView;
     }
-
-    /* GETTER * Yuck */
-
-    Game getmGame() {
-        return mGame;
-    }
-
-    /* SMALL UTILITY METHODS */
-    private TextView clone(final TextView vFrom) {
-        final TextView vTo = new TextView(this);
-        cloneLayout(vFrom, vTo);
-        return vTo;
-    }
-
-    static private void cloneLayout(final TextView vFrom, final TextView vTo) {
-        vTo.setLayoutParams(vFrom.getLayoutParams());
-        vTo.setPadding(vFrom.getPaddingLeft(), vFrom.getPaddingTop(), vFrom.getPaddingRight(), vFrom.getPaddingBottom());
-    }
-
-    private String resFormat(final int resource, final String param) {
-        return String.format(getText(resource).toString(),param);
-    }
-
 }

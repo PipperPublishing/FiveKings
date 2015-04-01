@@ -7,47 +7,61 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.Iterator;
-import java.util.List;
 
 /**
  * Created by Jeffrey on 1/22/2015.
-* 2/3/2015 If DiscardPile reduces score, then use it, otherwise use drawPile
+ * 2/3/2015 If DiscardPile reduces score, then use it, otherwise use drawPile
  * 2/4/2015 Remove drawPileCard from useDiscardPile decision (may later add back % decisions) and changes to separate meld/score with drawCard
  * 2/4/2015 Split discard/draw, meld&score, and discard into separate steps to make it easier to include human players
  * 2/15/2015 Sort unmelded cards for easier viewing
  * 2/15/2015 Initialize isFirstTurn and then check in useDiscardPile to see if we need to do initial melding
  * 2/17/2015 Don't use iPosition for now
  * 2/17/2015    Added isHuman to control when you can click on piles
- *              Added checkHandSize() to make sure we have the right number of cards
+ * Added checkHandSize() to make sure we have the right number of cards
  * 2/24/2015    Move Hand to be inner class
- *              Eliminated meldAndEvaluateAsIs, evaluateIfFirst by melding when we deal the hand
+ * Eliminated meldAndEvaluateAsIs, evaluateIfFirst by melding when we deal the hand
  * 2/26/2015    getUnMelded returns melds and singles unrolled into one CardList for display
  * 2/27/2015    Added addToMeld and makeNewMeld; include checking for dropping back onto itself
  * 2/28/2015    Added Meld definition to record valuation (tells us whether it's a valid meld)
  * 3/3/2015     Added static method to check if a CardList is a valid meld
  * 3/4/2015     Removed meldAndEvaluate (replaced with checkMeldsAndEvaluate)
  * 3/7/2015     Zero round score in initGame so that display shows correctly
- *              and split updateRoundScore out so it can be called in endTurn
+ * and split updateRoundScore out so it can be called in endCurrentPlayerTurn
  * 3/11/2015    Moved updatePlayerLayout to PlayerLayout as "update"
  * 3/12/2015    v0.4.01:
- *              Change method parameters to final
+ * Change method parameters to final
  * 3/13/2015    Moved calculateValue to be a Player method so it can be overridden and brought cardScore in here from Card
  * 3/14/2015    meldUsingHeuristics: When melding singles need 2 wildcards to make a meld from a single (don't keep partials with a wildcard)
- *              Removed iPosition; maintaining this during deletions or adds would be painful
+ * Removed iPosition; maintaining this during deletions or adds would be painful
  * 3/15/2015    meldUsingHeuristics needs to add wildcards into singles if they aren't melded away
  * 3/16/2015    Convert to Meld using Hand; also create a PlayerHand which has roundOf and discard added
- *              and relevant methods
+ * and relevant methods
+ * 3/22/2015    Move logTurn etc from Game to here or subclasses
+ * 3/26/2015    Introduced TURN_STATE to tell what to do when clicked
  * TODO:A : Done? Need to eliminate partial melds of wildcards in Permutations
  * TODO:A Move roundScore to Hand (Down from Player)
  */
 abstract class Player implements HandComparator {
     private String name;
-    //dealer rotates every round, but iPosition says where this player sits relative to others
     private int roundScore;
     private int cumulativeScore;
-    protected Hand hand;
 
-    private PlayerLayout playerLayout; //representation on-screen including score etc
+    protected Hand hand;
+    protected Card drawnCard; //possibly should also be in hand (like the Discard)
+    static protected enum TurnState {
+        NOT_MY_TURN, PREPARE_TURN, PLAY_TURN
+    }
+    protected TurnState turnState;
+
+
+    @Deprecated
+    static final Comparator<Player> playerComparatorByScoreDesc = new Comparator<Player>() {
+        @Override
+        public int compare(final Player lhs, final Player rhs) {
+            return lhs.cumulativeScore - rhs.cumulativeScore;
+        }
+    };
+    private PlayerMiniHandLayout playerMiniHandLayout; //representation on-screen including score etc
 
     Player(final String name) {
         this.name = name;
@@ -60,49 +74,50 @@ abstract class Player implements HandComparator {
         this.roundScore = player.roundScore;
         this.cumulativeScore = player.cumulativeScore;
         this.hand = player.hand;
-        this.playerLayout = player.playerLayout;
+        this.playerMiniHandLayout = player.playerMiniHandLayout;
     }
 
-    final boolean initGame() {
+
+    boolean initGame() {
         this.cumulativeScore = 0;
         this.roundScore = 0; //only zero this here because we display all scores at the start of a new game
-        this.hand=null;
-        this.playerLayout=null;
+        this.hand = null;
+        this.playerMiniHandLayout = null;
+        this.drawnCard = null;
+        this.turnState = TurnState.NOT_MY_TURN;
         return true;
     }
 
-    boolean initAndDealNewHand(Deck.DrawPile drawPile,Rank roundOf, MeldedCardList.MeldMethod method) {
+    boolean initAndDealNewHand(final Deck.DrawPile drawPile, final Rank roundOf) {
         this.roundScore = 0;
+        this.turnState = TurnState.NOT_MY_TURN;
         this.hand = new Hand(drawPile, roundOf);
         return true;
     }
 
-    @Deprecated
-    static final Comparator<Player> playerComparatorByScoreDesc = new Comparator<Player>() {
-        @Override
-        public int compare(final Player lhs, final Player rhs) {
-            return lhs.cumulativeScore - rhs.cumulativeScore;
-        }
-    };
-
-
     //default implementation does nothing
-    int checkMeldsAndEvaluate(boolean isFinalRound) {return -1;}
+    int checkMeldsAndEvaluate(final boolean isFinalTurn) {
+        return -1;
+    }
 
     abstract Card discardFromHand(final Card cardToDiscard);
 
-    protected void checkHandSize() throws RuntimeException{
-        if (!hand.checkSize()) throw new RuntimeException(Game.APP_TAG + "checkHandSize: Hand length is too short/long");
+    protected void checkHandSize() throws RuntimeException {
+        if (!hand.checkSize())
+            throw new RuntimeException(Game.APP_TAG + "checkHandSize: Hand length is too short/long");
     }
 
-
-    final PlayerLayout addPlayerLayout(final Context c, final int iPlayer, final int numPlayers)  {
-        this.playerLayout = new PlayerLayout(c, this.name, iPlayer, numPlayers);
-        return this.playerLayout;
+    final PlayerMiniHandLayout addPlayerMiniHandLayout(final Context c, final int iPlayer, final int numPlayers) {
+        this.playerMiniHandLayout = new PlayerMiniHandLayout(c, this, iPlayer, numPlayers);
+        return this.playerMiniHandLayout;
     }
 
-    final void removePlayerLayout() {
-        this.playerLayout = null;
+    final void removePlayerMiniHand() {
+        this.playerMiniHandLayout = null;
+    }
+
+    final void updatePlayerMiniHand(boolean isCurrent) {
+        if (playerMiniHandLayout != null) playerMiniHandLayout.update(isCurrent, this.isOut(), this.getRoundScore(), this.getCumulativeScore());
     }
 
     //Player GETTERS and SETTERS
@@ -113,7 +128,7 @@ abstract class Player implements HandComparator {
 
     final void updateName(final String updatedName) {
         this.name = updatedName;
-        this.playerLayout.updateName(updatedName);
+        this.playerMiniHandLayout.updateName(updatedName);
     }
 
     final int addToCumulativeScore() {
@@ -125,9 +140,15 @@ abstract class Player implements HandComparator {
         return name;
     }
 
-    final Card getHandDiscard() { return hand.getDiscard();}
+    final Card getHandDiscard() {
+        return hand.getDiscard();
+    }
 
-    final String getMeldedString(final boolean withBraces){
+    void setHandDiscard(Card discard) {
+        hand.setDiscard(discard);
+    }
+
+    final String getMeldedString(final boolean withBraces) {
         StringBuilder mMelds = new StringBuilder("Melds ");
         if (withBraces) mMelds.append("{");
         mMelds.append(MeldedCardList.getString(hand.melds));
@@ -153,54 +174,96 @@ abstract class Player implements HandComparator {
         }
         return partialAndSingles.toString();
     }
-   final int getHandValueOrScore(final boolean isFinalScore) {
-        return hand.calculateValueAndScore(isFinalScore);
-   }
 
-   final int getRoundScore() {
+    final int getHandValueOrScore(final boolean isFinalScore) {
+        return hand.calculateValueAndScore(isFinalScore);
+    }
+
+    final int getRoundScore() {
         return roundScore;
     }
 
-   final PlayerLayout getPlayerLayout() {
-        return playerLayout;
+    final PlayerMiniHandLayout getPlayerMiniHandLayout() {
+        return playerMiniHandLayout;
     }
 
-   final ArrayList<CardList> getHandMelded() {
+    final ArrayList<CardList> getHandMelded() {
         ArrayList<CardList> combined = new ArrayList<>();
         combined.addAll(hand.getMelded());
         return combined;
-   }
-
+    }
 
     //TODO:A: Not unrolling these right now (Human doesn't see this)
     //because otherwise we don't know what to add back to
     //have to eliminate "combined"
-   final ArrayList<CardList> getHandUnMelded() {
+    final ArrayList<CardList> getHandUnMelded() {
         ArrayList<CardList> combined = new ArrayList<>();
         combined.addAll(hand.getUnMelded());
         combined.add(hand.getSingles());
         return combined;
-   }
+    }
 
-   final int getCumulativeScore() {
+    final int getCumulativeScore() {
         return cumulativeScore;
     }
 
-   abstract boolean isHuman();
+    Card getDrawnCard() {
+        return drawnCard;
+    }
 
-   final boolean isOut() {
+    abstract boolean isHuman();
+
+    final boolean isOut() {
         return ((hand != null) && (hand.calculateValueAndScore(true) == 0));
     }
 
-   void setHandDiscard(Card discard) {hand.setDiscard(discard);}
+    /*-----------------------------------------------------*/
+    /* GAME PLAYING TURNS - depends on what type of player */
+    /*-----------------------------------------------------*/
+    abstract void prepareTurn(final FiveKings fKActivity);
 
+    abstract Game.PileDecision takeTurn(final FiveKings fKActivity, final PlayerMiniHandLayout playerMiniHandLayout, Game.PileDecision drawOrDiscardPile, final Deck deck, final boolean isFinalTurn);
 
+    abstract void logTurn(final boolean isFinalTurn);
 
+    final Player endTurn(final Player passedPlayerWentOut, final Deck deck) {
+        Player playerWentOut = passedPlayerWentOut;
+        //TODO:A Nasty that we have to pass deck down all this way to do discard
+        //remove discard from player's hand and add to discardPile
+        deck.discardPile.add(this.discardFromHand(this.getHandDiscard()));
+        //only HumanPlayer does anything
+        this.checkMeldsAndEvaluate(playerWentOut != null);
+
+        String sValuationOrScore = (null == playerWentOut) ? "Valuation=" : "Score=";
+        Log.d(Game.APP_TAG, "after...... " + this.getMeldedString(true) + this.getPartialAndSingles(true) + " "
+                + sValuationOrScore + this.getHandValueOrScore(null != playerWentOut));
+
+        if ((playerWentOut == null) && this.isOut()) playerWentOut = this;
+        if (playerWentOut != null) {
+            this.updateRoundScore();
+            playerMiniHandLayout.setPlayedInFinalTurn(true);
+        }
+        this.turnState = TurnState.NOT_MY_TURN;
+        return playerWentOut;
+    }
+
+    @Override
+    public boolean isFirstBetterThanSecond(final MeldedCardList testHand, final MeldedCardList bestHand, final boolean isFinalTurn) {
+        return testHand.calculateValueAndScore(isFinalTurn) <= bestHand.calculateValueAndScore(isFinalTurn);
+    }
+
+    final TurnState getTurnState() {
+        return turnState;
+    }
+
+    final void setTurnState(TurnState turnState) {
+        this.turnState = turnState;
+    }
 
     /*-------------------------------------------------------------
-    /* INNER CLASS: Hand - use of MeldedCardList specific to Players */
+            /* INNER CLASS: Hand - use of MeldedCardList specific to Players */
     /*-----------------------------------------------------------*/
-   protected class Hand extends MeldedCardList {
+    protected class Hand extends MeldedCardList {
         private Card discard; //discard associated with this hand
 
         Hand(final Rank roundOf) {
@@ -213,7 +276,8 @@ abstract class Player implements HandComparator {
             this(roundOf);
             if (drawPile != null) {
                 singles = new Meld(this.playerHandComparator, drawPile.deal(roundOf.getRankValue())); //only for human really
-                this.clear(); this.addAll(singles);
+                this.clear();
+                this.addAll(singles);
             }
         }
 
@@ -221,7 +285,8 @@ abstract class Player implements HandComparator {
         //note that it doesn't copy other values which are not relevant
         protected Hand(final Rank roundOf, final CardList cards, final Card discard) {
             this(roundOf);
-            this.clear(); this.addAll(cards);
+            this.clear();
+            this.addAll(cards);
             this.discard = discard;
         }
 
@@ -229,7 +294,7 @@ abstract class Player implements HandComparator {
             return roundOf.getRankValue() == this.size();
         }
 
-        Card discardFrom(final Card discardedCard){
+        Card discardFrom(final Card discardedCard) {
             this.remove(discardedCard);
             syncCardsAndMelds();
             return discardedCard;
@@ -258,19 +323,19 @@ abstract class Player implements HandComparator {
             //check that all cards in melds, partialMelds, and singles are in hand.cards (remove if not)
             for (Iterator<Meld> mIterator = melds.iterator(); mIterator.hasNext(); ) {
                 CardList cl = mIterator.next();
-                for (Iterator<Card> cIter = cl.iterator(); cIter.hasNext();) {
+                for (Iterator<Card> cIter = cl.iterator(); cIter.hasNext(); ) {
                     if (!this.contains(cIter.next())) cIter.remove();
                 }
                 if (cl.isEmpty()) mIterator.remove();
             }
             for (Iterator<Meld> clIterator = partialMelds.iterator(); clIterator.hasNext(); ) {
                 CardList cl = clIterator.next();
-                for (Iterator<Card> cIter = cl.iterator(); cIter.hasNext();) {
+                for (Iterator<Card> cIter = cl.iterator(); cIter.hasNext(); ) {
                     if (!this.contains(cIter.next())) cIter.remove();
                 }
                 if (cl.isEmpty()) clIterator.remove();
             }
-            for (Iterator<Card> cardIterator = singles.iterator(); cardIterator.hasNext();) {
+            for (Iterator<Card> cardIterator = singles.iterator(); cardIterator.hasNext(); ) {
                 if (!this.contains(cardIterator.next())) cardIterator.remove();
             }
 
@@ -282,10 +347,10 @@ abstract class Player implements HandComparator {
 
         //used by Computer (or eventually maybe Human with [Meld] button)
         // the Hand this is being called on is the test hand, so we set here the member variables
-        protected int meldAndEvaluate(final MeldMethod method, final boolean isFinalRound) {
-            if (method == MeldMethod.PERMUTATIONS) meldBestUsingPermutations(isFinalRound);
-            else meldUsingHeuristics(isFinalRound);
-            return this.calculateValueAndScore(isFinalRound);
+        protected int meldAndEvaluate(final MeldMethod method, final boolean isFinalTurn) {
+            if (method == MeldMethod.PERMUTATIONS) meldBestUsingPermutations(isFinalTurn);
+            else meldUsingHeuristics(isFinalTurn);
+            return this.calculateValueAndScore(isFinalTurn);
         }
 
         /* HEURISTICS
@@ -297,7 +362,7 @@ abstract class Player implements HandComparator {
         In the final scoring, calculate partialMelds and unMelded value
         Evaluation accounts for hand potential, but Scoring is just what's left after melding
         */
-        private boolean meldUsingHeuristics(final boolean isFinalRound) {
+        private boolean meldUsingHeuristics(final boolean isFinalTurn) {
             //Log.d(Game.APP_TAG,"Entering meldUsingHeuristics");
             final int numCards = this.size();
             final Rank wildCardRank = this.roundOf;
@@ -324,54 +389,52 @@ abstract class Player implements HandComparator {
             for (Card card : cardsSortedByRankDesc) {
                 //if the card is already in a full meld, then skip it
                 // don't' have to decomposeAndCheck wildcards because we've removed them
-                if (!contains(fullRankMelds,card)) {
+                if (!contains(fullRankMelds, card)) {
                     if (rankMatch.isEmpty()) rankMatch.add(card);
-                    else if (card.isSameRank(rankMatch.get(rankMatch.size()-1))) {
+                    else if (card.isSameRank(rankMatch.get(rankMatch.size() - 1))) {
                         rankMatch.setMeldType(MeldType.RANK);
                         rankMatch.add(card);
-                    }
-                    else {
+                    } else {
                         //not same rank; record and restart the sequence
-                        addWildcardsAndRecord(fullRankMelds,partialRankMelds,rankMatch,wildCards,isFinalRound);
+                        addWildcardsAndRecord(fullRankMelds, partialRankMelds, rankMatch, wildCards, isFinalTurn);
                         rankMatch.clear();
                         rankMatch.add(card);
                     }//end-if same rank
                 }
             }
-            addWildcardsAndRecord(fullRankMelds,partialRankMelds,rankMatch,wildCards,isFinalRound);
+            addWildcardsAndRecord(fullRankMelds, partialRankMelds, rankMatch, wildCards, isFinalTurn);
 
             //Sequences - for now full sequences (3*-4*-5*) or broken pairs (e.g. 3*-5*) in partialSequences list
             //Log.d(Game.APP_TAG,"---find matches in each sequence");
             CardList cardsSortedBySuit = new CardList(nonWildCards);
             Collections.sort(cardsSortedBySuit, Card.cardComparatorSuitFirst); //e.g. 3S,5S,JS,6H,8H...
             Meld sequenceMatch = new Meld(this.playerHandComparator, MeldComplete.SINGLES);
-            for (Suit suit:Suit.values()) {
+            for (Suit suit : Suit.values()) {
                 sequenceMatch.clear();
                 for (Card card : cardsSortedBySuit) {
                     //if the card is already in a full meld or sequence, then skip it
-                    if (card.isSameSuit(suit) && !contains(fullRankMelds,card) && !contains(fullSequences,card)) {
+                    if (card.isSameSuit(suit) && !contains(fullRankMelds, card) && !contains(fullSequences, card)) {
                         if (sequenceMatch.isEmpty()) sequenceMatch.add(card);
-                        else if (1 == card.getRankDifference(sequenceMatch.get(sequenceMatch.size()-1))) {
+                        else if (1 == card.getRankDifference(sequenceMatch.get(sequenceMatch.size() - 1))) {
                             sequenceMatch.setMeldType(MeldType.SEQUENCE);
                             sequenceMatch.add(card);
                         }
                         //broken sequence; record but put into partial sequences AND into next sequence (unless we used aa wildcard to make it full)
-                        else if ((1 == sequenceMatch.size()) && (2== card.getRankDifference(sequenceMatch.get(sequenceMatch.size()-1)))) {
+                        else if ((1 == sequenceMatch.size()) && (2 == card.getRankDifference(sequenceMatch.get(sequenceMatch.size() - 1)))) {
                             sequenceMatch.setMeldType(MeldType.SEQUENCE);
                             sequenceMatch.add(card);
-                            boolean madePartialIntoFull = addWildcardsAndRecord(fullSequences,partialSequences,sequenceMatch,wildCards,isFinalRound);
+                            boolean madePartialIntoFull = addWildcardsAndRecord(fullSequences, partialSequences, sequenceMatch, wildCards, isFinalTurn);
                             sequenceMatch.clear();
                             if (!madePartialIntoFull) sequenceMatch.add(card);
-                        }
-                        else{
+                        } else {
                             //not adjacent; record and restart the sequence
-                            addWildcardsAndRecord(fullSequences,partialSequences,sequenceMatch,wildCards,isFinalRound);
+                            addWildcardsAndRecord(fullSequences, partialSequences, sequenceMatch, wildCards, isFinalTurn);
                             sequenceMatch.clear();
                             sequenceMatch.add(card);
                         }
                     }//end-if same suit
                 }
-                addWildcardsAndRecord(fullSequences,partialSequences,sequenceMatch,wildCards,isFinalRound);
+                addWildcardsAndRecord(fullSequences, partialSequences, sequenceMatch, wildCards, isFinalTurn);
             }//end for Suits
 
             //Go back and check if partial rank melds overlap with full sequences; if so, drop the partial rank meld
@@ -383,14 +446,14 @@ abstract class Player implements HandComparator {
             //If we still have 2+ wildcards, meld singles into a full meld - but don't create partials with a wildcard
             Meld meldOfSingles = new Meld(this.playerHandComparator, MeldComplete.SINGLES);
             for (Card card : cardsSortedByRankDesc) {
-                if (wildCards.size()<=1) break;
-                if (!contains(fullRankMelds,card) && !contains(fullSequences,card)) {
+                if (wildCards.size() <= 1) break;
+                if (!contains(fullRankMelds, card) && !contains(fullSequences, card)) {
                     meldOfSingles.clear();
                     meldOfSingles.add(card);
                     meldOfSingles.add(wildCards.get(0));
                     wildCards.remove(0);
                     meldOfSingles.setMeldType(MeldType.EITHER); //because it's X-Wild-Wild
-                    addWildcardsAndRecord(fullRankMelds,partialRankMelds,meldOfSingles,wildCards,isFinalRound);
+                    addWildcardsAndRecord(fullRankMelds, partialRankMelds, meldOfSingles, wildCards, isFinalTurn);
                 }
             }
 
@@ -419,21 +482,21 @@ abstract class Player implements HandComparator {
 
             // For final scoring (last licks) we don't show partial melds (they all go into singles)
             // For intermediate scoring they count reduced and we don't show in singles
-            if (isFinalRound) {
+            if (isFinalTurn) {
                 //partialMelds should always already be clear (because checked earlier)
                 if (!partialRankMelds.isEmpty() || !partialSequences.isEmpty())
                     Log.e(Game.APP_TAG, "meldUsingHeuristics: partialMelds not empty in final scoring");
                 partialMelds.clear();
-            }else {
+            } else {
                 partialMelds = new ArrayList<>(partialRankMelds);
                 partialMelds.addAll(partialSequences);
             }
             //Clean up what is now left in singles  - for final scoring we put wildcards and partial melds/sequences into singles
             // since the wildcards are no longer being melded into partials need to add them back here
             singles = new Meld(this.playerHandComparator, nonWildCards);
-            for (Card card:nonWildCards) {
-                if (contains(melds,card)) singles.remove(card);
-                if (!isFinalRound && contains(partialMelds,card)) singles.remove(card);
+            for (Card card : nonWildCards) {
+                if (contains(melds, card)) singles.remove(card);
+                if (!isFinalTurn && contains(partialMelds, card)) singles.remove(card);
             }
             singles.addAll(wildCards);
 
@@ -444,13 +507,12 @@ abstract class Player implements HandComparator {
         }//end int meldUsingHeuristics
 
         //save test if full; see if you can pad it to a full with wildcards and keep/discard if not
-        private boolean addWildcardsAndRecord(final ArrayList<Meld> fulls, final ArrayList<Meld> partials, final Meld test, final CardList wildCards, final boolean isFinalRound) {
-            boolean madePartialIntoFull=false;
-            if (test.size()>=3) {
+        private boolean addWildcardsAndRecord(final ArrayList<Meld> fulls, final ArrayList<Meld> partials, final Meld test, final CardList wildCards, final boolean isFinalTurn) {
+            boolean madePartialIntoFull = false;
+            if (test.size() >= 3) {
                 test.setMeldComplete(MeldComplete.FULL);
-                fulls.add((Meld)test.clone());
-            }
-            else if (2 == test.size()) {
+                fulls.add((Meld) test.clone());
+            } else if (2 == test.size()) {
                 if (!wildCards.isEmpty()) {
                     test.add(wildCards.get(0));
                     wildCards.remove(0);
@@ -458,8 +520,8 @@ abstract class Player implements HandComparator {
                     test.setMeldComplete(MeldComplete.FULL);
                     fulls.add((Meld) test.clone());
                     madePartialIntoFull = true;
-                } else if (isFinalRound) { //should not be called if we don't have enough wildcards
-                    Log.e(Game.APP_TAG,"addWildcardsAndRecord: wildCards.isEmpty and isFinalRound");
+                } else if (isFinalTurn) { //should not be called if we don't have enough wildcards
+                    Log.e(Game.APP_TAG, "addWildcardsAndRecord: wildCards.isEmpty and isFinalTurn");
                 } else {
                     test.setMeldComplete(MeldComplete.PARTIAL);
                     partials.add((Meld) test.clone());
@@ -474,7 +536,7 @@ abstract class Player implements HandComparator {
             This is the sledgehammer approach - we use this until it gets too slow and then switch to heuristics
             Everything melded gives the maximum evaluation of 0
              */
-        private void meldBestUsingPermutations(final boolean isFinalRound) {
+        private void meldBestUsingPermutations(final boolean isFinalTurn) {
             final int numCards = this.size();
             final Rank wildCardRank = this.roundOf;
 
@@ -482,18 +544,18 @@ abstract class Player implements HandComparator {
             MeldedCardList bestMeldedCardList = new MeldedCardList(this.roundOf, this.playerHandComparator);
             //have to do this two step process (passing best.. and cardsCopy separately)
             //because decomposeAndCheck is used in multiple ways
-            cardsCopy.decomposeAndCheck(isFinalRound, bestMeldedCardList);
+            cardsCopy.decomposeAndCheck(isFinalTurn, bestMeldedCardList);
             this.copyJustMelds(bestMeldedCardList);
 
         }//end meldBestUsingPermutations
 
         //Helper for HumanPlayer.checkMeldsAndEvaluate (throws away decomposition, but calculates valuation)
-        final int checkMeldsAndEvaluate(final boolean isFinalRound) {
-            final MeldedCardList decomposedMelds = new MeldedCardList(this.roundOf,this.playerHandComparator);
+        final int checkMeldsAndEvaluate(final boolean isFinalTurn) {
+            final MeldedCardList decomposedMelds = new MeldedCardList(this.roundOf, this.playerHandComparator);
             for (MeldedCardList.Meld meld : this.melds) {
-                meld.decomposeAndCheck(isFinalRound, decomposedMelds);
+                meld.decomposeAndCheck(isFinalTurn, decomposedMelds);
             }
-            return this.calculateValueAndScore(isFinalRound);
+            return this.calculateValueAndScore(isFinalTurn);
         }
 
         /* SETTERS and GETTERS */
@@ -502,36 +564,12 @@ abstract class Player implements HandComparator {
         }
 
         final void setDiscard(final Card discard) {
-            if (null == discard)throw new RuntimeException("setDiscard: discard == null");
+            if (null == discard) throw new RuntimeException("setDiscard: discard == null");
             this.discard = discard;
         }
 
 
     }//end Inner Class Hand
-
-
-
-    /* STATIC METHODS FOR PlayerLayout */
-    static void updatePlayerHands(final List<Player> players, final Player currentPlayer) {
-        for (Player player: players) {
-            if (player.getPlayerLayout() == null) continue;
-            player.getPlayerLayout().update(currentPlayer == player, player.isOut(),
-                    player.getRoundScore(), player.getCumulativeScore());
-        }
-    }
-
-    static void resetAndUpdatePlayerHands(final List<Player> players, final Player currentPlayer) {
-        for (Player player : players) {
-            player.getPlayerLayout().setPlayedInFinalRound(false);
-            player.getPlayerLayout().setGreyedOut(true);
-        }
-        updatePlayerHands(players, currentPlayer);
-    }
-
-   @Override
-    public boolean isFirstBetterThanSecond(final MeldedCardList testHand, final MeldedCardList bestHand, final boolean isFinalRound) {
-        return testHand.calculateValueAndScore(isFinalRound) <= bestHand.calculateValueAndScore(isFinalRound);
-   }
 
 
 }

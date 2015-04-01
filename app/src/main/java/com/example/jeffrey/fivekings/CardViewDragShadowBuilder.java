@@ -16,7 +16,7 @@ class CardViewDragShadowBuilder extends View.DragShadowBuilder {
     private Drawable shadow;
 
     // Defines the constructor for myDragShadowBuilder
-    CardViewDragShadowBuilder(View v) {
+    CardViewDragShadowBuilder(final View v) {
 
         // Stores the View parameter passed to myDragShadowBuilder.
         super(v);
@@ -27,7 +27,7 @@ class CardViewDragShadowBuilder extends View.DragShadowBuilder {
 
     // Defines a callback that sends the drag shadow dimensions and touch point back to the system.
     @Override
-    public void onProvideShadowMetrics(Point size, Point touch) {
+    public void onProvideShadowMetrics(final Point size, final Point touch) {
         int width, height;
         // Sets the shadow to the same size as the card (otherwise hard to see under finger)
         width = getView().getWidth();
@@ -44,7 +44,7 @@ class CardViewDragShadowBuilder extends View.DragShadowBuilder {
     // Defines a callback that draws the drag shadow in a Canvas that the system constructs
     // from the dimensions passed in onProvideShadowMetrics().
     @Override
-    public void onDrawShadow(Canvas canvas) {
+    public void onDrawShadow(final Canvas canvas) {
         // Draws the ColorDrawable in the Canvas passed in from the system.
         shadow.draw(canvas);
     }

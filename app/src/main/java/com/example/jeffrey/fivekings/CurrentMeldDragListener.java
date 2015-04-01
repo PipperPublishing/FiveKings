@@ -16,7 +16,7 @@ import com.example.jeffrey.fivekings.util.Utilities;
  */
 class CurrentMeldDragListener  implements View.OnDragListener  {
     @Override
-    public boolean onDrag(View v, DragEvent event) {
+    public boolean onDrag(final View v, final DragEvent event) {
         RelativeLayout rl = (RelativeLayout)v;
 
         // Defines a variable to store the action type for the incoming event
@@ -27,7 +27,7 @@ class CurrentMeldDragListener  implements View.OnDragListener  {
             case DragEvent.ACTION_DRAG_STARTED:
                 // Determines if this View can accept the dragged data
                 if (event.getClipDescription().hasMimeType(ClipDescription.MIMETYPE_TEXT_PLAIN)) {
-                    rl.startAnimation(Utilities.instantFade(0.3f, 0.3f));
+                    rl.startAnimation(Utilities.instantFade(FiveKings.THIRD_TRANSPARENT_ALPHA, FiveKings.THIRD_TRANSPARENT_ALPHA));
                     // returns true to indicate that the View can accept the dragged data.
                     return true;
                 }

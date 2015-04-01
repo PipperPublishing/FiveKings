@@ -14,7 +14,7 @@ import android.widget.RelativeLayout;
 class CurrentMeldsLayoutDragListener implements View.OnDragListener {
     // This is the method that the system calls when it dispatches a drag event to the listener.
     @Override
-    public boolean onDrag(View v, DragEvent event) {
+    public boolean onDrag(final View v, final DragEvent event) {
         RelativeLayout rl = (RelativeLayout)v;
 
         // Defines a variable to store the action type for the incoming event

@@ -20,7 +20,7 @@ class DiscardPileDragEventListener implements View.OnDragListener {
     // This is the method that the system calls when it dispatches a drag event to the
     // listener.
     @Override
-    public boolean onDrag(View v, DragEvent event) {
+    public boolean onDrag(final View v, final DragEvent event) {
         CardView cv = (CardView)v;
 
         // Defines a variable to store the action type for the incoming event
@@ -32,7 +32,7 @@ class DiscardPileDragEventListener implements View.OnDragListener {
                 // Determines if this View can accept the dragged data
                 if (event.getClipDescription().hasMimeType(ClipDescription.MIMETYPE_TEXT_PLAIN)) {
                     //fades out of the draw pile
-                    cv.startAnimation(Utilities.instantFade(0.5f, 0.5f));
+                    cv.startAnimation(Utilities.instantFade(FiveKings.HALF_TRANSPARENT_ALPHA, FiveKings.HALF_TRANSPARENT_ALPHA));
                     // returns true to indicate that the View can accept the dragged data.
                     return true;
                 }
@@ -49,7 +49,7 @@ class DiscardPileDragEventListener implements View.OnDragListener {
                 return true;
 
             case DragEvent.ACTION_DRAG_EXITED:
-                cv.startAnimation(Utilities.instantFade(0.5f, 0.5f));
+                cv.startAnimation(Utilities.instantFade(FiveKings.HALF_TRANSPARENT_ALPHA, FiveKings.HALF_TRANSPARENT_ALPHA));
                 return true;
 
             case DragEvent.ACTION_DROP:

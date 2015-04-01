@@ -117,7 +117,7 @@ class MeldedCardList extends CardList{
     }
 
 
-    protected int calculateValueAndScore(boolean isFinalRound) {
+    protected int calculateValueAndScore(boolean isFinalTurn) {
         float intermediateValue = 0.0f;
         int finalScore =0;
         for (Card card : this) {
@@ -138,16 +138,16 @@ class MeldedCardList extends CardList{
                 intermediateValue += meld.valuation;
             }
         }
-        return isFinalRound ? finalScore : (int)intermediateValue;
+        return isFinalTurn ? finalScore : (int)intermediateValue;
     }
 
     //Helper for Meld.decomposeAndCheck - meldType is already set in decomposeAndCheck
-    void addDecomposition(boolean isFinalRound, final Meld testMeld) {
+    void addDecomposition(boolean isFinalTurn, final Meld testMeld) {
         if (testMeld.size() >= 3) {
             testMeld.setMeldComplete(MeldComplete.FULL);
             this.melds.add((Meld) testMeld.clone());
         }
-        else if (!isFinalRound && (2 == testMeld.size())) {
+        else if (!isFinalTurn && (2 == testMeld.size())) {
             testMeld.setMeldComplete(MeldComplete.PARTIAL);
             this.partialMelds.add((Meld) testMeld.clone());
         }
@@ -231,7 +231,7 @@ class MeldedCardList extends CardList{
         If it's not a single meld, will return the breakdown
         it's the caller's responsibility to not call this with too long a "meld" (since permutation time goes up geometrically)
         returns best arrangement and returns partial meld and singles components if it can't be fully melded*/
-        protected int decomposeAndCheck(final boolean isFinalRound, final MeldedCardList bestMeldedCardList) {
+        protected int decomposeAndCheck(final boolean isFinalTurn, final MeldedCardList bestMeldedCardList) {
             int numCards = this.size();
             Rank wildCardRank = MeldedCardList.this.roundOf;
             Permuter indexes = new Permuter(numCards);
@@ -328,7 +328,7 @@ class MeldedCardList extends CardList{
 
                     if (testIsMelding) testMeld.add(testCard);
                     else {// testCard doesn't fit the testMeld - now check if testMeld has fewer than 3 cards then we can move it to unMelded
-                        permHand.addDecomposition(isFinalRound, testMeld);
+                        permHand.addDecomposition(isFinalTurn, testMeld);
                         testMeld.clear();
                         testMeld.add(testCard);
                         isRankMeld = true;
@@ -337,12 +337,12 @@ class MeldedCardList extends CardList{
                     }
                 }//for iCard=1..numCards (testing permutation)
                 //anything left over in testMeld needs to be added to unMelded or Melded appropriately
-                permHand.addDecomposition(isFinalRound, testMeld);
+                permHand.addDecomposition(isFinalTurn, testMeld);
 
                 //reset the bestPermutation if this is a lower score
                 //use the player's specific criteria (ComputerPlayer or SmarterComputerPlayer)
-                if ((bestValuation == -1) || playerHandComparator.isFirstBetterThanSecond(permHand, bestMeldedCardList, isFinalRound)) {
-                    bestValuation = permHand.calculateValueAndScore(isFinalRound);
+                if ((bestValuation == -1) || playerHandComparator.isFirstBetterThanSecond(permHand, bestMeldedCardList, isFinalTurn)) {
+                    bestValuation = permHand.calculateValueAndScore(isFinalTurn);
                     //use Hand.copyFrom because bestMeldedCardList is a (final) parameter
                     bestMeldedCardList.copyFrom(permHand);
                 }
@@ -368,10 +368,10 @@ class MeldedCardList extends CardList{
         }//end int decomposeAndCheck
 
         @Deprecated
-        protected int decomposeAndCheck(final boolean isFinalRound) {
+        protected int decomposeAndCheck(final boolean isFinalTurn) {
             //new copy of best found so far - not used here
             MeldedCardList bestHand = new MeldedCardList(MeldedCardList.this.roundOf, MeldedCardList.this.playerHandComparator);
-            return decomposeAndCheck(isFinalRound, bestHand);
+            return decomposeAndCheck(isFinalTurn, bestHand);
         }
 
         private void setCheckedAndValid() {
@@ -404,11 +404,11 @@ class MeldedCardList extends CardList{
             return meldType;
         }
 
-        void setMeldComplete(MeldComplete meldComplete) {
+        void setMeldComplete(final MeldComplete meldComplete) {
             this.meldComplete = meldComplete;
         }
 
-        void setMeldType(MeldType meldType) {
+        void setMeldType(final MeldType meldType) {
             this.meldType = meldType;
         }
     }//end class Meld
@@ -444,10 +444,10 @@ class MeldedCardList extends CardList{
     //by default, wildcards have value INTERMEDIATE_WILDCARD_VALUE so that there is incentive to meld them
     //but not incentive to discard them
     //In final scoring they have full value (20 for rank wildcards, and 50 for Jokers)
-    static int getCardScore(Card card, Rank wildCardRank, boolean isFinalRound) {
+    static int getCardScore(Card card, Rank wildCardRank, boolean isFinalTurn) {
         final int cardScore;
         //if final round, then rank wildCard=20, Joker=50, otherwise Rank value
-        if (isFinalRound) cardScore = card.getCardValue(wildCardRank);
+        if (isFinalTurn) cardScore = card.getCardValue(wildCardRank);
             //if intermediate, then any wildcard=1 (including Jokers), otherwise Rank value
         else cardScore = (card.isWildCard(wildCardRank) ? INTERMEDIATE_WILD_CARD_VALUE : card.getCardValue(wildCardRank));
         return cardScore;

@@ -13,7 +13,7 @@ package com.example.jeffrey.fivekings;
  * 3/21/2015    Prefer full rank melds over sequences
  * TODO:B: Merge common piece of isFirstBetterThanSecond with keepDiscardDecision
  */
-class StrategyComputerPlayer extends EvaluationComputerPlayer{
+class StrategyComputerPlayer extends ComputerPlayer {
 
     StrategyComputerPlayer(final String name) {
         super(name);
@@ -21,19 +21,19 @@ class StrategyComputerPlayer extends EvaluationComputerPlayer{
 
 
     @Override
-    Game.PileDecision tryDiscardOrDrawPile(final MeldedCardList.MeldMethod method, final boolean isFinalRound, final Card discardPileCard, final Card drawPileCard) {
+    Game.PileDecision tryDiscardOrDrawPile(final MeldedCardList.MeldMethod method, final boolean isFinalTurn, final Card discardPileCard, final Card drawPileCard) {
         Game.PileDecision decision;
 
         //also sets method parameter this.discard - ugly way of returning that
-        Hand bestHand = findBestHand(method, isFinalRound, discardPileCard);
+        Hand bestHand = findBestHand(method, isFinalTurn, discardPileCard);
         //use Discard Pile if it was better than the existing hand
         //OR if it's the best we can probably do (we probably won't reduce valuation with DrawPile)
-        if ((bestHand.getDiscard() != discardPileCard) && keepDiscardDecision(bestHand, this.hand, discardPileCard, isFinalRound)) {
+        if ((bestHand.getDiscard() != discardPileCard) && keepDiscardDecision(bestHand, this.hand, discardPileCard, isFinalTurn)) {
             decision = Game.PileDecision.DISCARD_PILE;
             this.hand = bestHand;
         } else {
             decision = Game.PileDecision.DRAW_PILE;
-            this.hand = findBestHand(method, isFinalRound, drawPileCard);
+            this.hand = findBestHand(method, isFinalTurn, drawPileCard);
         }
 
         return decision; //just for logging and animation
@@ -42,11 +42,11 @@ class StrategyComputerPlayer extends EvaluationComputerPlayer{
 
     //most of these are the same test, but we don't use calculateHandValue if it was just because a single card improved things
     // and there's a good chance of drawing to add to a meld / complete a partial meld
-    private boolean keepDiscardDecision(final Hand bestDiscardPileHand, final Hand currentHand, final Card discardPileCard, final boolean isFinalRound) {
+    private boolean keepDiscardDecision(final Hand bestDiscardPileHand, final Hand currentHand, final Card discardPileCard, final boolean isFinalTurn) {
         final boolean keepDiscardDecision;
 
         //1. If we're out with bestDiscardPileHand then obviously pick that - MUST KEEP THIS TEST
-        if (bestDiscardPileHand.calculateValueAndScore(isFinalRound) == 0) keepDiscardDecision = true;
+        if (bestDiscardPileHand.calculateValueAndScore(isFinalTurn) == 0) keepDiscardDecision = true;
 
         //2. Whichever option has more full melds is better (not always true depending on what is left)
         else if (bestDiscardPileHand.numMelds() != currentHand.numMelds()) keepDiscardDecision = (bestDiscardPileHand.numMelds() > currentHand.numMelds());
@@ -55,16 +55,16 @@ class StrategyComputerPlayer extends EvaluationComputerPlayer{
         else if (bestDiscardPileHand.numMeldedCards() != currentHand.numMeldedCards())  keepDiscardDecision = (bestDiscardPileHand.numMeldedCards() > currentHand.numMeldedCards()) ;
 
         //5. or more partial melds on an intermediate round
-        else if (!isFinalRound && bestDiscardPileHand.numPartialMelds() > currentHand.numPartialMelds()) keepDiscardDecision = true;
+        else if (!isFinalTurn && bestDiscardPileHand.numPartialMelds() > currentHand.numPartialMelds()) keepDiscardDecision = true;
         //6. on an Intermediate Round, prefer rank melds over sequence melds - this only adds partial meld test
-        else if (!isFinalRound && (bestDiscardPileHand.numPartialMelds() == currentHand.numPartialMelds())
+        else if (!isFinalTurn && (bestDiscardPileHand.numPartialMelds() == currentHand.numPartialMelds())
                 && (bestDiscardPileHand.numPartialMelds() > 0) && (bestDiscardPileHand.numPartialRankMelds() != currentHand.numPartialRankMelds())) {
             keepDiscardDecision = (bestDiscardPileHand.numPartialRankMelds() > currentHand.numPartialRankMelds());
         }
         //6. same number of melds, same number of unmelded cards; are there partial or full melds we could meld to?
         else if ((currentHand.numPartialMelds() > 0) || (currentHand.numMelds() > 0)) keepDiscardDecision = false;
         //7. if melds are empty and the improvement was just a card replacement, use DrawPile if we might be able to do better
-        else if ((bestDiscardPileHand.calculateValueAndScore(isFinalRound) < currentHand.calculateValueAndScore(isFinalRound))
+        else if ((bestDiscardPileHand.calculateValueAndScore(isFinalTurn) < currentHand.calculateValueAndScore(isFinalTurn))
                 && (discardPileCard.getRankDifference(Rank.EIGHT) > 0)) keepDiscardDecision = false;
         else keepDiscardDecision = true;
 
@@ -72,10 +72,10 @@ class StrategyComputerPlayer extends EvaluationComputerPlayer{
     }
 
     @Override
-    public boolean isFirstBetterThanSecond(final MeldedCardList testHand, final MeldedCardList bestHand, final boolean isFinalRound) {
+    public boolean isFirstBetterThanSecond(final MeldedCardList testHand, final MeldedCardList bestHand, final boolean isFinalTurn) {
         final boolean testBetterThanBest;
         //1. If we're out with testHand then obviously pick that
-        if (testHand.calculateValueAndScore(isFinalRound) == 0) testBetterThanBest = true;
+        if (testHand.calculateValueAndScore(isFinalTurn) == 0) testBetterThanBest = true;
 
         //2. Whichever option has more full melds is better (not always true depending on what is left)
         else if (testHand.numMelds() != bestHand.numMelds()) testBetterThanBest = (testHand.numMelds() > bestHand.numMelds());
@@ -98,7 +98,7 @@ class StrategyComputerPlayer extends EvaluationComputerPlayer{
             testBetterThanBest = (testHand.numPartialRankMelds() > bestHand.numPartialRankMelds());
         }
         //8. This check is only used to decide on a discard, not on DrawPile vs. DiscardPile
-        else testBetterThanBest =  (testHand.calculateValueAndScore(isFinalRound) < bestHand.calculateValueAndScore(isFinalRound));
+        else testBetterThanBest =  (testHand.calculateValueAndScore(isFinalTurn) < bestHand.calculateValueAndScore(isFinalTurn));
         return testBetterThanBest;
     }
 

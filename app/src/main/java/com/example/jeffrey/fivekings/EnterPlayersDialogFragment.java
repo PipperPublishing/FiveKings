@@ -28,7 +28,7 @@ public class EnterPlayersDialogFragment extends DialogFragment {
 
     //use newInstance to pass arguments to the Bundle which the dialog can access
     // apparently this is preferred to custom member fields and setters
-    static EnterPlayersDialogFragment newInstance(String oldPlayerName, boolean oldIsHuman, boolean addingFlag, int iPlayer) {
+    static EnterPlayersDialogFragment newInstance(final String oldPlayerName, final boolean oldIsHuman, final boolean addingFlag, final int iPlayer) {
         EnterPlayersDialogFragment ePDF = new EnterPlayersDialogFragment();
         Bundle args = new Bundle();
         args.putString(playerArg, oldPlayerName);
@@ -40,7 +40,7 @@ public class EnterPlayersDialogFragment extends DialogFragment {
     }
 
     @Override
-    public Dialog onCreateDialog(Bundle args) {
+    public Dialog onCreateDialog(final Bundle args) {
         //use getArguments because they were passed to the fragment
         final String playerName=getArguments().getString(playerArg, "");
         final boolean isHuman=getArguments().getBoolean(isHumanArg, false);

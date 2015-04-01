@@ -15,7 +15,8 @@ class CardView extends ImageView {
     private Card card; //TODO:A would like to make this final again
     private final int viewIndex; //index in layout
 
-    static final int sBitmapCardBack = R.drawable.b2fv;
+    static final int sRedBitmapCardBack = R.drawable.b2fv;
+    static final int sBlueBitmapCardBack = R.drawable.b1fv;
     static int INTRINSIC_WIDTH = -1;
     static int INTRINSIC_HEIGHT = -1;
 
@@ -30,7 +31,7 @@ class CardView extends ImageView {
             {R.drawable.st3, R.drawable.st4, R.drawable.st5, R.drawable.st6, R.drawable.st7, R.drawable.st8, R.drawable.st9, R.drawable.st10, R.drawable.stj, R.drawable.stq, R.drawable.stk}
     };
 
-    CardView(Context c, Card card, int viewIndex) {
+    CardView(final Context c, final Card card, final int viewIndex) {
         super(c);
         checkSetIntrinsic(c);
         this.viewIndex = viewIndex;
@@ -41,7 +42,7 @@ class CardView extends ImageView {
     }
 
     //for card back and any other non-face-card which doesn't need viewIndex or card
-    CardView(Context c, int resource) {
+    CardView(final Context c, final int resource) {
         super(c);
         checkSetIntrinsic(c);
         this.card = null;
@@ -49,7 +50,7 @@ class CardView extends ImageView {
         this.viewIndex = -1;
     }
 
-    public CardView(Context c, AttributeSet attributeSet) {
+    public CardView(final Context c, final AttributeSet attributeSet) {
         super(c, attributeSet);
         checkSetIntrinsic(c);
         this.card = null;
@@ -57,11 +58,11 @@ class CardView extends ImageView {
     }
 
     //Copy constructor
-    CardView(Context c, CardView cv) {
+    CardView(final Context c, final CardView cv) {
         this(c, cv.card, -1);
     }
 
-    void checkSetIntrinsic(Context c) {
+    final void checkSetIntrinsic(final Context c) {
         if(INTRINSIC_WIDTH==-1)
         {
             INTRINSIC_WIDTH = c.getResources().getDrawable(R.drawable.joker1).getIntrinsicWidth();
@@ -70,7 +71,7 @@ class CardView extends ImageView {
     }
 
     //TODO:B this is a hack because we are changing that card
-    void setCard(Context c, Card card) {
+    void setCard(final Context c, final Card card) {
         this.card = card;
 
         if (card == null) this.setImageDrawable(null);

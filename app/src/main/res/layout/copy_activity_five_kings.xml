@@ -2,7 +2,7 @@
              xmlns:tools="http://schemas.android.com/tools"
              android:layout_width="match_parent"
              android:layout_height="match_parent"
-             android:background="@android:color/holo_blue_light"
+             android:background="@android:color/holo_blue_dark"
              android:id="@+id/fullscreen_content"
              tools:context=".FiveKings"
              android:paddingTop="@dimen/abc_action_bar_stacked_max_height"
@@ -20,6 +20,18 @@
         android:layout_alignParentTop="true"
         >
 
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:textAppearance="?android:attr/textAppearanceSmall"
+            android:text="@string/blank"
+            android:id="@+id/current_round"
+            android:clipChildren="false"
+            android:layout_centerHorizontal="true"
+            android:textStyle="italic"
+            android:layout_alignParentTop="false"
+            android:layout_below="@+id/drawPile"/>
+
         <view
             android:id="@+id/drawPile"
             class="com.example.jeffrey.fivekings.CardView"
@@ -27,7 +39,7 @@
             android:layout_height="72dp"
             android:contentDescription="@string/Draw"
             android:text="@string/Draw"
-            android:src="@drawable/b1fv"
+            android:src="@drawable/b2fv"
             android:clipChildren="false"
             android:layout_alignParentTop="true"
             android:layout_toLeftOf="@+id/spacer"
@@ -40,7 +52,7 @@
             android:clipChildren="false"
             android:layout_centerHorizontal="true"
             android:layout_alignParentTop="true"
-            android:layout_below="@+id/drawPile"/>
+            android:layout_below="@+id/current_round"/>
 
         <view
             android:id="@+id/discardPile"
@@ -56,30 +68,16 @@
 
     </RelativeLayout>
 
-    <Button
-        android:id="@+id/Play"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="@string/startGame"
-        android:layout_gravity="center_horizontal|bottom"
-        android:layout_centerHorizontal="true"
-        android:background="@android:drawable/dialog_holo_light_frame"
-        android:textColor="@color/primary_text_default_material_light"
-        android:layout_below="@+id/draw_and_discard_piles"
-        android:textAppearance="@style/TextAppearance.AppCompat.Small"
-        android:maxLines="1"
-        android:backgroundTint="@android:color/holo_blue_bright"/>
-
     <LinearLayout
+        android:layout_above="@+id/Play"
         android:orientation="vertical"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:clipChildren="false"
         android:id="@+id/play_area"
         android:paddingTop="10dp"
-        android:layout_below="@+id/Play"
-        android:layout_alignParentTop="false"
-        android:layout_alignParentBottom="true">
+        android:layout_below="@+id/draw_and_discard_piles"
+        android:layout_alignParentTop="false">
 
         <!-- Use layout_weight=1 for current_cards and current_melds; this makes them fill empty space equally -->
         <RelativeLayout
@@ -107,6 +105,17 @@
 
 
     </LinearLayout>
+
+    <Button
+        android:id="@+id/Play"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="@string/startGame"
+        android:layout_gravity="center_horizontal|bottom"
+        android:layout_alignParentBottom="true"
+        android:layout_centerHorizontal="true"
+        android:background="@android:drawable/btn_default"
+        android:textColor="@color/primary_text_default_material_light"/>
 
 
 </RelativeLayout>

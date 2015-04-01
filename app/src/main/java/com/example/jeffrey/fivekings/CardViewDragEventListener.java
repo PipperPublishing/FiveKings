@@ -13,7 +13,7 @@ class CardViewDragEventListener implements View.OnDragListener {
     // This is the method that the system calls when it dispatches a drag event to the
     // listener.
     @Override
-    public boolean onDrag(View v, DragEvent event) {
+    public boolean onDrag(final View v, final DragEvent event) {
         CardView cardView = (CardView)v;
 
         // Defines a variable to store the action type for the incoming event
