@@ -125,7 +125,7 @@ DONE: A rank meld > rank meld with wildcards > sequence meld
 
 
 ----------------------
->>> v0.4.03 Clean Up and Refactoring
+v0.4.03 Clean Up and Refactoring
 DONE: change takeComputerTurn and takeHumanTurn to Player methods
 - comments from Catherine
     * DONE: don't like "add scores" phrasing
@@ -143,54 +143,64 @@ DONE: When you continue with a new game sometimes the old Layouts are not all re
 DONE: This doesn't handle if removed player is the dealer
 
 ----------------------
-v0.4.04 Clean-up
+>>>> v0.5.01: Menu start and clean-up
+
+DONE    - or have a setting
+DONE For Computer, if cards are not being shown, just have one touch to move current player and play
+DONE: Eliminate ROUND_END
+
+
+Menu
+DONE Help/Instructions
+DONE: No deal animation
+DONE: New Game
+    - Start a new game with new players
+
+DONE:- remove [Next Button] , except for Humans
+DONE: replace [Play Computer] with touching the cards or some other gesture
+DONE: About with Version number and contact information
+
+DONE: Another run at spinner
+
+---------------
+v0.5.02 Clean-up for Carolyn
+- Celebrate win!
+>>> Helpful hints if you click on the wrong place
+    - especially Play button
+    - if it's a new round, then indicate that (check GameState)
 - TODO:A's!!!
-- Improve logic flow and understandability of FiveKings, Game, PlayerLayout etc
-    - push player Hand updates to individual players rather than mass updates of screen
-- Look at CardList implementation and consider LinkedHashSet or others which provide
-    - check for non-duplicates
-    - automatic ordering
+- Remove Deprecated code
 - cancel animation if I get bored with dealing
         - if you just touch the screen or the Play button
 - For Humans, don't show cards until second touch of card (before show card backs)
-- Hourglass or spinner to indicate it is thinking
-addWildcardsAndRecord: wildCards.isEmpty and isFinalTurn - not really a bug
-- Eliminate ROUND_END
-------------------------
-v0.5.00: Menu
-
-- Instructions
+- Add an extra click to expose your cards if human players are next to each other
 - Settings
     - Show other players cards with/except for next player after you
-- Play
-    - Start a new game with new players
 
-- Add an extra click to expose your cards if human players are next to each other
-    - just use normal [Play Turn] button currently used for Computer hands
-    - remove [Next Button] , except for Humans
-    - replace [Play Computer] with touching the cards or some other gesture
 
-- Hibernate state if forced to
-- Clean up Game state flow and handling
-- Look at use of Static and Inner classes
-- About with Version number and contact information
-
+BUG: On Human hand, clicking on something else cancels the ability to draw a card
+BUG: Last person who goes out: cumulativeScore in log is wrong (0)-
+NOT A BUG: addWildcardsAndRecord: wildCards.isEmpty and isFinalTurn - not really a bug
 
 -------------------
 v0.6.00 Graphics
+- Look at CardList implementation and consider LinkedHashSet or others which provide
+    - check for non-duplicates
+    - automatic ordering
 - FiveKings bugs/todo's
 - Celebrate on final result! Show score table at end - possibly with round-by-round scores?
     - DONE: make a particularly big round score Red when it's scored
     - DONE: outline hands in Red or Yellow (just like in Green)
     - explode cards/hands into multi-color confetti
     - other comments like Phase 10: pick up a discard and say "Thanks! I really needed that" or "Ouch!"
+- Hourglass or spinner to indicate it is thinking
 - Animate open hands into view from mini-hands
 - Animate dealing discard (use z-axis flip of card over?)
 - Fix translation using exact positions on screen
     - Instead of using Intrinsic width, should use actual laid out width etc
 - Hint overlays like Google (arrows and text)
 - investigate using Callback instead of Listener (does it make it easier to find card?)
-- make cards bigger - why aren't they expanding to fill available space
+- make miniHands bigger - why aren't they expanding to fill available space?
 - Find a suit of Stars
 - Add button to [Meld] for you (with a number of times you can use it?)
     - or only in first few rounds
@@ -218,6 +228,10 @@ Previously Done:
 -----------------
 v0.6.01 Graphics
 - Modify single layout dynamically if you switch to landscape mode
+    - Improve logic flow and understandability of FiveKings, Game, PlayerLayout etc
+    - Clean up Game state flow and handling
+    - push player Hand updates to individual players rather than mass updates of screen
+    - more sub-classing rather than if (isHuman) type logic
 
 ----------------
 v0.7.01 Scoring and Valuation
@@ -244,8 +258,8 @@ Use Meld.check somehow?
 
 -----------------
 v1.1.01 Optimization
-- Use multi-threading to preprocess computer hands while waiting for button presses
+DONE Use multi-threading to preprocess computer hands while waiting for button presses
 
 ======================
 QUESTIONS:
-1. When to use a Base Class vs. an Interface? Abstract Class vs. Interface vs Base Class? Is Virtual Class something different?
+

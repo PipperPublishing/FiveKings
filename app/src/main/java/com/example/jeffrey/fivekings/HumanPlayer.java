@@ -76,13 +76,13 @@ class HumanPlayer extends Player {
         fKActivity.setWidgetsForHuman(getName());
         fKActivity.updateHandsAndCards(true, false); //always show cards for humans
         turnState = TurnState.PLAY_TURN;
-        getPlayerMiniHandLayout().getCardView().clearAnimation();
+        getMiniHandLayout().getCardView().clearAnimation();
     }
 
 
     @Override
-    Game.PileDecision takeTurn(final FiveKings fKActivity, final PlayerMiniHandLayout playerMiniHandLayout,final Game.PileDecision drawOrDiscardPile, final Deck deck, final boolean isFinalTurn) {
-        //TODO:A: Hack-ish way of making sure we were called from the right place
+    void takeTurn(final FiveKings fKActivity, final PlayerMiniHandLayout playerMiniHandLayout, final Game.PileDecision drawOrDiscardPile, final Deck deck, final boolean isFinalTurn) {
+        //TODO:A: Hack-ish way of making sure we were called from the clickedDrawOrDiscard
         if (fKActivity.getmGame().getGameState() != GameState.HUMAN_PICKED_CARD) {
             Toast.makeText(fKActivity, R.string.yourCardsAndMelds, Toast.LENGTH_SHORT).show();
         }else {
@@ -107,7 +107,6 @@ class HumanPlayer extends Player {
             fKActivity.animateHumanPickUp(drawOrDiscardPile);
             fKActivity.showHint(turnInfo.toString());
         }
-        return drawOrDiscardPile;
     }
 
     @Override

@@ -11,7 +11,7 @@ package com.example.jeffrey.fivekings;
  * 3/19/2015    isFirstBetterThanSecond: If everything else is equal, prefer more rank melds to sequence melds
  * 3/20/2015    Extend rank meld preference to keepDiscardDecision
  * 3/21/2015    Prefer full rank melds over sequences
- * TODO:B: Merge common piece of isFirstBetterThanSecond with keepDiscardDecision
+ * 4/5/2015     Only override strategy portions - execution is same as ComputerPlayer
  */
 class StrategyComputerPlayer extends ComputerPlayer {
 
@@ -20,29 +20,10 @@ class StrategyComputerPlayer extends ComputerPlayer {
     }
 
 
-    @Override
-    Game.PileDecision tryDiscardOrDrawPile(final MeldedCardList.MeldMethod method, final boolean isFinalTurn, final Card discardPileCard, final Card drawPileCard) {
-        Game.PileDecision decision;
-
-        //also sets method parameter this.discard - ugly way of returning that
-        Hand bestHand = findBestHand(method, isFinalTurn, discardPileCard);
-        //use Discard Pile if it was better than the existing hand
-        //OR if it's the best we can probably do (we probably won't reduce valuation with DrawPile)
-        if ((bestHand.getDiscard() != discardPileCard) && keepDiscardDecision(bestHand, this.hand, discardPileCard, isFinalTurn)) {
-            decision = Game.PileDecision.DISCARD_PILE;
-            this.hand = bestHand;
-        } else {
-            decision = Game.PileDecision.DRAW_PILE;
-            this.hand = findBestHand(method, isFinalTurn, drawPileCard);
-        }
-
-        return decision; //just for logging and animation
-    }
-
-
     //most of these are the same test, but we don't use calculateHandValue if it was just because a single card improved things
     // and there's a good chance of drawing to add to a meld / complete a partial meld
-    private boolean keepDiscardDecision(final Hand bestDiscardPileHand, final Hand currentHand, final Card discardPileCard, final boolean isFinalTurn) {
+    @Override
+    final protected boolean keepDiscardDecision(final Hand bestDiscardPileHand, final Hand currentHand, final Card discardPileCard, final boolean isFinalTurn) {
         final boolean keepDiscardDecision;
 
         //1. If we're out with bestDiscardPileHand then obviously pick that - MUST KEEP THIS TEST

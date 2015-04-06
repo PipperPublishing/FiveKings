@@ -34,16 +34,20 @@ import android.util.Log;
  *              - Introduce enum PileDecision and Player.MeldMethod
  * 3/16/2015    Removed USE_DRAW_PILE, USE_DISCARD_PILE
  * 3/22/2015    Change takeComputerTurn and takeHumanTurn to Player methods
- * 3/31/2015    Replace endRound with checkEndRound + other logic
+ * 3/31/2015    Replace logRoundScores with checkEndRound + other logic
  *              Added delegate methods, especially to playerList
+ * 4/1/2015     Removed ROUND_END assignment
+ *              Added
  *
  */
 public class Game {
     static final String APP_TAG = BuildConfig.VERSION_NAME;
     static final int MAX_PLAYERS=10;
     static final int MAX_CARDS=14; //Round of Kings + picked up card
-    //to eventually move into a Settings dialog
-    static final boolean SHOW_ALL_CARDS=false;
+    // in the Menu Settings dialog
+    private boolean showComputerCards =false;
+    private boolean animateDealing=true;
+
     private final Deck deck;
     //List of players sorted into correct relative position
     private final PlayerList players;
@@ -51,7 +55,7 @@ public class Game {
     private Rank roundOf;
     private long roundStartTime, roundStopTime;
 
-    private GameState gameState=null;
+    private GameState gameState;
 
     static enum PileDecision {DISCARD_PILE, DRAW_PILE}
 
@@ -60,7 +64,9 @@ public class Game {
         this.deck = Deck.getInstance(true);
         this.players = new PlayerList();
         this.players.addStandardPlayers();
-        init();
+        this.gameState = GameState.NEW_GAME;
+        roundStartTime = 0;
+        roundStopTime = 0;
     }
 
     //can call this to have another game with same players and deck
@@ -69,9 +75,6 @@ public class Game {
         this.players.initGame();
         this.roundOf = Rank.getLowestRank();
         this.gameState = GameState.ROUND_START;
-
-        roundStartTime = 0;
-        roundStopTime = 0;
 
         return true;
     }
@@ -99,11 +102,10 @@ public class Game {
         //don't advance to next player - instead do that when player is clicked
         //we've come back around to the player who went out
         if (players.nextPlayerWentOut()) {
-            this.gameState = GameState.ROUND_END;
             roundStopTime = System.currentTimeMillis();
             Log.d(Game.APP_TAG, String.format("Elapsed time = %.2f seconds", (roundStopTime - roundStartTime) / 1000.0));
 
-            players.endRound();
+            players.logRoundScores();
 
             roundOf = roundOf.getNext();
             this.gameState = roundOf == null ? GameState.GAME_END : GameState.ROUND_START;
@@ -117,11 +119,10 @@ public class Game {
     void clickedDrawOrDiscard(final FiveKings fKActivity, final Game.PileDecision drawOrDiscardPile) {
         setGameState(GameState.HUMAN_PICKED_CARD);
         fKActivity.disableDrawDiscardClick();
-        getCurrentPlayer().takeTurn(fKActivity, getCurrentPlayer().getPlayerMiniHandLayout(), drawOrDiscardPile, deck, isFinalTurn());
+        getCurrentPlayer().takeTurn(fKActivity, getCurrentPlayer().getMiniHandLayout(), drawOrDiscardPile, deck, isFinalTurn());
     }
 
-
-    Card getDiscardPileCard() {
+    Card peekDiscardPileCard() {
         //Possibly null (after just picking up)
          return deck.discardPile.peekNext();
     }
@@ -153,11 +154,12 @@ public class Game {
     }
     void removePlayerMiniHands(final Activity a) { this.players.removePlayerMiniHands(a);}
     void resetPlayerMiniHandsToRoundStart() {
-        players.resetAndUpdatePlayerMiniHands();
+        players.resetPlayerMiniHandsRoundStart();
+        players.updatePlayerMiniHands(false);
     }
 
-    void updatePlayerMiniHands() {
-        this.players.updatePlayerMiniHands();
+    void updatePlayerMiniHands(final boolean isRoundStart) {
+        this.players.updatePlayerMiniHands(isRoundStart);
     }
 
     String getNextPlayerName() {
@@ -210,5 +212,21 @@ public class Game {
 
     Deck getDeck() {
         return deck;
+    }
+
+    boolean isShowComputerCards() {
+        return showComputerCards;
+    }
+
+    void setShowComputerCards(boolean showComputerCards) {
+        this.showComputerCards = showComputerCards;
+    }
+
+    boolean isAnimateDealing() {
+        return animateDealing;
+    }
+
+    void setAnimateDealing(boolean animateDealing) {
+        this.animateDealing = animateDealing;
     }
 }

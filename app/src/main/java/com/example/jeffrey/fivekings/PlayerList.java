@@ -26,10 +26,8 @@ class PlayerList extends ArrayList<Player> {
     }
 
     final void addStandardPlayers() {
-        this.addPlayer("Easy", PlayerList.PlayerType.BASIC_COMPUTER);
-        this.addPlayer("Expert 1", PlayerList.PlayerType.EXPERT_COMPUTER);
-        this.addPlayer("Expert 2", PlayerList.PlayerType.EXPERT_COMPUTER);
         this.addPlayer("You", PlayerList.PlayerType.HUMAN);
+        this.addPlayer("Computer", PlayerList.PlayerType.EXPERT_COMPUTER);
     }
 
     //Called on first game and then if you want another game
@@ -76,7 +74,7 @@ class PlayerList extends ArrayList<Player> {
 
         //remove the PlayerLayout
         final RelativeLayout fullScreenContent = (RelativeLayout) activity.findViewById(R.id.fullscreen_content);
-        final PlayerMiniHandLayout deletedPlayerMiniHandLayout = this.getPlayer(iDeletedPlayer).getPlayerMiniHandLayout();
+        final PlayerMiniHandLayout deletedPlayerMiniHandLayout = this.getPlayer(iDeletedPlayer).getMiniHandLayout();
         //this one won't be deleted in the loop because we deleted it from the player list
         if (null != deletedPlayerMiniHandLayout) fullScreenContent.removeView(deletedPlayerMiniHandLayout);
         this.remove(iDeletedPlayer);
@@ -134,7 +132,7 @@ class PlayerList extends ArrayList<Player> {
     }
 
 
-    void endRound() {
+    void logRoundScores() {
         if (playerWentOut == null) throw new RuntimeException("Error - playerWentOut is null");
         Log.i(Game.APP_TAG, "Player "+playerWentOut.getName()+" went out");
         Log.i(Game.APP_TAG, "        Current scores:");
@@ -143,7 +141,7 @@ class PlayerList extends ArrayList<Player> {
             Log.i(Game.APP_TAG, "Player " + player.getName() + ": " + player.getMeldedString(true) + player.getPartialAndSingles(true) + ". Cumulative score=" + player.getCumulativeScore());
         }
 
-        if (this.dealer == null) throw new RuntimeException("endRound: dealer is null" );
+        if (this.dealer == null) throw new RuntimeException("logRoundScores: dealer is null" );
         this.currentPlayer = null;
 
     }
@@ -167,22 +165,18 @@ class PlayerList extends ArrayList<Player> {
     }
 
     /* Update PlayerLayout */
-    void updatePlayerMiniHands() {
-        for (Player player : this) player.updatePlayerMiniHand(this.currentPlayer == player);
+    void resetPlayerMiniHandsRoundStart() {
+        for (Player player : this) player.resetPlayerMiniHand();
     }
 
-    void resetAndUpdatePlayerMiniHands() {
-        for (Player player : this) {
-            player.getPlayerMiniHandLayout().setPlayedInFinalTurn(false);
-            player.getPlayerMiniHandLayout().setGreyedOut(true);
-        }
-        updatePlayerMiniHands();
+    void updatePlayerMiniHands(final boolean isRoundStart) {
+        for (Player player : this) player.updatePlayerMiniHand(this.currentPlayer == player, true);
     }
 
     void removePlayerMiniHands(Activity a) {
         final RelativeLayout fullScreenContent = (RelativeLayout) a.findViewById(R.id.fullscreen_content);
         for (int iPlayer = 0; iPlayer < this.size(); iPlayer++) {
-            PlayerMiniHandLayout playerMiniHandLayout = this.get(iPlayer).getPlayerMiniHandLayout();
+            PlayerMiniHandLayout playerMiniHandLayout = this.get(iPlayer).getMiniHandLayout();
             fullScreenContent.removeView(playerMiniHandLayout);
             this.get(iPlayer).removePlayerMiniHand();
         }

@@ -7,6 +7,7 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.RelativeLayout;
 import android.widget.TextView;
+import android.widget.Toast;
 
 /**
  * Created by Jeffrey on 3/8/2015.
@@ -26,6 +27,8 @@ import android.widget.TextView;
  * 3/31/2015    Change name to PlayerMiniHandLayout
  *              Added yellow or red border to high-scoring hands
  *              On first click, show cards - on second play
+ * 4/4/2015     If !showCards, then don't force a second click
+ * 4/6/2015     Removed updateCumulativeScore from update, so it can be updated after the roundScore animation completes
 
  */
 class PlayerMiniHandLayout extends RelativeLayout{
@@ -93,17 +96,22 @@ class PlayerMiniHandLayout extends RelativeLayout{
             @Override
             public void onClick(View tv) {
                 //if this the next player, and the current player has finished its turn, move to this player
-                if ((player == fKActivity.getmGame().getNextPlayer()) && (fKActivity.getmGame().getGameState() != GameState.ROUND_END)
-                        && (fKActivity.getmGame().getCurrentPlayer().getTurnState() == Player.TurnState.NOT_MY_TURN)) {
+                if ((player == fKActivity.getmGame().getNextPlayer()) && (fKActivity.getmGame().getCurrentPlayer().getTurnState() == Player.TurnState.NOT_MY_TURN)) {
                     fKActivity.getmGame().rotatePlayer(); //also sets PREPARE_TURN
-                    if (player.getTurnState() == Player.TurnState.PREPARE_TURN)
-                        player.prepareTurn(fKActivity);
+                    if (player.getTurnState() == Player.TurnState.PREPARE_TURN) player.prepareTurn(fKActivity);
+                    //if showCards is false, no reason to force another click - just go ahead and play
+                    if (!fKActivity.getmGame().isShowComputerCards()
+                            && (player == fKActivity.getmGame().getCurrentPlayer()) && (player.getTurnState() == Player.TurnState.PLAY_TURN)) {
+                        PlayerMiniHandLayout.this.cardView.clearAnimation();
+                        player.takeTurn(fKActivity, PlayerMiniHandLayout.this, null, fKActivity.getmGame().getDeck(),fKActivity.getmGame().isFinalTurn());
+                    }
                 }
                 //second time we click on the current player, check that we're ready to play (PLAY_TURN)
                 else if ((player == fKActivity.getmGame().getCurrentPlayer()) && (player.getTurnState() == Player.TurnState.PLAY_TURN)) {
                     PlayerMiniHandLayout.this.cardView.clearAnimation();
                     player.takeTurn(fKActivity, PlayerMiniHandLayout.this, null, fKActivity.getmGame().getDeck(),fKActivity.getmGame().isFinalTurn());
                 }
+                else Toast.makeText(fKActivity, R.string.clickComputerHand, Toast.LENGTH_SHORT).show();
             }
         });
 
@@ -139,7 +147,7 @@ class PlayerMiniHandLayout extends RelativeLayout{
         cumScoreView.setLayoutParams(cumScoreLp);
         this.addView(cumScoreView);
         cumScoreView.setVisibility(INVISIBLE); //to start
-        updateCumulativeScore(0);
+        updateCumulativeScore(player.getCumulativeScore());
 
         this.roundScoreView = new TextView(c);
         roundScoreView.setId(ROUND_SCORE_VIEW_ID);
@@ -200,20 +208,26 @@ class PlayerMiniHandLayout extends RelativeLayout{
     }
 
     /* UTILITIES FOR UPDATING SCORES ETC. */
-    final void update(final boolean isCurrent, final boolean isOut, final int roundScore, final int cumulativeScore) {
+    final void reset() {
         //set the border depending on the player state
         resetToPlain();
+        setPlayedInFinalTurn(false);
+        setGreyedOut(true);
+    }
+
+    final void update(final boolean isCurrent, final boolean isOut, final int roundScore, final int cumulativeScore) {
         if (isCurrent) showAsCurrent();
         //playedInFinalTurn flag is set when you play in final round, and controls green border and round Score display
         //without this check, hands would show green border after being dealt a melded hand
         if (isOut && playedInFinalTurn) showAsOut();
         updateRoundScore(roundScore);
-        updateCumulativeScore(cumulativeScore);
+        // <0 means we're waiting for roundScore animation to update cumulativeScore
+        if (cumulativeScore >= 0) updateCumulativeScore(cumulativeScore);
         invalidate();
     }
 
 
-    private boolean updateCumulativeScore(final int cumulativeScore) {
+    final boolean updateCumulativeScore(final int cumulativeScore) {
         cumScoreView.setText(Integer.toString(cumulativeScore));
         cumScoreView.setVisibility(VISIBLE);
         return true;

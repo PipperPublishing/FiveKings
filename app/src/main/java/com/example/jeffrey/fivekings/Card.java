@@ -108,4 +108,6 @@ class Card {
         if (this.isWildCard(wildCardRank)) return WILD_CARD_VALUE;
         else return cardValue;
     }
+
+
 }

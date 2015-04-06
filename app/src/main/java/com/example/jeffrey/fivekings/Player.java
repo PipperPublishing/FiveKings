@@ -61,7 +61,7 @@ abstract class Player implements HandComparator {
             return lhs.cumulativeScore - rhs.cumulativeScore;
         }
     };
-    private PlayerMiniHandLayout playerMiniHandLayout; //representation on-screen including score etc
+    private PlayerMiniHandLayout miniHandLayout; //representation on-screen including score etc
 
     Player(final String name) {
         this.name = name;
@@ -74,7 +74,7 @@ abstract class Player implements HandComparator {
         this.roundScore = player.roundScore;
         this.cumulativeScore = player.cumulativeScore;
         this.hand = player.hand;
-        this.playerMiniHandLayout = player.playerMiniHandLayout;
+        this.miniHandLayout = player.miniHandLayout;
     }
 
 
@@ -82,7 +82,7 @@ abstract class Player implements HandComparator {
         this.cumulativeScore = 0;
         this.roundScore = 0; //only zero this here because we display all scores at the start of a new game
         this.hand = null;
-        this.playerMiniHandLayout = null;
+        this.miniHandLayout = null;
         this.drawnCard = null;
         this.turnState = TurnState.NOT_MY_TURN;
         return true;
@@ -108,16 +108,23 @@ abstract class Player implements HandComparator {
     }
 
     final PlayerMiniHandLayout addPlayerMiniHandLayout(final Context c, final int iPlayer, final int numPlayers) {
-        this.playerMiniHandLayout = new PlayerMiniHandLayout(c, this, iPlayer, numPlayers);
-        return this.playerMiniHandLayout;
+        this.miniHandLayout = new PlayerMiniHandLayout(c, this, iPlayer, numPlayers);
+        return this.miniHandLayout;
     }
 
     final void removePlayerMiniHand() {
-        this.playerMiniHandLayout = null;
+        this.miniHandLayout = null;
     }
 
-    final void updatePlayerMiniHand(boolean isCurrent) {
-        if (playerMiniHandLayout != null) playerMiniHandLayout.update(isCurrent, this.isOut(), this.getRoundScore(), this.getCumulativeScore());
+    final void resetPlayerMiniHand() {
+        if (miniHandLayout != null) miniHandLayout.reset();
+    }
+
+    final void updatePlayerMiniHand(final boolean isCurrent, boolean updateCumScore) {
+        if (miniHandLayout != null) {
+            miniHandLayout.update(isCurrent, this.isOut(), this.getRoundScore(),
+                    updateCumScore ? this.getCumulativeScore() : -1);
+        }
     }
 
     //Player GETTERS and SETTERS
@@ -128,7 +135,7 @@ abstract class Player implements HandComparator {
 
     final void updateName(final String updatedName) {
         this.name = updatedName;
-        this.playerMiniHandLayout.updateName(updatedName);
+        this.miniHandLayout.updateName(updatedName);
     }
 
     final int addToCumulativeScore() {
@@ -183,8 +190,8 @@ abstract class Player implements HandComparator {
         return roundScore;
     }
 
-    final PlayerMiniHandLayout getPlayerMiniHandLayout() {
-        return playerMiniHandLayout;
+    final PlayerMiniHandLayout getMiniHandLayout() {
+        return miniHandLayout;
     }
 
     final ArrayList<CardList> getHandMelded() {
@@ -222,9 +229,13 @@ abstract class Player implements HandComparator {
     /*-----------------------------------------------------*/
     abstract void prepareTurn(final FiveKings fKActivity);
 
-    abstract Game.PileDecision takeTurn(final FiveKings fKActivity, final PlayerMiniHandLayout playerMiniHandLayout, Game.PileDecision drawOrDiscardPile, final Deck deck, final boolean isFinalTurn);
+    abstract void takeTurn(final FiveKings fKActivity, final PlayerMiniHandLayout playerMiniHandLayout, Game.PileDecision drawOrDiscardPile, final Deck deck, final boolean isFinalTurn);
 
     abstract void logTurn(final boolean isFinalTurn);
+
+    void findBestHandStart(final boolean isFinalTurn, final Card addedCard) {
+        //default does nothing
+    }
 
     final Player endTurn(final Player passedPlayerWentOut, final Deck deck) {
         Player playerWentOut = passedPlayerWentOut;
@@ -241,7 +252,7 @@ abstract class Player implements HandComparator {
         if ((playerWentOut == null) && this.isOut()) playerWentOut = this;
         if (playerWentOut != null) {
             this.updateRoundScore();
-            playerMiniHandLayout.setPlayedInFinalTurn(true);
+            miniHandLayout.setPlayedInFinalTurn(true);
         }
         this.turnState = TurnState.NOT_MY_TURN;
         return playerWentOut;
