@@ -61,11 +61,6 @@ class PlayerList extends ArrayList<Player> {
         return this.get(iPlayer);
     }
 
-    int getCurrentPlayerIndex() {
-        return this.indexOf(this.currentPlayer);
-    }
-
-
     void deletePlayer(final int iDeletedPlayer, Activity activity) {
         //need to advance to next player before we remove it
         if (this.get(iDeletedPlayer) == currentPlayer) currentPlayer = getNextPlayer(this.currentPlayer);
@@ -105,6 +100,17 @@ class PlayerList extends ArrayList<Player> {
         return this.currentPlayer;
     }
 
+    boolean hideHandFromPrevious(Player thisPlayer) {
+        //true if previous player is Human and so is this
+        boolean hideCurrentHandFromPrevious=false;
+        for (Player player : this) {
+            if (getNextPlayer(player) == thisPlayer) {
+                hideCurrentHandFromPrevious = player.isHuman() && thisPlayer.isHuman();
+            }
+        }
+        return hideCurrentHandFromPrevious;
+    }
+
     Player getNextPlayer() {
         return getNextPlayer(this.currentPlayer);
     }
@@ -120,6 +126,17 @@ class PlayerList extends ArrayList<Player> {
             else nextPlayer =  this.get(playerIndex + 1);
         }
         return nextPlayer;
+    }
+
+    Player getWinner() {
+        Player winningPlayer = this.get(0);
+
+        for (Player player : this) {
+            if (player.getCumulativeScore() <= winningPlayer.getCumulativeScore()) {
+                winningPlayer = player;
+            }
+        }
+        return winningPlayer;
     }
 
     boolean nextPlayerWentOut() {
@@ -169,7 +186,7 @@ class PlayerList extends ArrayList<Player> {
         for (Player player : this) player.resetPlayerMiniHand();
     }
 
-    void updatePlayerMiniHands(final boolean isRoundStart) {
+    void updatePlayerMiniHands() {
         for (Player player : this) player.updatePlayerMiniHand(this.currentPlayer == player, true);
     }
 

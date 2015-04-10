@@ -7,7 +7,6 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.RelativeLayout;
 import android.widget.TextView;
-import android.widget.Toast;
 
 /**
  * Created by Jeffrey on 3/8/2015.
@@ -97,21 +96,18 @@ class PlayerMiniHandLayout extends RelativeLayout{
             public void onClick(View tv) {
                 //if this the next player, and the current player has finished its turn, move to this player
                 if ((player == fKActivity.getmGame().getNextPlayer()) && (fKActivity.getmGame().getCurrentPlayer().getTurnState() == Player.TurnState.NOT_MY_TURN)) {
+                    //if the current player is Human and this player is Human, we'll hide the hands initially
+                    boolean hideHandInitially = fKActivity.getmGame().hideHandFromPreviousPlayer(player);
                     fKActivity.getmGame().rotatePlayer(); //also sets PREPARE_TURN
-                    if (player.getTurnState() == Player.TurnState.PREPARE_TURN) player.prepareTurn(fKActivity);
-                    //if showCards is false, no reason to force another click - just go ahead and play
-                    if (!fKActivity.getmGame().isShowComputerCards()
-                            && (player == fKActivity.getmGame().getCurrentPlayer()) && (player.getTurnState() == Player.TurnState.PLAY_TURN)) {
-                        PlayerMiniHandLayout.this.cardView.clearAnimation();
-                        player.takeTurn(fKActivity, PlayerMiniHandLayout.this, null, fKActivity.getmGame().getDeck(),fKActivity.getmGame().isFinalTurn());
-                    }
+                    if (player.getTurnState() == Player.TurnState.PREPARE_TURN) player.prepareTurn(fKActivity, hideHandInitially);
+                    //prepareTurn calls takeTurn if it's computer player and we're not showing cards
                 }
                 //second time we click on the current player, check that we're ready to play (PLAY_TURN)
                 else if ((player == fKActivity.getmGame().getCurrentPlayer()) && (player.getTurnState() == Player.TurnState.PLAY_TURN)) {
-                    PlayerMiniHandLayout.this.cardView.clearAnimation();
-                    player.takeTurn(fKActivity, PlayerMiniHandLayout.this, null, fKActivity.getmGame().getDeck(),fKActivity.getmGame().isFinalTurn());
+                    fKActivity.cancelAnimatePlayerMiniHand(PlayerMiniHandLayout.this);
+                    player.takeTurn(fKActivity, null, fKActivity.getmGame().getDeck(),fKActivity.getmGame().isFinalTurn());
                 }
-                else Toast.makeText(fKActivity, R.string.clickComputerHand, Toast.LENGTH_SHORT).show();
+                else fKActivity.showHint(null, true);
             }
         });
 
@@ -122,12 +118,11 @@ class PlayerMiniHandLayout extends RelativeLayout{
         cardLp.addRule(CENTER_HORIZONTAL);
         cardView.setLayoutParams(cardLp);
         cardView.setId(CARD_VIEW_ID);
-        this.setGreyedOut(true); //until the first card is dealt
         this.addView(cardView);
 
-        this.nameView = new TextView(getContext());
+        this.nameView = new TextView(c);
         nameView.setId(NAME_VIEW_ID);
-        nameView.setTextAppearance(getContext(), R.style.TextAppearance_AppCompat_Small);
+        nameView.setTextAppearance(c, R.style.TextAppearance_AppCompat_Small);
         LayoutParams nameLp = new LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT);
         nameLp.addRule(BELOW, CARD_VIEW_ID);
         nameLp.addRule(CENTER_HORIZONTAL);
@@ -161,7 +156,7 @@ class PlayerMiniHandLayout extends RelativeLayout{
         roundScoreView.setLayoutParams(roundScoreLp);
         this.addView(roundScoreView);
 
-        this.playedInFinalTurn = false;
+        reset(); //greys out and resets border
     }//end constructor for player mini-hands
 
     //constructor for [+] hand that when clicked gives you addPlayer dialog
@@ -186,10 +181,9 @@ class PlayerMiniHandLayout extends RelativeLayout{
         cardLp.addRule(CENTER_HORIZONTAL);
         cardView.setLayoutParams(cardLp);
         cardView.setId(CARD_VIEW_ID);
-        this.setGreyedOut(true); //until the first card is dealt
         this.addView(cardView);
 
-        this.nameView = new TextView(getContext()); //TODO:A: Can we use c here? and in other places where getContext() is used
+        this.nameView = new TextView(getContext());
         nameView.setId(NAME_VIEW_ID);
         nameView.setTextAppearance(getContext(), R.style.TextAppearance_AppCompat_Small);
         LayoutParams nameLp = new LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT);
@@ -204,7 +198,7 @@ class PlayerMiniHandLayout extends RelativeLayout{
         roundScoreView=null;
         cumScoreView=null;
 
-        setGreyedOut(true);
+        reset();
     }
 
     /* UTILITIES FOR UPDATING SCORES ETC. */
@@ -216,7 +210,7 @@ class PlayerMiniHandLayout extends RelativeLayout{
     }
 
     final void update(final boolean isCurrent, final boolean isOut, final int roundScore, final int cumulativeScore) {
-        if (isCurrent) showAsCurrent();
+        showOrHideCurrentBorder(isCurrent);
         //playedInFinalTurn flag is set when you play in final round, and controls green border and round Score display
         //without this check, hands would show green border after being dealt a melded hand
         if (isOut && playedInFinalTurn) showAsOut();
@@ -263,10 +257,8 @@ class PlayerMiniHandLayout extends RelativeLayout{
 
 
     //outline with white border, or solid if you're out
-    void showAsCurrent() {
-        this.cardView.setBackgroundDrawable(getResources().getDrawable(R.drawable.nopad_white_border));
-        this.roundScoreView.setTextColor(getResources().getColor(android.R.color.white));
-        this.nameView.setTextColor(getResources().getColor(android.R.color.white));
+    void showOrHideCurrentBorder(final boolean showCurrentBorder) {
+        this.cardView.setBackgroundDrawable(showCurrentBorder ? getResources().getDrawable(R.drawable.nopad_white_border) : null);
     }
     void showAsOut() {
         this.cardView.setBackgroundDrawable(getResources().getDrawable(R.drawable.no_pad_solid_green_border));

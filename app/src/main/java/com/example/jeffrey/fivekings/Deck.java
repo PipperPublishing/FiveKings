@@ -64,7 +64,7 @@ class Deck extends DealingCardList  {
         private DrawPile(){
             super();
             this.clear();
-            this.addAll(Deck.this.getCards());
+            this.addAll(Deck.this);
         }
 
         @Override

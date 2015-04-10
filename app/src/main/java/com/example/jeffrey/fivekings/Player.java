@@ -38,7 +38,8 @@ import java.util.Iterator;
  * and relevant methods
  * 3/22/2015    Move logTurn etc from Game to here or subclasses
  * 3/26/2015    Introduced TURN_STATE to tell what to do when clicked
- * TODO:A : Done? Need to eliminate partial melds of wildcards in Permutations
+ * 4/8/2015     Not a bug to have no wildcards and call addWildCards...
+ *              meldUsingHeuristics calls decomposeAndCheck to order wildcard melds
  * TODO:A Move roundScore to Hand (Down from Player)
  */
 abstract class Player implements HandComparator {
@@ -52,7 +53,7 @@ abstract class Player implements HandComparator {
         NOT_MY_TURN, PREPARE_TURN, PLAY_TURN
     }
     protected TurnState turnState;
-
+    protected PlayerMiniHandLayout miniHandLayout; //representation on-screen including score etc
 
     @Deprecated
     static final Comparator<Player> playerComparatorByScoreDesc = new Comparator<Player>() {
@@ -61,7 +62,6 @@ abstract class Player implements HandComparator {
             return lhs.cumulativeScore - rhs.cumulativeScore;
         }
     };
-    private PlayerMiniHandLayout miniHandLayout; //representation on-screen including score etc
 
     Player(final String name) {
         this.name = name;
@@ -227,9 +227,9 @@ abstract class Player implements HandComparator {
     /*-----------------------------------------------------*/
     /* GAME PLAYING TURNS - depends on what type of player */
     /*-----------------------------------------------------*/
-    abstract void prepareTurn(final FiveKings fKActivity);
+    abstract void prepareTurn(final FiveKings fKActivity, final boolean hideHandInitially);
 
-    abstract void takeTurn(final FiveKings fKActivity, final PlayerMiniHandLayout playerMiniHandLayout, Game.PileDecision drawOrDiscardPile, final Deck deck, final boolean isFinalTurn);
+    abstract void takeTurn(final FiveKings fKActivity, Game.PileDecision drawOrDiscardPile, final Deck deck, final boolean isFinalTurn);
 
     abstract void logTurn(final boolean isFinalTurn);
 
@@ -527,13 +527,14 @@ abstract class Player implements HandComparator {
                 if (!wildCards.isEmpty()) {
                     test.add(wildCards.get(0));
                     wildCards.remove(0);
-                    //TODO:B: Could call Meld.check to order it properly
-                    test.setMeldComplete(MeldComplete.FULL);
+                    //These should all be short melds - call decompose to order them correctly
+                    //also set meldComplete and isCheckedAndValid
+                    if (test.decomposeAndCheck(isFinalTurn, new MeldedCardList(this.roundOf,playerHandComparator)) != 0) {
+                        throw new RuntimeException("addWildCardsAndRecord: full meld not evaluating to 0");
+                    }
                     fulls.add((Meld) test.clone());
                     madePartialIntoFull = true;
-                } else if (isFinalTurn) { //should not be called if we don't have enough wildcards
-                    Log.e(Game.APP_TAG, "addWildcardsAndRecord: wildCards.isEmpty and isFinalTurn");
-                } else {
+                } else if (!isFinalTurn) { //only create partial melds on intermediate turns
                     test.setMeldComplete(MeldComplete.PARTIAL);
                     partials.add((Meld) test.clone());
                 }
@@ -561,6 +562,7 @@ abstract class Player implements HandComparator {
         }//end meldBestUsingPermutations
 
         //Helper for HumanPlayer.checkMeldsAndEvaluate (throws away decomposition, but calculates valuation)
+        //TODO:A May be able to use a version of this in meldUsing Heuristics (as part of ComputerPlayer)
         final int checkMeldsAndEvaluate(final boolean isFinalTurn) {
             final MeldedCardList decomposedMelds = new MeldedCardList(this.roundOf, this.playerHandComparator);
             for (MeldedCardList.Meld meld : this.melds) {

@@ -10,10 +10,12 @@ import android.widget.ImageView;
  * 2/26/2015    Move drawable for Card to CardView so we don't need context
  * 3/3/2015     Set INTRINSIC_WIDTH and INTRINSIC_HEIGHT as soon as we start building CardViews
  * 3/4/2015     card can be null in which case we set null ImageDrawable as well
+ * 4/9/2015     Add acceptDrag to accept/deny drag (for now just to DiscardPile)
  */
 class CardView extends ImageView {
-    private Card card; //TODO:A would like to make this final again
+    private Card card; //TODO:A would like to make this final again and maybe keep CardViews rather than cards
     private final int viewIndex; //index in layout
+    private boolean acceptDrag; //melds accept drags, but in general not cards (except for DiscardPile)
 
     static final int sRedBitmapCardBack = R.drawable.b2fv;
     static final int sBlueBitmapCardBack = R.drawable.b1fv;
@@ -36,6 +38,7 @@ class CardView extends ImageView {
         checkSetIntrinsic(c);
         this.viewIndex = viewIndex;
         this.card = card;
+        this.acceptDrag = false;
         if (card == null) this.setImageDrawable(null);
         else if (card.isJoker()) setImageDrawable(c.getResources().getDrawable(R.drawable.joker1));
         else setImageDrawable(c.getResources().getDrawable(sBitmapResource[card.getSuit().getOrdinal()][card.getRank().getOrdinal()]));
@@ -48,13 +51,16 @@ class CardView extends ImageView {
         this.card = null;
         setImageDrawable(c.getResources().getDrawable(resource));
         this.viewIndex = -1;
+        this.acceptDrag = false;
     }
 
+    //for XML-based view (specifically DiscardPile)
     public CardView(final Context c, final AttributeSet attributeSet) {
         super(c, attributeSet);
         checkSetIntrinsic(c);
         this.card = null;
         this.viewIndex = -1;
+        this.acceptDrag = false;
     }
 
     //Copy constructor
@@ -70,7 +76,7 @@ class CardView extends ImageView {
         }
     }
 
-    //TODO:B this is a hack because we are changing that card
+    //TODO:B this is a hack because we are changing that card - specifically for DiscardPile
     void setCard(final Context c, final Card card) {
         this.card = card;
 
@@ -87,5 +93,11 @@ class CardView extends ImageView {
         return viewIndex;
     }
 
+    boolean isAcceptDrag() {
+        return acceptDrag;
+    }
 
+    void setAcceptDrag(boolean acceptDrag) {
+        this.acceptDrag = acceptDrag;
+    }
 }

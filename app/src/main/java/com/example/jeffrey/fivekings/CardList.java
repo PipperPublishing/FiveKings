@@ -1,7 +1,6 @@
 package com.example.jeffrey.fivekings;
 
 import java.util.ArrayList;
-import java.util.List;
 
 /**
  * Created by Jeffrey on 1/22/2015.
@@ -32,10 +31,6 @@ class CardList extends ArrayList<Card> {
     CardList(Card card) {
         this();
         this.add(card);
-    }
-
-    List<Card> getCards() {
-        return this;
     }
 
     String getString() {

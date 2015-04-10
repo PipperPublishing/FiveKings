@@ -119,7 +119,9 @@ public class Game {
     void clickedDrawOrDiscard(final FiveKings fKActivity, final Game.PileDecision drawOrDiscardPile) {
         setGameState(GameState.HUMAN_PICKED_CARD);
         fKActivity.disableDrawDiscardClick();
-        getCurrentPlayer().takeTurn(fKActivity, getCurrentPlayer().getMiniHandLayout(), drawOrDiscardPile, deck, isFinalTurn());
+        //turn on ability to accept drag to DiscardPile
+        fKActivity.enableDragToDiscardPile();
+        getCurrentPlayer().takeTurn(fKActivity, drawOrDiscardPile, deck, isFinalTurn());
     }
 
     Card peekDiscardPileCard() {
@@ -155,16 +157,13 @@ public class Game {
     void removePlayerMiniHands(final Activity a) { this.players.removePlayerMiniHands(a);}
     void resetPlayerMiniHandsToRoundStart() {
         players.resetPlayerMiniHandsRoundStart();
-        players.updatePlayerMiniHands(false);
+        players.updatePlayerMiniHands();
     }
 
-    void updatePlayerMiniHands(final boolean isRoundStart) {
-        this.players.updatePlayerMiniHands(isRoundStart);
+    void updatePlayerMiniHands() {
+        this.players.updatePlayerMiniHands();
     }
 
-    String getNextPlayerName() {
-        return this.players.getNextPlayer().getName();
-    }
 
     Player getPlayerByIndex(final int iPlayer) {
         return players.get(iPlayer);
@@ -180,6 +179,12 @@ public class Game {
 
     Player getNextPlayer() { return players.getNextPlayer();}
 
+    boolean hideHandFromPreviousPlayer(final Player player) {
+        return players.hideHandFromPrevious(player);
+    }
+
+    Player getWinner() { return players.getWinner(); }
+
     boolean isFinalTurn() { return players.getPlayerWentOut() != null;}
 
     Card getDrawnCard() {
@@ -192,7 +197,13 @@ public class Game {
 
     int numPlayers() { return this.players.size();}
 
-    Player endTurn() {
+
+    /* Starting and ending turns */
+    void findBestHandStart() {
+        getNextPlayer().findBestHandStart(isFinalTurn(), peekDiscardPileCard());
+    }
+
+    Player endCurrentPlayerTurn() {
         return players.endCurrentPlayerTurn(deck);
     }
 

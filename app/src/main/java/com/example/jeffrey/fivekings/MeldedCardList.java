@@ -179,15 +179,6 @@ class MeldedCardList extends CardList{
 
     protected CardList getSingles() {return singles;}
 
-    @Deprecated
-        //now being done in syncCardsAndMelds
-    CardList getSortedSingles() {
-        CardList sortedCards = new CardList(singles);
-        Collections.sort(sortedCards, Card.cardComparatorRankFirstDesc);
-        return sortedCards;
-    }
-
-
 
     /* 3/17/2015    Removed numCards argument; just initialize capacity as MAX_CARDS
         3/19/2015   Replace isSequenceMeld and isRankMeld with meldType (SEQUENCE, RANK, or null)
@@ -366,13 +357,6 @@ class MeldedCardList extends CardList{
 
             return bestValuation;
         }//end int decomposeAndCheck
-
-        @Deprecated
-        protected int decomposeAndCheck(final boolean isFinalTurn) {
-            //new copy of best found so far - not used here
-            MeldedCardList bestHand = new MeldedCardList(MeldedCardList.this.roundOf, MeldedCardList.this.playerHandComparator);
-            return decomposeAndCheck(isFinalTurn, bestHand);
-        }
 
         private void setCheckedAndValid() {
             this.isValidFullMeld = true;

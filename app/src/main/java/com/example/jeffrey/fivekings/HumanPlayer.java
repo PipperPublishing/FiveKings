@@ -1,7 +1,6 @@
 package com.example.jeffrey.fivekings;
 
 import android.util.Log;
-import android.widget.Toast;
 
 /**
  * Created by Jeffrey on 3/12/2015.
@@ -72,21 +71,25 @@ class HumanPlayer extends Player {
     /* Game playing methods (moved from Game) */
     /*----------------------------------------*/
     @Override
-    void prepareTurn(final FiveKings fKActivity) {
-        fKActivity.setWidgetsForHuman(getName());
-        fKActivity.updateHandsAndCards(true, false); //always show cards for humans
+    //TODO:A move to a prepareHumanTurn (including hideHand...)
+    void prepareTurn(final FiveKings fKActivity, final boolean hideHandInitially) {
         turnState = TurnState.PLAY_TURN;
-        getMiniHandLayout().getCardView().clearAnimation();
+        //TODO:A Override a method which returns showComputerCards false or true depending on setting or human
+        //if hideHand... is set, then we don't reveal the hand until you click a second time (handled by takeTurn)
+        if (hideHandInitially) {
+            fKActivity.updateHandsAndCards(false, false);
+        } else {
+            fKActivity.updateHandsAndCards(true, false);
+            fKActivity.enableDrawDiscardClick(); //also animates piles and sets the hint
+            fKActivity.cancelAnimatePlayerMiniHand(this.getMiniHandLayout());
+        }
     }
 
 
     @Override
-    void takeTurn(final FiveKings fKActivity, final PlayerMiniHandLayout playerMiniHandLayout, final Game.PileDecision drawOrDiscardPile, final Deck deck, final boolean isFinalTurn) {
-        //TODO:A: Hack-ish way of making sure we were called from the clickedDrawOrDiscard
-        if (fKActivity.getmGame().getGameState() != GameState.HUMAN_PICKED_CARD) {
-            Toast.makeText(fKActivity, R.string.yourCardsAndMelds, Toast.LENGTH_SHORT).show();
-        }else {
-
+    //TODO:A Bad smell from all those fKActivity calls
+    void takeTurn(final FiveKings fKActivity, final Game.PileDecision drawOrDiscardPile, final Deck deck, final boolean isFinalTurn) {
+        if (fKActivity.getmGame().getGameState() == GameState.HUMAN_PICKED_CARD) {
             final StringBuilder turnInfo = new StringBuilder(100);
             turnInfo.setLength(0);
             final String turnInfoFormat = fKActivity.getText(R.string.humanTurnInfo).toString();
@@ -105,8 +108,12 @@ class HumanPlayer extends Player {
             //at this point the DiscardPile still shows the old card if you picked it
             //handles animating the card off the appropriate pile and making it appear in the hand
             fKActivity.animateHumanPickUp(drawOrDiscardPile);
-            fKActivity.showHint(turnInfo.toString());
-        }
+        } else if (fKActivity.getmGame().getGameState() != GameState.END_HUMAN_TURN) {
+            //TODO:A: if GameState not set correctly, then reveal the cards
+            fKActivity.updateHandsAndCards(true, false);
+            fKActivity.enableDrawDiscardClick(); //also animates piles and sets the hint
+            fKActivity.showHint(null, true);
+        } else fKActivity.showHint(null, true);
     }
 
     @Override

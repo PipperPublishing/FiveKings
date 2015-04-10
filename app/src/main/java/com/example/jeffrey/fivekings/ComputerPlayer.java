@@ -66,17 +66,20 @@ public class ComputerPlayer extends Player {
     /* GAME PLAYING METHODS (moved from Game) */
     /*----------------------------------------*/
     @Override
-    //if this is final turn, or we are showing computer hands then do that
-    void prepareTurn(final FiveKings fKActivity) {
-        fKActivity.setWidgetsByGameState();
-        //If showComputerCards is false we still show after each player's final turn
-        fKActivity.updateHandsAndCards(fKActivity.getmGame().isShowComputerCards(), false);
+    //TODO:A move to a prepareComputerTurn
+    //Must be some way to simplify showComputerCards and hideHands... into one player call
+    void prepareTurn(final FiveKings fKActivity, final boolean hideHandInitially) {
         turnState = TurnState.PLAY_TURN;
+        fKActivity.updateHandsAndCards(fKActivity.getmGame().isShowComputerCards(), false);
+        //if showCards is false, no reason to force another click - just go ahead and play
+        if (!fKActivity.getmGame().isShowComputerCards()) {
+            fKActivity.cancelAnimatePlayerMiniHand(this.getMiniHandLayout());
+            takeTurn(fKActivity, null, fKActivity.getmGame().getDeck(),fKActivity.getmGame().isFinalTurn());
+        }
     }
 
     @Override
-    void takeTurn(final FiveKings fKActivity, final PlayerMiniHandLayout playerMiniHandLayout, final Game.PileDecision drawOrDiscardPile, final Deck deck, final boolean isFinalTurn) {
-        fKActivity.setWidgetsByGameState();
+    void takeTurn(final FiveKings fKActivity, final Game.PileDecision drawOrDiscardPile, final Deck deck, final boolean isFinalTurn) {
 
         final StringBuilder turnInfo = new StringBuilder(100);
         turnInfo.setLength(0);
@@ -126,11 +129,11 @@ public class ComputerPlayer extends Player {
             protected void onPostExecute(final Game.PileDecision pickFrom) {
                 fKActivity.showSpinner(false);
                 //Moved actual discard into endCurrentPlayerTurn so we can do animation at same time
-                fKActivity.showHint(turnInfo.toString());
+                fKActivity.showHint(turnInfo.toString(), false);
 
                 //at this point the DiscardPile still shows the old card
                 //animate... also calls syncDisplay and checkEndRound() in the OnAnimationEnd listener
-                fKActivity.animateComputerPickUpAndDiscard(playerMiniHandLayout, pickFrom);
+                fKActivity.animateComputerPickUpAndDiscard(ComputerPlayer.this.getMiniHandLayout(), pickFrom);
                 turnState = TurnState.NOT_MY_TURN;
             }
         }

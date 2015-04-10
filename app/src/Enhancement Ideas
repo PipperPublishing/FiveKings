@@ -111,7 +111,6 @@ Previously Done:
 
 -----------------------
 v0.4.02 Bug fixes and clean-up
-- TODO:A's (especially in scoring)
 - Lint warnings
 - More final parameters
 
@@ -143,7 +142,7 @@ DONE: When you continue with a new game sometimes the old Layouts are not all re
 DONE: This doesn't handle if removed player is the dealer
 
 ----------------------
->>>> v0.5.01: Menu start and clean-up
+v0.5.01: Menu start and clean-up
 
 DONE    - or have a setting
 DONE For Computer, if cards are not being shown, just have one touch to move current player and play
@@ -163,37 +162,51 @@ DONE: About with Version number and contact information
 DONE: Another run at spinner
 
 ---------------
-v0.5.02 Clean-up for Carolyn
-- Celebrate win!
->>> Helpful hints if you click on the wrong place
-    - especially Play button
-    - if it's a new round, then indicate that (check GameState)
-- TODO:A's!!!
-- Remove Deprecated code
-- cancel animation if I get bored with dealing
+>>> v0.5.02 Clean-up for Carolyn
+DONE: - Celebrate win!
+DONE: Helpful hints if you click on the wrong place
+        - especially Play button
+        - if it's a new round, then indicate that (check GameState)
+DONE For Humans, don't show cards until second touch of card (before show card backs)
+    - Add an extra click to expose your cards if human players are next to each other
+DONE: Remove Deprecated code
+
+DONE: check critical TODO:A's!!!
+DONE: cancel animation if I get bored with dealing
         - if you just touch the screen or the Play button
-- For Humans, don't show cards until second touch of card (before show card backs)
-- Add an extra click to expose your cards if human players are next to each other
-- Settings
-    - Show other players cards with/except for next player after you
+DONE: Call Meld.check on Computer Heuristics hands to order correctly
+
+FIXED: If you drag a card to the Discard Pile before the appropriate time, it crashes
+BUG: New Game after game complete crashes
+FIXED: Drag after you've dragged to Discard Pile
+
+FIXED: On Human hand, clicking on something else cancels the ability to draw a card
+FIXED: Animate Dealing false, miniHands are now staying transparent
+IGNORED: addWildcardsAndRecord: wildCards.isEmpty and isFinalTurn - not really a bug
+FIXED: Final hand is updating Cumulative Score before roundScore arrives
 
 
-BUG: On Human hand, clicking on something else cancels the ability to draw a card
-BUG: Last person who goes out: cumulativeScore in log is wrong (0)-
-NOT A BUG: addWildcardsAndRecord: wildCards.isEmpty and isFinalTurn - not really a bug
+-------------------
+v0.5.50 Clean-up
+- Remove smells where possible :)
+- Player methods use fKActivity and a lot of convoluted logic
+- TODO:A's - either do or change to B's
+- BUG: Meld.check on Heuristics is showing Joker-3-4
 
 -------------------
 v0.6.00 Graphics
+- Setting to control how long (how many rounds) you see Help/Hints
+    - also look at other constants
 - Look at CardList implementation and consider LinkedHashSet or others which provide
     - check for non-duplicates
     - automatic ordering
 - FiveKings bugs/todo's
+- Make discard/draw pile bigger and cards bigger?
+    - Slide out hand animation
 - Celebrate on final result! Show score table at end - possibly with round-by-round scores?
-    - DONE: make a particularly big round score Red when it's scored
-    - DONE: outline hands in Red or Yellow (just like in Green)
-    - explode cards/hands into multi-color confetti
+    DONE: explode cards/hands into multi-color confetti
+    - Try exploding into middle of screen with fade-out
     - other comments like Phase 10: pick up a discard and say "Thanks! I really needed that" or "Ouch!"
-- Hourglass or spinner to indicate it is thinking
 - Animate open hands into view from mini-hands
 - Animate dealing discard (use z-axis flip of card over?)
 - Fix translation using exact positions on screen
@@ -209,11 +222,13 @@ v0.6.00 Graphics
         - if it's *not* a meld, can we bail early? (depends which mode we're testing in)- Better [Play] and [Meld] button design (find a good image)
     - replace button at bottom of screen with spinner or arrow to click
 - LOTS of cleaning up in FiveKings - follow flow
-- Slide out hand animation
-DONE: Touch Computer hand to play it
 - Landscape layout: isn't switching automatically when I turn the device
 
 Previously Done:
+    - DONE: make a particularly big round score Red when it's scored
+    - DONE: outline hands in Red or Yellow (just like in Green)
+    DONE: Touch Computer hand to play it
+    DONE: Hourglass or spinner to indicate it is thinking
     - DONE: On New Game, should clear Scores when you get to Round 3
     - DONE: Background watermark: Drag your melds into here (or equivalent)
     - DONE: Fix annoying menu popup problem
@@ -255,6 +270,10 @@ Add in more than one sequence and longer sequences than 3
 Use Meld.check somehow?
     - note the numCard breakpoint when we switched to permutations and don't look for sequences bigger than this
     - should allow us to build bigger sequences
+----------------
+v0.9.01 Menu
+- Make hiding hand from Human an option
+
 
 -----------------
 v1.1.01 Optimization
