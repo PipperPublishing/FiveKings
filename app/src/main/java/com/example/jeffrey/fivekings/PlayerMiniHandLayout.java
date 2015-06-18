@@ -28,7 +28,8 @@ import android.widget.TextView;
  *              On first click, show cards - on second play
  * 4/4/2015     If !showCards, then don't force a second click
  * 4/6/2015     Removed updateCumulativeScore from update, so it can be updated after the roundScore animation completes
-
+    6/4/2015    Scale mini hands and draw/discard pile so that they fit in top 1/3 of screen
+   6/9/2015     Scale mini hands based on actual size of DiscardPile
  */
 class PlayerMiniHandLayout extends RelativeLayout{
     //in API 17+ we could use View.generateViewId
@@ -37,9 +38,8 @@ class PlayerMiniHandLayout extends RelativeLayout{
     private static final int ROUND_SCORE_VIEW_ID=1003;
     private static final int CARD_VIEW_ID=1004;
 
-    static final float DECK_SCALING = 0.75f;
-    static final float CARD_SCALING = 0.5f; //reduced size of drawpile + 1/2 size of placed card
-    private static final float X_PADDING = 50f;
+    private static final float MINI_HAND_SCALING = 0.6f; //size of min-hand relative to DrawPile
+    static final float SPACER_WIDTH = 10f;
     private static final float Y_PADDING = 30f;
     private static final int RED_SCORE = 40;
     private static final int YELLOW_SCORE = 20;
@@ -63,8 +63,9 @@ class PlayerMiniHandLayout extends RelativeLayout{
 
         if (numPlayers <= 1) throw new RuntimeException("You must have at least two players");
         double angle = 180 * iPlayer/(numPlayers-1);
-        float xMargin = CardView.INTRINSIC_WIDTH*(DECK_SCALING + CARD_SCALING/2)+ X_PADDING;
-        float yMargin = CardView.INTRINSIC_HEIGHT*(DECK_SCALING + CARD_SCALING/2) + Y_PADDING;
+        //Translate mini-hand center to clear DiscardPile/DrawPile + allowance for Spacer and some extra
+        float xMargin = fKActivity.getDrawPileWidth()+ 0.5f * MINI_HAND_SCALING* fKActivity.getDrawPileWidth() + 2*SPACER_WIDTH;
+        float yMargin = fKActivity.getDrawPileHeight() + Y_PADDING;
         float TranslationX;
         float TranslationY;
         //Adjust to clear the edges of the Drawpile and DiscardPile
@@ -113,7 +114,7 @@ class PlayerMiniHandLayout extends RelativeLayout{
 
 
         this.cardView = new CardView(c, CardView.sBlueBitmapCardBack);
-        LayoutParams cardLp = new LayoutParams((int)(CardView.INTRINSIC_WIDTH*CARD_SCALING), (int)(CardView.INTRINSIC_HEIGHT*CARD_SCALING));
+        LayoutParams cardLp = new LayoutParams((int)(fKActivity.getDrawPileWidth()* MINI_HAND_SCALING), (int)(fKActivity.getDrawPileHeight()* MINI_HAND_SCALING));
         cardLp.addRule(ALIGN_PARENT_TOP);
         cardLp.addRule(CENTER_HORIZONTAL);
         cardView.setLayoutParams(cardLp);
@@ -160,6 +161,7 @@ class PlayerMiniHandLayout extends RelativeLayout{
     }//end constructor for player mini-hands
 
     //constructor for [+] hand that when clicked gives you addPlayer dialog
+    @Deprecated
     PlayerMiniHandLayout(final Context c) {
         super(c);
         final RelativeLayout.LayoutParams handLp = new RelativeLayout.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT);
@@ -176,7 +178,7 @@ class PlayerMiniHandLayout extends RelativeLayout{
         });
 
         this.cardView = new CardView(c, CardView.sBlueBitmapCardBack);
-        LayoutParams cardLp = new LayoutParams((int)(CardView.INTRINSIC_WIDTH*CARD_SCALING), (int)(CardView.INTRINSIC_HEIGHT*CARD_SCALING));
+        LayoutParams cardLp = new LayoutParams((int)(CardView.INTRINSIC_WIDTH* MINI_HAND_SCALING), (int)(CardView.INTRINSIC_HEIGHT* MINI_HAND_SCALING));
         cardLp.addRule(ALIGN_PARENT_TOP);
         cardLp.addRule(CENTER_HORIZONTAL);
         cardView.setLayoutParams(cardLp);

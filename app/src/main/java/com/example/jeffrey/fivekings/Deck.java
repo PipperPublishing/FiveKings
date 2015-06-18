@@ -48,7 +48,7 @@ class Deck extends DealingCardList  {
     }
 
     final void initDrawAndDiscardPile() {
-        drawPile = new DrawPile();
+        drawPile = new DrawPile(); //also copies deck to drawPile
         discardPile = new DiscardPile();
     }
 

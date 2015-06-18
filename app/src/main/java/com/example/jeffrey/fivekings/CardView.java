@@ -11,6 +11,8 @@ import android.widget.ImageView;
  * 3/3/2015     Set INTRINSIC_WIDTH and INTRINSIC_HEIGHT as soon as we start building CardViews
  * 3/4/2015     card can be null in which case we set null ImageDrawable as well
  * 4/9/2015     Add acceptDrag to accept/deny drag (for now just to DiscardPile)
+ * 6/7/2015     Now that DiscardPile is wrap_content, we need to have an invisible card there when it is null
+ * 6/9/2015     Add getHeight and getWidth
  */
 class CardView extends ImageView {
     private Card card; //TODO:A would like to make this final again and maybe keep CardViews rather than cards
@@ -83,6 +85,8 @@ class CardView extends ImageView {
         if (card == null) this.setImageDrawable(null);
         else if (card.isJoker()) setImageDrawable(c.getResources().getDrawable(R.drawable.joker1));
         else setImageDrawable(c.getResources().getDrawable(sBitmapResource[card.getSuit().getOrdinal()][card.getRank().getOrdinal()]));
+
+        this.setMinimumWidth(INTRINSIC_WIDTH);
     }
 
     Card getCard() {

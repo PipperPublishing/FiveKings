@@ -40,6 +40,7 @@ import java.util.Iterator;
  * 3/26/2015    Introduced TURN_STATE to tell what to do when clicked
  * 4/8/2015     Not a bug to have no wildcards and call addWildCards...
  *              meldUsingHeuristics calls decomposeAndCheck to order wildcard melds
+ * 6/18/2015    Sort Hand immediately after dealing
  * TODO:A Move roundScore to Hand (Down from Player)
  */
 abstract class Player implements HandComparator {
@@ -287,6 +288,7 @@ abstract class Player implements HandComparator {
             this(roundOf);
             if (drawPile != null) {
                 singles = new Meld(this.playerHandComparator, drawPile.deal(roundOf.getRankValue())); //only for human really
+                Collections.sort(singles,Card.cardComparatorRankFirstDesc);
                 this.clear();
                 this.addAll(singles);
             }

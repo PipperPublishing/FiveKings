@@ -31,8 +31,8 @@
     <string name="now_playing">Playing %s\'s round</string>
     <string name="newGame">New Game</string>
     <string name="areYouSure">Are you sure you want to end this game and start another?</string>
-    <string name="congratulationsName">Congratulations %s!</string>
-    <string name="congratulationsDetails">You won with the lowest score of %s. Winner cleans up!</string>
+    <string name="congratulationsName">Congratulations!</string>
+    <string name="congratulationsDetails">%1$s won with the lowest score of %2$s. Winner cleans up!</string>
     <string name="isHuman">human</string>
     <string name="isComputer">computer</string>
     <string name="addPlayersTitle">Add player</string>
@@ -64,7 +64,8 @@
         The winner is the player who has the lowest score at the end of the game.\n
         You start with the round of 3\'s where you have 3 cards and 3\'s are wild (in addition to Jokers).\n
         You end with the round of Kings where you have 13 cards and Kings are wild.\n\n
-        In each turn, draw from the Draw or Discard pile to your hand, meld your cards (by dragging them to the meld area on the screen), and discard a card to the Discard pile.\n
+        In each turn, draw from the Draw or Discard pile to your hand, meld your cards (by dragging them to the meld area on the screen), and discard a card to the Discard pile.
+        Melds are 3 or more of the same rank, or 3 or more in a sequence, including as many wild cards as you like.\n
         A player is "out" when they have melded all their cards, giving them a score of 0 for the round.
         All other players get one more turn to improve their hands, or also go out. At the end of the round,
         your score for the round is the sum of the unmelded cards you have left. Cards count their face value
