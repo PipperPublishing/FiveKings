@@ -189,7 +189,7 @@ v0.5.50
 FIXED: New Game will crash after game
 
 ============================================================
->>>> v0.5.60 Card size and scaling
+v0.5.60 Card size and scaling
  Hands need to fill the space on the Android tablet
 DONE    - produce scaled cards for different resolutions
 DONE    - Scale mini-hands to 50%/75% of DrawPile
@@ -201,54 +201,7 @@ DONE   3. Cards are too small (especially on Nexus 7 running android 4.4.3) - ne
 DONE    Animated cards being clipped by top RelativeLayout
 DONE        Computer animated pickup is happening x-shifted to right
 DONE        The "deal pile" is too big during the deal animation - need to record the scaling factor??
-
-
--------------------------------------
-v0.6.00 Play test bugs
-- Remove smells where possible :)
-- LOTS of cleaning up in FiveKings - follow flow
-- Player methods use fKActivity and a lot of convoluted logic
-- TODO:A's - either do or change to B's
-- BUG: Meld.check on Heuristics is showing Joker-3-4
-
-    - Improve logic flow and understandability of FiveKings, Game, PlayerLayout etc
-    - Clean up Game state flow and handling
-    - push player Hand updates to individual players rather than mass updates of screen
-    - more sub-classing rather than if (isHuman) type logic
-
-BUGS
-    - I've seen a couple of times when the computer gave itself more points than it should have.  I think it happens if it
-      is saving one card for a run, e.g. 10C,JC, but has two other of one of those cards (JS,JD).  It doesn't move the jack
-      over to the pair to meld them.
-DONE    - It would be nice if the hand would sort if you tap on it. When you have 10 or 12 cards and are trying to decide whether
-      or not to pick up that first card, it would help those who need their cards sorted to play :-)
-    - Logic for pick up and discard on final turn is different. Goal is only to minimize score. So DrawVsDiscard comparator should only be comparing that potential.
-      After picking from  Discard pile, no change should be necessary. After picking from Draw pile minimize score.
-    - 1. Expect the game to play the compute turn without clicking, while showing your (human) hand still
-      2. Several times where cards got "stuck" on the bottom of the screen and didn't disappear
-      6.  have easy/medium/hard modes
-      7.  human vs. human mode?
-
--------------------
-v0.6.10 Graphics
-
-- 5th suit with different shape (cats?)
-- Make discard/draw pile bigger and cards bigger?
-    - Slide out hand animation
-    - make miniHands bigger - why aren't they expanding to fill available space?
-    - Animate open hands into view from mini-hands
-- Show score table at end - possibly with round-by-round scores?
-    - Try exploding into middle of screen with fade-out
-    - other comments like Phase 10: pick up a discard and say "Thanks! I really needed that" or "Ouch!"
-- Animate dealing discard (use z-axis flip of card over?)
-- Hint overlays like Google (arrows and text)
-- Find a suit of Stars - option to use other backgrounds for 5th suit
-
-- Add button to [Meld] for you (with a number of times you can use it?)
-    - or only in first few rounds
-    - Guard against human trying to put all cards in one meld (and it working!)
-        - if it's *not* a meld, can we bail early? (depends which mode we're testing in)
-        - Better [Play] button design (find a good image)
+=============================
 
 Previously Done:
     DONE: replace button at bottom of screen with spinner or arrow to click
@@ -265,20 +218,59 @@ Previously Done:
     - DONE: Long press on [Play] should be something (new game)
     - DONE: Players show as backs of cards in semi-circle above play area
     - DONE: Animation when a card is picked from Draw or Discard
+DONE- Make discard/draw pile bigger and cards bigger?
+========================
+v0.6.01
+DONE    - It would be nice if the hand would sort if you tap on it. When you have 10 or 12 cards and are trying to decide whether
+      or not to pick up that first card, it would help those who need their cards sorted to play :-)
+
+-------------------------------------
+>>>> v0.6.02 Bugs
+DONE Show Help screen when you start and not Add Player
+
+BUG: If you change Computer to a Human on the first round, then it doesn't play it
+    - Perhaps something to do with the  wait for human code
+    - Check Human mode (2 humans, 2 humans + computer)
+BUG: With two Human players, after the deal the Discard is changed after you click on the player
+
+BUGS
+    - I've seen a couple of times when the computer gave itself more points than it should have.  I think it happens if it
+      is saving one card for a run, e.g. 10C,JC, but has two other of one of those cards (JS,JD).  It doesn't move the jack
+      over to the pair to meld them.
+
+BUG: Meld.check on Heuristics is showing Joker-3-4
 
 
+- Check Human mode
 
------------------
-v0.6.20 Graphics
-- Modify single layout dynamically if you switch to landscape mode
-- Landscape layout: isn't switching automatically when I turn the device
+
+-------------------
+v0.6.50 Graphics
+      2. Several times where cards got "stuck" on the bottom of the screen and didn't disappear
+- 5th suit with different shape (cats?)
+
+    - Slide out hand animation
+    - make miniHands bigger - why aren't they expanding to fill available space?
+    - Animate open hands into view from mini-hands
+- 1. Expect the game to play the compute turn without clicking, while showing your (human) hand still
+- Show score table at end - possibly with round-by-round scores?
+    - Try exploding into middle of screen with fade-out
+    - other comments like Phase 10: pick up a discard and say "Thanks! I really needed that" or "Ouch!"
+- Animate dealing discard (use z-axis flip of card over?)
+- Hint overlays like Google (arrows and text)
+- Modify single layout dynamically when you turn the device to landscape mode
 - Fix translation using exact positions on screen
     - Instead of using Intrinsic width, should use actual laid out width etc
+=======================
+v0.7.01 Publish to Google Store
+- About screen: generic email
+- Icon (hi-res)
+- Fix Q Stars
+- Name?
 
-- Look at CardList implementation and consider LinkedHashSet or others which provide
-    - check for non-duplicates
-    - automatic ordering
-- investigate using Callback instead of Listener (does it make it easier to find card?)
+
+
+
 
 ----------------
 v0.7.01 Scoring and Valuation
@@ -289,24 +281,50 @@ Permutations:
 - Eliminate looking at other perms that are equivalent score (e.g. (K* KS KH) = (KS K* KH)) - use a hash?
 - ??use sorted lists
 - implement Meld.needsCheck
+- track what is left in DrawPile (or cheat and remember it)
+- Cheat mode where it peeks at draw pile card (in Settings)
+
+
+Use Meld.check somehow?
+    - note the numCard breakpoint when we switched to permutations and don't look for sequences bigger than this
+    - should allow us to build bigger sequences
+
+-------------------
+v0.7.03 Clean up
+- Remove smells where possible :)
+- LOTS of cleaning up in FiveKings - follow flow
+- Player methods use fKActivity and a lot of convoluted logic
+
+    - Improve logic flow and understandability of FiveKings, Game, PlayerLayout etc
+    - Clean up Game state flow and handling
+    - push player Hand updates to individual players rather than mass updates of screen
+    - more sub-classing rather than if (isHuman) type logic
+- Save state when I navigate away
+-----------------
+v0.7.04
 BUG:A Check if still true? Heuristics is throwing away wildcard when you have a partial meld of 4-4 and only full melds;
 BUG:A Permutations won't build a K onto T*Q
-
-    - track what is left in DrawPile (or cheat and remember it)
-    - Cheat mode where it peeks at draw pile card (in Settings)
 
 Heuristics:
 BUG:A Heuristics won't build a sequence X-Y-Jok-Z; not looking at this - use meld.check?
 Add in more than one sequence and longer sequences than 3
 - Loop over fullMeld and fullSequence alternatives (use perms?)
-Use Meld.check somehow?
-    - note the numCard breakpoint when we switched to permutations and don't look for sequences bigger than this
-    - should allow us to build bigger sequences
+
+
+    - Logic for pick up and discard on final turn is different. Goal is only to minimize score. So DrawVsDiscard comparator should only be comparing that potential.
+      After picking from  Discard pile, no change should be necessary. After picking from Draw pile minimize score.
+
+
 ----------------
 v0.9.01 Menu
 - Make hiding hand from Human an option
 - Setting to control how long (how many rounds) you see Help/Hints
     - also look at other constants
+
+- Look at CardList implementation and consider LinkedHashSet or others which provide
+    - check for non-duplicates
+    - automatic ordering
+- investigate using Callback instead of Listener (does it make it easier to find card?)
 
 -----------------
 v1.1.01 Optimization

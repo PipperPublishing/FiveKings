@@ -1,17 +1,23 @@
 apply plugin: 'com.android.application'
 
 android {
+    signingConfigs {
+        ReleaseSigning {
+            keyAlias 'ReleaseKey'
+            keyPassword 'b8tt3rb2ll'
+            storeFile file('C:/Users/Jeffrey/AndroidStudioProjects/PipperPublishing.jks')
+            storePassword 'b8tt3rb2ll'
+        }
+    }
     compileSdkVersion 21
     buildToolsVersion "21.1.2"
-
     defaultConfig {
         applicationId "com.example.jeffrey.fivekings"
         minSdkVersion 14
         targetSdkVersion 21
-        versionCode 560
-        versionName "0.5.60-1053-06-18-2015"
+        versionCode 602
+        versionName "0.6.02-2130-08-13-2015"
     }
-
     applicationVariants.all { variant ->
         variant.outputs.each { output ->
             output.outputFile = new File(
@@ -19,11 +25,11 @@ android {
                     output.outputFile.name.replace(".apk", "-${variant.versionName}.apk"))
         }
     }
-
     buildTypes {
         release {
             minifyEnabled false
             proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
+            signingConfig signingConfigs.ReleaseSigning
         }
     }
 }

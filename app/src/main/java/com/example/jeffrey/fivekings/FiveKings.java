@@ -339,7 +339,7 @@ public class FiveKings extends Activity {
         mCurrentCards.removeAllViews();
         mCurrentMelds.removeAllViews();
         mGame.relayoutPlayerMiniHands(this);
-        showAddPlayers();
+        HelpBox.show(FiveKings.this);
         return true;
     }
 
