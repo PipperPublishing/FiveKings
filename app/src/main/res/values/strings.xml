@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
 
-    <string name="app_name">FiveKings</string>
+    <string name="app_name">Five Kings</string>
     <string name="Joker">Joker</string>
     <string name="Score">Scores</string>
     <string name="scores_after">Scores after %s\'s round</string>
@@ -57,7 +57,7 @@
     <string name="edit_delete_hint">Long click on a player hand to edit or delete</string>
     <string name="show_computer_cards">Show Computer cards</string>
     <string name="animate_dealing">Animate dealing</string>
-    <string name="about">Problems? Please email me at jdpugh2@gmail.com</string>
+    <string name="about">Problems? Please email us at pipper.publishing@gmail.com</string>
     <string name="help_title">Help</string>
     <string name="help_message">\n
         In this game you play 11 rounds against the computer and/or against other humans.\n

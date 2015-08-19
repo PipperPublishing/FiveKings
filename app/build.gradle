@@ -12,11 +12,11 @@ android {
     compileSdkVersion 21
     buildToolsVersion "21.1.2"
     defaultConfig {
-        applicationId "com.example.jeffrey.fivekings"
+        applicationId "com.pipperpublishing.fivekings"
         minSdkVersion 14
         targetSdkVersion 21
-        versionCode 602
-        versionName "0.6.02-2130-08-13-2015"
+        versionCode 603
+        versionName "0.6.03-1721-08-18-2015"
     }
     applicationVariants.all { variant ->
         variant.outputs.each { output ->

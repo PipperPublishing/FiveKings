@@ -1,4 +1,4 @@
-package com.example.jeffrey.fivekings;
+package com.pipperpublishing.fivekings;
 
 import android.app.Application;
 import android.test.ApplicationTestCase;

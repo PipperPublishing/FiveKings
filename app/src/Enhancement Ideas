@@ -225,9 +225,12 @@ DONE    - It would be nice if the hand would sort if you tap on it. When you hav
       or not to pick up that first card, it would help those who need their cards sorted to play :-)
 
 -------------------------------------
->>>> v0.6.02 Bugs
+v0.6.02 Bugs
 DONE Show Help screen when you start and not Add Player
+Generate Release version
 
+---------------------------------------
+v0.6.03
 BUG: If you change Computer to a Human on the first round, then it doesn't play it
     - Perhaps something to do with the  wait for human code
     - Check Human mode (2 humans, 2 humans + computer)
