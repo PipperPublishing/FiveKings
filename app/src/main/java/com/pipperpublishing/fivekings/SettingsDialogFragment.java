@@ -13,19 +13,17 @@ import android.widget.Checkable;
 /**
  * 4/3/2015 Created to show settings
  *          Currently just showComputerCards (on every hand) and animateDealing
+ * 8/25/2015    Reuse the preference names now being saved in FiveKings
  */
 public class SettingsDialogFragment extends DialogFragment {
-    private static final String showComputerCardsArg = "SHOW_COMPUTER_CARDS";
-    private static final String animateDealingArg = "ANIMATE_DEALING";
-
 
     //use newInstance to pass arguments to the Bundle which the dialog can access
     // apparently this is preferred to custom member fields and setters
     static SettingsDialogFragment newInstance(final boolean oldShowComputerCards, final boolean oldAnimateDealing) {
         SettingsDialogFragment ePDF = new SettingsDialogFragment();
         Bundle args = new Bundle();
-        args.putBoolean(showComputerCardsArg, oldShowComputerCards);
-        args.putBoolean(animateDealingArg, oldAnimateDealing);
+        args.putBoolean(FiveKings.SHOW_COMPUTER_HANDS_SETTING, oldShowComputerCards);
+        args.putBoolean(FiveKings.ANIMATE_DEALING_SETTING, oldAnimateDealing);
         ePDF.setArguments(args);
         return ePDF;
     }
@@ -33,8 +31,8 @@ public class SettingsDialogFragment extends DialogFragment {
     @Override
     public Dialog onCreateDialog(final Bundle args) {
         //use getArguments because they were passed to the fragment
-        final boolean oldShowComputerCards=getArguments().getBoolean(showComputerCardsArg, false);
-        final boolean oldAnimateDealing = getArguments().getBoolean(animateDealingArg, false);
+        final boolean oldShowComputerCards=getArguments().getBoolean(FiveKings.SHOW_COMPUTER_HANDS_SETTING, false);
+        final boolean oldAnimateDealing = getArguments().getBoolean(FiveKings.ANIMATE_DEALING_SETTING, false);
         final AlertDialog.Builder builder = new AlertDialog.Builder(getActivity());
         // Get the layout inflater
         final LayoutInflater inflater = getActivity().getLayoutInflater();

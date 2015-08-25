@@ -230,11 +230,53 @@ DONE Show Help screen when you start and not Add Player
 Generate Release version
 
 ---------------------------------------
-v0.6.03
+v0.6.03 Published to App Store (Beta)
+DONE Changed path
+DONE Added icon
+DONE - About screen: generic email
+DONE Icon (hi-res)
+
+======================================
+>>>> v0.7.01 Annoying graphics
+>>>Save Settings using SharedPreferences.getPreferences()
+
+Fix Stars to something else (Moons?) and another color - paint.net
+Landscape mode
+- Modify single layout dynamically when you turn the device to landscape mode
+
+
+Test with 2-5 players
+
+--------------------------------
+v0.7.02 Computer/Human bugs
+
 BUG: If you change Computer to a Human on the first round, then it doesn't play it
     - Perhaps something to do with the  wait for human code
     - Check Human mode (2 humans, 2 humans + computer)
 BUG: With two Human players, after the deal the Discard is changed after you click on the player
+
+- Check Human mode
+
+
+-------------------
+v0.7.50 Graphics
+      2. Several times where cards got "stuck" on the bottom of the screen and didn't disappear
+- 5th suit with different shape (cats?)
+
+    - Slide out hand animation
+    - Animate open hands into view from mini-hands
+- 1. Expect the game to play the compute turn without clicking, while showing your (human) hand still
+- Show score table at end - possibly with round-by-round scores?
+    - Try exploding into middle of screen with fade-out
+    - other comments like Phase 10: pick up a discard and say "Thanks! I really needed that" or "Ouch!"
+- Animate dealing discard (use z-axis flip of card over?)
+- Hint overlays like Google (arrows and text)
+- Fix translation using exact positions on screen
+    - Instead of using Intrinsic width, should use actual laid out width etc
+=======================
+
+v0.8.01 Scoring and Valuation
+
 
 BUGS
     - I've seen a couple of times when the computer gave itself more points than it should have.  I think it happens if it
@@ -244,39 +286,6 @@ BUGS
 BUG: Meld.check on Heuristics is showing Joker-3-4
 
 
-- Check Human mode
-
-
--------------------
-v0.6.50 Graphics
-      2. Several times where cards got "stuck" on the bottom of the screen and didn't disappear
-- 5th suit with different shape (cats?)
-
-    - Slide out hand animation
-    - make miniHands bigger - why aren't they expanding to fill available space?
-    - Animate open hands into view from mini-hands
-- 1. Expect the game to play the compute turn without clicking, while showing your (human) hand still
-- Show score table at end - possibly with round-by-round scores?
-    - Try exploding into middle of screen with fade-out
-    - other comments like Phase 10: pick up a discard and say "Thanks! I really needed that" or "Ouch!"
-- Animate dealing discard (use z-axis flip of card over?)
-- Hint overlays like Google (arrows and text)
-- Modify single layout dynamically when you turn the device to landscape mode
-- Fix translation using exact positions on screen
-    - Instead of using Intrinsic width, should use actual laid out width etc
-=======================
-v0.7.01 Publish to Google Store
-- About screen: generic email
-- Icon (hi-res)
-- Fix Q Stars
-- Name?
-
-
-
-
-
-----------------
-v0.7.01 Scoring and Valuation
 - Look at melding "potential" of single unmelded cards you keep (not just partial melds)
 - Don't discard what others want (wild cards, or cards they picked up)
 Permutations:
@@ -293,7 +302,7 @@ Use Meld.check somehow?
     - should allow us to build bigger sequences
 
 -------------------
-v0.7.03 Clean up
+v0.8.03 Clean up
 - Remove smells where possible :)
 - LOTS of cleaning up in FiveKings - follow flow
 - Player methods use fKActivity and a lot of convoluted logic
@@ -304,7 +313,7 @@ v0.7.03 Clean up
     - more sub-classing rather than if (isHuman) type logic
 - Save state when I navigate away
 -----------------
-v0.7.04
+v0.8.04
 BUG:A Check if still true? Heuristics is throwing away wildcard when you have a partial meld of 4-4 and only full melds;
 BUG:A Permutations won't build a K onto T*Q
 

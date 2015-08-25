@@ -9,6 +9,7 @@ import android.app.AlertDialog;
 import android.content.ClipData;
 import android.content.Context;
 import android.content.DialogInterface;
+import android.content.SharedPreferences;
 import android.graphics.Point;
 import android.graphics.Typeface;
 import android.os.Bundle;
@@ -108,9 +109,14 @@ import java.util.List;
     6/11/2015   Change from DECK_SCALING to use actual scaled height of deck (that is dynamically controlled by the LinearLayout it is placed in)
     6/17/2015   Try adding Discard and DrawPile programmatically to solve weird translation problem
                 Use setAdjustViewBounds and position relative to spacer
+    8/25/2015   Read/set settings for ShowComputerHands and AnimateDealing
 */
 
 public class FiveKings extends Activity {
+    static final String SETTINGS_NAME="SettingsFile";
+    static final String SHOW_COMPUTER_HANDS_SETTING="showComputerHands";
+    static final String ANIMATE_DEALING_SETTING="animateDealing";
+
     static final float CARD_OFFSET_RATIO = 0.2f;
     static final float CARD_SCALING = 0.6f; //in the meld area, the cards are 1.5 x CARD_SCALING + a margin for the border, to fit in the meld area
     static final float X_MELD_OFFSET_RATIO = 0.3f;
@@ -197,10 +203,17 @@ public class FiveKings extends Activity {
 
         dealAnimatorSet = null;
 
+
+
         if (null == mGame) mGame = new Game();
         //have to do this after new Game() because we need the deck etc. created there
         setupDrawAndDiscardPiles();
         disableDrawDiscardClick();
+
+        //get current settings from SharedPreferences if they exist
+        SharedPreferences settings = getSharedPreferences(SETTINGS_NAME, 0);
+        mGame.setShowComputerCards(settings.getBoolean(SHOW_COMPUTER_HANDS_SETTING,false));
+        mGame.setAnimateDealing(settings.getBoolean(ANIMATE_DEALING_SETTING, true));
 
     }//end onCreate
 
@@ -252,8 +265,17 @@ public class FiveKings extends Activity {
     }
 
     public void setSettings(final boolean showComputerHands, final boolean animateDealing) {
+        //set locally...
         mGame.setShowComputerCards(showComputerHands);
         mGame.setAnimateDealing(animateDealing);
+        //...and also store in preferences
+        SharedPreferences settings = getSharedPreferences(SETTINGS_NAME, 0);
+        SharedPreferences.Editor editor = settings.edit();
+        editor.putBoolean(SHOW_COMPUTER_HANDS_SETTING, showComputerHands);
+        editor.putBoolean(ANIMATE_DEALING_SETTING, animateDealing);
+
+        // Commit the edits!
+        editor.commit();
     }
 
     //Event handler for [Save] in add player dialog
