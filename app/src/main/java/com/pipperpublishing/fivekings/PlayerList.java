@@ -10,6 +10,7 @@ import java.util.ArrayList;
  * Created by Jeffrey on 3/22/2015.
  * 3/22/2015    Encapsulates list of players for Game
  * 3/24/2015    Moved next Dealer to initRound() (so we can handle deleting the dealer)
+ * 8/29/2015    Layout mini hands relative to draw_and_discard_pile RelativeLayout
  TODO:A Maybe manage PlayerLayout as well?
  */
 class PlayerList extends ArrayList<Player> {
@@ -159,7 +160,7 @@ class PlayerList extends ArrayList<Player> {
         }
 
         if (this.dealer == null) throw new RuntimeException("logRoundScores: dealer is null" );
-        this.currentPlayer = null;
+        //FIXME: Removed this because I don't know why I set it: this.currentPlayer = null;
 
     }
 
@@ -202,9 +203,9 @@ class PlayerList extends ArrayList<Player> {
     //re-layout when we've changed number of players by adding/deleting
     void relayoutPlayerMiniHands(Activity a) {
         removePlayerMiniHands(a);
-        final RelativeLayout fullScreenContent = (RelativeLayout) a.findViewById(R.id.fullscreen_content);
+        final RelativeLayout drawAndDiscardPiles = (RelativeLayout) a.findViewById(R.id.draw_and_discard_piles);
         for (int iPlayer = 0; iPlayer < this.size(); iPlayer++) {
-            fullScreenContent.addView(this.get(iPlayer).addPlayerMiniHandLayout(a, iPlayer, this.size()));
+            drawAndDiscardPiles.addView(this.get(iPlayer).addPlayerMiniHandLayout(a, iPlayer, this.size()));
         }
     }
 }

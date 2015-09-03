@@ -1,6 +1,8 @@
 package com.pipperpublishing.fivekings;
 
 import android.app.Activity;
+import android.os.Parcel;
+import android.os.Parcelable;
 import android.util.Log;
 
 /**
@@ -37,16 +39,17 @@ import android.util.Log;
  * 3/31/2015    Replace logRoundScores with checkEndRound + other logic
  *              Added delegate methods, especially to playerList
  * 4/1/2015     Removed ROUND_END assignment
- *              Added
+    8/30/2015   Made Game parcelable as first step towards saving state
+ 9/3/2015       Switch parceling gameState to toString/valueOf
  *
  */
-public class Game {
+public class Game implements Parcelable{
     static final String APP_TAG = BuildConfig.VERSION_NAME;
-    static final int MAX_PLAYERS=10;
-    static final int MAX_CARDS=14; //Round of Kings + picked up card
+    static final int MAX_PLAYERS = 10;
+    static final int MAX_CARDS = 14; //Round of Kings + picked up card
     // in the Menu Settings dialog
-    private boolean showComputerCards =false;
-    private boolean animateDealing=true;
+    private boolean showComputerCards = false;
+    private boolean animateDealing = true;
 
     private final Deck deck;
     //List of players sorted into correct relative position
@@ -109,8 +112,7 @@ public class Game {
 
             roundOf = roundOf.getNext();
             this.gameState = roundOf == null ? GameState.GAME_END : GameState.ROUND_START;
-        }
-        else this.gameState = GameState.TURN_START;
+        } else this.gameState = GameState.TURN_START;
         return roundOf;
     }
 
@@ -126,7 +128,7 @@ public class Game {
 
     Card peekDiscardPileCard() {
         //Possibly null (after just picking up)
-         return deck.discardPile.peekNext();
+        return deck.discardPile.peekNext();
     }
 
     /*----------------------------------------------*/
@@ -143,6 +145,7 @@ public class Game {
     void addPlayer(final String playerName, final boolean isHuman) {
         this.players.addPlayer(playerName, isHuman ? PlayerList.PlayerType.HUMAN : PlayerList.PlayerType.EXPERT_COMPUTER);
     }
+
     void updatePlayer(final String playerName, final boolean isHuman, final int iPlayer) {
         this.players.updatePlayer(playerName, isHuman, iPlayer);
     }
@@ -154,7 +157,11 @@ public class Game {
     void relayoutPlayerMiniHands(final Activity a) {
         this.players.relayoutPlayerMiniHands(a);
     }
-    void removePlayerMiniHands(final Activity a) { this.players.removePlayerMiniHands(a);}
+
+    void removePlayerMiniHands(final Activity a) {
+        this.players.removePlayerMiniHands(a);
+    }
+
     void resetPlayerMiniHandsToRoundStart() {
         players.resetPlayerMiniHandsRoundStart();
         players.updatePlayerMiniHands();
@@ -177,15 +184,21 @@ public class Game {
         return players.getCurrentPlayer();
     }
 
-    Player getNextPlayer() { return players.getNextPlayer();}
+    Player getNextPlayer() {
+        return players.getNextPlayer();
+    }
 
     boolean hideHandFromPreviousPlayer(final Player player) {
         return players.hideHandFromPrevious(player);
     }
 
-    Player getWinner() { return players.getWinner(); }
+    Player getWinner() {
+        return players.getWinner();
+    }
 
-    boolean isFinalTurn() { return players.getPlayerWentOut() != null;}
+    boolean isFinalTurn() {
+        return players.getPlayerWentOut() != null;
+    }
 
     Card getDrawnCard() {
         return getCurrentPlayer().getDrawnCard();
@@ -195,7 +208,9 @@ public class Game {
         this.players.rotatePlayer();
     }
 
-    int numPlayers() { return this.players.size();}
+    int numPlayers() {
+        return this.players.size();
+    }
 
 
     /* Starting and ending turns */
@@ -239,5 +254,51 @@ public class Game {
 
     void setAnimateDealing(boolean animateDealing) {
         this.animateDealing = animateDealing;
+    }
+
+    /* IMPLEMENTATION OF PARCELABLE */
+
+    @Override
+    public int describeContents() {
+        return 0;
+    }
+
+    @Override
+    public void writeToParcel(Parcel out, int flags) {
+        out.writeByte((byte)(showComputerCards ? 1:0));
+        out.writeByte((byte)(animateDealing ? 1:0));
+
+        out.writeLong(roundStartTime);
+        out.writeLong(roundStopTime);
+
+        out.writeValue(deck);
+        out.writeValue(players);
+        out.writeValue(roundOf);
+        out.writeString(gameState.toString());
+    }
+
+    public static final Parcelable.Creator<Game> CREATOR
+            = new Parcelable.Creator<Game>() {
+            public Game createFromParcel(Parcel in) {
+                return new Game(in);
+            }
+
+            public Game[] newArray(int size) {
+                return new Game[size];
+            }
+        };
+
+    //recreate object from parcel
+    private Game(Parcel in) {
+        showComputerCards = in.readByte() != 0;
+        animateDealing = in.readByte() != 0;
+
+        roundStartTime = in.readLong();
+        roundStopTime = in.readLong();
+
+        deck = (Deck) in.readValue(Deck.class.getClassLoader());
+        players = (PlayerList) in.readValue(PlayerList.class.getClassLoader());
+        roundOf = (Rank) in.readValue(Rank.class.getClassLoader());
+        gameState = GameState.valueOf(in.readString());
     }
 }

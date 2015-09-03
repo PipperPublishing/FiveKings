@@ -1,5 +1,8 @@
 package com.pipperpublishing.fivekings;
 
+import android.os.Parcel;
+import android.os.Parcelable;
+
 import java.util.Comparator;
 
 /**
@@ -13,8 +16,9 @@ import java.util.Comparator;
  * 2/26/2015    Move drawables to CardView; changed Joker back to hardcoded string
  * 3/13/2015    Moved cardScore to Player.calculateCardScore (because it involves Final vs not Final)
  * 3/13/2015    Subclassed Jokers
+ * 8/30/2015    Make Card parcelable so deck etc can be parceled for savedInstanceState
  */
-class Card {
+class Card implements Parcelable{
     private static final int WILD_CARD_VALUE =20;
 
     //sorting for sequences (within the same suit)
@@ -109,5 +113,37 @@ class Card {
         else return cardValue;
     }
 
+    /* PARCELABLE INTERFACE */
+    @Override
+    public int describeContents() {
+        return 0;
+    }
 
+    @Override
+    public void writeToParcel(Parcel out, int flags) {
+        out.writeValue(suit);
+        out.writeValue(rank);
+    }
+
+    public static final Parcelable.Creator<Card> CREATOR
+            = new Parcelable.Creator<Card>() {
+        public Card createFromParcel(Parcel in) {
+            return new Card(in);
+        }
+
+        public Card[] newArray(int size) {
+            return new Card[size];
+        }
+    };
+
+    //recreate object from parcel
+    private Card(Parcel in) {
+        suit = (Suit) in.readValue(Suit.class.getClassLoader());
+        rank = (Rank) in.readValue(Rank.class.getClassLoader());
+
+        if ((rank != null) && (suit != null)) {
+            this.cardString = rank.getString() + suit.getString();
+            this.cardValue = rank.getRankValue();
+        }
+    }
 }

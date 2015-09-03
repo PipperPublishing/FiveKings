@@ -237,24 +237,42 @@ DONE - About screen: generic email
 DONE Icon (hi-res)
 
 ======================================
->>>> v0.7.01 Annoying graphics
->>>Save Settings using SharedPreferences.getPreferences()
+v0.7.01 Settings
+Save Settings using SharedPreferences.getPreferences()
 
-Fix Stars to something else (Moons?) and another color - paint.net
-Landscape mode
-- Modify single layout dynamically when you turn the device to landscape mode
+-----------------------------------
+v0.7.02
+DONE: Fix Stars to lightning bolts and another color - paint.net
+--------------
+>>>v0.7.03 Dynamic landscape mode and recover from pause/orientation change
+DONE Dynamic Landscape mode
+DONE Handle restart:
+    DONE Handle Task and Home button (currently crashes)
+   DONE? Implement state saving for my Custom Views: http://stackoverflow.com/questions/3542333/how-to-prevent-custom-views-from-losing-state-across-screen-orientation-changes
+    BUGS:
+   DONE- WHen Human picks card, it uses the static animation - need to animate it from the pile to the cards
+   DONE when you go out, score goes from random place - needs to go from between Hands and Melds
+     - when hands are re-laid out , moving card may be wrong (could be on next hand) - need to split?
+    DONE when you change orientation, resets to the grayed out hand instead of showing a card (or not)
+DONE Show Help immediately unless setting is set
+----------------------------------------------
+v0.7.04 Animation and restart bugs
+- Wrong card starts jiggling after restart
+- Computer/You overwrite the screen on landscape orientation change
 
 
-Test with 2-5 players
+
+
+
 
 --------------------------------
-v0.7.02 Computer/Human bugs
+v0.7.10 Computer/Human bugs
 
 BUG: If you change Computer to a Human on the first round, then it doesn't play it
     - Perhaps something to do with the  wait for human code
     - Check Human mode (2 humans, 2 humans + computer)
 BUG: With two Human players, after the deal the Discard is changed after you click on the player
-
+- Test with 2-5 players
 - Check Human mode
 
 
@@ -264,6 +282,7 @@ v0.7.50 Graphics
 - 5th suit with different shape (cats?)
 
     - Slide out hand animation
+    - Need dashed line on discard pile
     - Animate open hands into view from mini-hands
 - 1. Expect the game to play the compute turn without clicking, while showing your (human) hand still
 - Show score table at end - possibly with round-by-round scores?

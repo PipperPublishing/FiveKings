@@ -3,6 +3,8 @@ package com.pipperpublishing.fivekings;
 import android.content.Context;
 import android.graphics.Color;
 import android.graphics.Typeface;
+import android.os.Parcel;
+import android.os.Parcelable;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.RelativeLayout;
@@ -30,6 +32,8 @@ import android.widget.TextView;
  * 4/6/2015     Removed updateCumulativeScore from update, so it can be updated after the roundScore animation completes
     6/4/2015    Scale mini hands and draw/discard pile so that they fit in top 1/3 of screen
    6/9/2015     Scale mini hands based on actual size of DiscardPile
+ 9/1/2015       Save Custom View state as per http://stackoverflow.com/questions/3542333/how-to-prevent-custom-views-from-losing-state-across-screen-orientation-changes
+ //TODO:A Allow for recreating this during game play, so look at currentPlayer and whether player is out to set border and animation
  */
 class PlayerMiniHandLayout extends RelativeLayout{
     //in API 17+ we could use View.generateViewId
@@ -87,7 +91,7 @@ class PlayerMiniHandLayout extends RelativeLayout{
         this.setOnLongClickListener(new View.OnLongClickListener() {
             @Override
             public boolean onLongClick(View tv) {
-                ((FiveKings)c).showEditPlayer(player.getName(), player.isHuman(), iPlayer);
+                ((FiveKings) c).showEditPlayer(player.getName(), player.isHuman(), iPlayer);
                 return true;
             }
         });
@@ -137,7 +141,7 @@ class PlayerMiniHandLayout extends RelativeLayout{
         cumScoreView.setTextAppearance(c, R.style.TextAppearance_AppCompat_Small);
         cumScoreView.setTextColor(getResources().getColor(android.R.color.white));
         LayoutParams cumScoreLp = new LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT);
-        cumScoreLp.setMargins(0,0,0,10);
+        cumScoreLp.setMargins(0, 0, 0, 10);
         cumScoreLp.addRule(ALIGN_BOTTOM, CARD_VIEW_ID);
         cumScoreLp.addRule(CENTER_HORIZONTAL);
         cumScoreView.setLayoutParams(cumScoreLp);
@@ -281,5 +285,69 @@ class PlayerMiniHandLayout extends RelativeLayout{
 
     CardView getCardView() {
         return cardView;
+    }
+
+    /* Override onSaveInstanceState and extend BaseSavedState */
+
+    @Override
+    protected Parcelable onSaveInstanceState() {
+        //Allows parent classes to save state
+        Parcelable superState = super.onSaveInstanceState();
+        SavedState ss = new SavedState(superState);
+
+        // And add the fields we want to save
+        ss.cardView = this.cardView;
+        ss.roundScoreView = this.roundScoreView;
+        ss.cumScoreView = this.cumScoreView;
+        ss.nameView = this.nameView;
+        ss.playedInFinalTurn = this.playedInFinalTurn;
+
+        return ss;
+    }
+
+    static class SavedState extends BaseSavedState {
+        private  CardView cardView;
+        private  TextView roundScoreView;
+        private  TextView cumScoreView;
+        private  TextView nameView;
+
+        private boolean playedInFinalTurn;
+
+        SavedState(Parcelable superState) {
+            super(superState);
+        }
+
+        private SavedState(Parcel in) {
+            super(in);
+            this.cardView = (CardView) in.readValue(CardView.class.getClassLoader());
+            this.roundScoreView = (TextView) in.readValue(TextView.class.getClassLoader());
+            this.cumScoreView = (TextView) in.readValue(TextView.class.getClassLoader());
+            this.nameView = (TextView) in.readValue(TextView.class.getClassLoader());
+            this.playedInFinalTurn = in.readByte() != 0x00;
+        }
+
+        @Override
+        public void writeToParcel(Parcel out, int flags) {
+            super.writeToParcel(out, flags);
+            out.writeValue(cardView);
+            out.writeValue(roundScoreView);
+            out.writeValue(cumScoreView);
+            out.writeValue(nameView);
+            out.writeByte((byte) (playedInFinalTurn ? 0x01 : 0x00));
+        }
+
+        //required field that makes Parcelables from a Parcel
+        public static final Parcelable.Creator<SavedState> CREATOR =
+                new Parcelable.Creator<SavedState>() {
+                    @Override
+                    public SavedState createFromParcel(Parcel in) {
+                        return new SavedState(in);
+                    }
+                    @Override
+                    public SavedState[] newArray(int size) {
+                        return new SavedState[size];
+                    }
+                };
+
     }
 }

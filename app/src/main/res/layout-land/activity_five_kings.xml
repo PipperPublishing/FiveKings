@@ -1,0 +1,125 @@
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+             xmlns:tools="http://schemas.android.com/tools"
+             android:layout_width="match_parent"
+             android:layout_height="match_parent"
+             android:background="@android:color/holo_blue_light"
+             android:id="@+id/fullscreen_content"
+             tools:context=".FiveKings"
+              android:paddingBottom="5dp"
+              android:orientation="vertical"
+              android:paddingTop="@dimen/abc_action_bar_stacked_max_height"
+                android:clipChildren="false"
+                android:clipToPadding="false"
+              android:weightSum="6">
+
+    <LinearLayout
+        android:orientation="horizontal"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:clipChildren="false"
+        android:clipToPadding="false"
+        android:baselineAligned="false">
+
+        <LinearLayout
+            android:orientation="vertical"
+            android:layout_width="0dp"
+            android:layout_height="match_parent"
+            android:clipChildren="false"
+            android:clipToPadding="false"
+            android:layout_weight="1">
+
+            <RelativeLayout
+                android:id="@+id/draw_and_discard_piles"
+                android:layout_width="match_parent"
+                android:layout_height="0dp"
+                android:orientation="horizontal"
+                android:layout_weight="0.6"
+                android:clipChildren="false"
+                android:clipToPadding="false"
+                android:paddingLeft="5dp"
+                android:paddingRight="5dp"
+                android:layout_marginLeft="0dp"
+                android:layout_marginTop="0dp">
+
+                <Space
+                    android:id="@+id/spacer"
+                    android:layout_width="10dp"
+                    android:layout_height="match_parent"
+                    android:layout_alignParentTop="true"
+                    android:layout_centerHorizontal="true"
+                    android:background="@drawable/dashed_border"
+                    android:backgroundTint="#ffff3b26"
+                    />
+
+            </RelativeLayout>
+
+            <FrameLayout
+                android:layout_width="match_parent"
+                android:layout_height="0dp"
+                android:layout_weight="1"
+                android:clipChildren="false"
+                android:clipToPadding="false"
+                >
+
+                <Button
+                    android:id="@+id/Play"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="@string/startGame"
+                    android:layout_gravity="center|top"
+                    android:textColor="@color/primary_text_default_material_light"
+                    android:textAppearance="@style/TextAppearance.AppCompat.Small"
+                    android:maxLines="1"
+                    android:backgroundTint="@android:color/holo_blue_bright"
+                    android:background="@android:drawable/dialog_holo_light_frame"
+                    />
+
+                <ProgressBar
+                    android:id="@+id/progressCircle"
+                    style="?android:attr/progressBarStyleLarge"
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent"
+                    android:visibility="gone"
+                    android:layout_gravity="center_horizontal|bottom"/>
+            </FrameLayout>
+
+        </LinearLayout>
+
+        <LinearLayout
+            android:orientation="vertical"
+            android:layout_width="0dp"
+            android:layout_height="match_parent"
+            android:clipChildren="false"
+            android:clipToPadding="false"
+            android:layout_weight="1">
+
+            <RelativeLayout
+                android:id="@+id/current_cards"
+                android:layout_width="match_parent"
+                android:layout_height="0dp"
+                android:gravity="center_vertical|center_horizontal"
+                android:clipChildren="false"
+                android:clipToPadding="false"
+                android:padding="5dp"
+                android:layout_marginTop="0dp"
+                android:layout_weight="1">
+
+            </RelativeLayout>
+
+            <RelativeLayout
+                android:id="@+id/current_melds"
+                android:layout_width="match_parent"
+                android:layout_height="0dp"
+                android:padding="5dp"
+                android:gravity="center_vertical|left"
+                android:clipChildren="false"
+                android:clipToPadding="false"
+                android:layout_weight="1"
+                >
+
+            </RelativeLayout>
+        </LinearLayout>
+    </LinearLayout>
+
+
+</RelativeLayout>

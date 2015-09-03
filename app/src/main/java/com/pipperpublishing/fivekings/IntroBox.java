@@ -13,7 +13,7 @@ import android.widget.TextView;
  * Created by Jeffrey on 4/5/2015.
  * From http://tekeye.biz/2012/about-box-in-android-app
  */
-class HelpBox {
+class IntroBox {
 
     static void show(Activity callingActivity) {
         //Use a Spannable to allow for links highlighting

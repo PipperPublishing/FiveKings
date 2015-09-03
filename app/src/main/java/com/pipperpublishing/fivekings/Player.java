@@ -1,6 +1,8 @@
 package com.pipperpublishing.fivekings;
 
 import android.content.Context;
+import android.os.Parcel;
+import android.os.Parcelable;
 import android.util.Log;
 
 import java.util.ArrayList;
@@ -41,9 +43,11 @@ import java.util.Iterator;
  * 4/8/2015     Not a bug to have no wildcards and call addWildCards...
  *              meldUsingHeuristics calls decomposeAndCheck to order wildcard melds
  * 6/18/2015    Sort Hand immediately after dealing
+ * 8/30/2015    Implement Parcelable so we can save Game state
+ * 9/3/2015     Save TurnState using string/valueOf
  * TODO:A Move roundScore to Hand (Down from Player)
  */
-abstract class Player implements HandComparator {
+abstract class Player implements HandComparator, Parcelable {
     private String name;
     private int roundScore;
     private int cumulativeScore;
@@ -586,5 +590,36 @@ abstract class Player implements HandComparator {
 
     }//end Inner Class Hand
 
+    /* PARCELABLE INTERFACE */
+    @Override
+    public int describeContents() {
+        return 0;
+    }
+
+    @Override
+    public void writeToParcel(Parcel out, int flags) {
+        out.writeString(name);
+        out.writeInt(roundScore);
+        out.writeInt(cumulativeScore);
+
+        out.writeValue(hand);
+        out.writeValue(drawnCard);
+        out.writeString(turnState.toString());
+        //Not saving miniHandLayout reference - we recreate this
+
+    }
+
+
+
+    protected Player(Parcel in) {
+        name = in.readString();
+        roundScore = in.readInt();
+        cumulativeScore = in.readInt();
+        hand = (Hand) in.readValue(Hand.class.getClassLoader());
+        drawnCard = (Card) in.readValue(Card.class.getClassLoader());
+        turnState = TurnState.valueOf(in.readString());
+        //not saving miniHandLayout reference
+
+    }
 
 }

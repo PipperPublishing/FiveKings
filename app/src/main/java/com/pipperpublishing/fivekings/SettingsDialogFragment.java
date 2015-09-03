@@ -14,16 +14,18 @@ import android.widget.Checkable;
  * 4/3/2015 Created to show settings
  *          Currently just showComputerCards (on every hand) and animateDealing
  * 8/25/2015    Reuse the preference names now being saved in FiveKings
+ * 8/26/2015    Add showHelp
  */
 public class SettingsDialogFragment extends DialogFragment {
 
     //use newInstance to pass arguments to the Bundle which the dialog can access
     // apparently this is preferred to custom member fields and setters
-    static SettingsDialogFragment newInstance(final boolean oldShowComputerCards, final boolean oldAnimateDealing) {
+    static SettingsDialogFragment newInstance(final boolean oldShowComputerCards, final boolean oldAnimateDealing, boolean oldShowHelp) {
         SettingsDialogFragment ePDF = new SettingsDialogFragment();
         Bundle args = new Bundle();
         args.putBoolean(FiveKings.SHOW_COMPUTER_HANDS_SETTING, oldShowComputerCards);
         args.putBoolean(FiveKings.ANIMATE_DEALING_SETTING, oldAnimateDealing);
+        args.putBoolean(FiveKings.SHOW_HELP, oldShowHelp);
         ePDF.setArguments(args);
         return ePDF;
     }
@@ -32,7 +34,8 @@ public class SettingsDialogFragment extends DialogFragment {
     public Dialog onCreateDialog(final Bundle args) {
         //use getArguments because they were passed to the fragment
         final boolean oldShowComputerCards=getArguments().getBoolean(FiveKings.SHOW_COMPUTER_HANDS_SETTING, false);
-        final boolean oldAnimateDealing = getArguments().getBoolean(FiveKings.ANIMATE_DEALING_SETTING, false);
+        final boolean oldAnimateDealing = getArguments().getBoolean(FiveKings.ANIMATE_DEALING_SETTING, true);
+        final boolean oldShowHelp = getArguments().getBoolean(FiveKings.SHOW_HELP, true);
         final AlertDialog.Builder builder = new AlertDialog.Builder(getActivity());
         // Get the layout inflater
         final LayoutInflater inflater = getActivity().getLayoutInflater();
@@ -57,7 +60,7 @@ public class SettingsDialogFragment extends DialogFragment {
         //show the current settings
         ((Checkable) tv.findViewById(R.id.show_computer_cards)).setChecked(oldShowComputerCards);
         ((Checkable)tv.findViewById(R.id.animate_dealing)).setChecked(oldAnimateDealing);
-
+        ((Checkable)tv.findViewById(R.id.show_intro)).setChecked(oldShowHelp);
         return builder.create();
     }
 
@@ -76,8 +79,9 @@ public class SettingsDialogFragment extends DialogFragment {
                     //Retrieve the new/changed values
                     boolean showComputerCards = ((Checkable) SettingsDialogFragment.this.getDialog().findViewById(R.id.show_computer_cards)).isChecked();
                     boolean animateDealing = ((Checkable) SettingsDialogFragment.this.getDialog().findViewById(R.id.animate_dealing)).isChecked();
+                    boolean showHelp = ((Checkable) SettingsDialogFragment.this.getDialog().findViewById(R.id.show_intro)).isChecked();
                     //Register the FiveKings activity method as the callback
-                    ((FiveKings) getActivity()).setSettings(showComputerCards, animateDealing);
+                    ((FiveKings) getActivity()).setSettings(showComputerCards, animateDealing,showHelp );
                     dismiss(); //dismiss the dialog on [Save]
                 }
             });

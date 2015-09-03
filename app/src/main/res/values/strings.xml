@@ -57,6 +57,7 @@
     <string name="edit_delete_hint">Long click on a player hand to edit or delete</string>
     <string name="show_computer_cards">Show Computer cards</string>
     <string name="animate_dealing">Animate dealing</string>
+    <string name="show_intro">Show game introduction</string>
     <string name="about">Problems? Please email us at pipper.publishing@gmail.com</string>
     <string name="help_title">Help</string>
     <string name="help_message">\n
