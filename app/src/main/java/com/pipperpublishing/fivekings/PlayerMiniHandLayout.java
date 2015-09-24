@@ -32,7 +32,8 @@ import android.widget.TextView;
  * 4/6/2015     Removed updateCumulativeScore from update, so it can be updated after the roundScore animation completes
     6/4/2015    Scale mini hands and draw/discard pile so that they fit in top 1/3 of screen
    6/9/2015     Scale mini hands based on actual size of DiscardPile
- 9/1/2015       Save Custom View state as per http://stackoverflow.com/questions/3542333/how-to-prevent-custom-views-from-losing-state-across-screen-orientation-changes
+ 9/1/2015       Save Custom View state as per http://stackoverflow.com/questions/3542333/how-to-prevent-custom-views-from-losing-state-across-screen-orientation-change
+ 9/21/2015      Not currently using Current View state save./restore (recreating from scratch)
  //TODO:A Allow for recreating this during game play, so look at currentPlayer and whether player is out to set border and animation
  */
 class PlayerMiniHandLayout extends RelativeLayout{
@@ -109,7 +110,7 @@ class PlayerMiniHandLayout extends RelativeLayout{
                 }
                 //second time we click on the current player, check that we're ready to play (PLAY_TURN)
                 else if ((player == fKActivity.getmGame().getCurrentPlayer()) && (player.getTurnState() == Player.TurnState.PLAY_TURN)) {
-                    fKActivity.cancelAnimatePlayerMiniHand(PlayerMiniHandLayout.this);
+                    cardView.clearAnimation();
                     player.takeTurn(fKActivity, null, fKActivity.getmGame().getDeck(),fKActivity.getmGame().isFinalTurn());
                 }
                 else fKActivity.showHint(null, true);
@@ -214,6 +215,7 @@ class PlayerMiniHandLayout extends RelativeLayout{
         setPlayedInFinalTurn(false);
         setGreyedOut(true);
     }
+
 
     final void update(final boolean isCurrent, final boolean isOut, final int roundScore, final int cumulativeScore) {
         showOrHideCurrentBorder(isCurrent);

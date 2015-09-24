@@ -4,6 +4,7 @@ import android.app.Activity;
 import android.os.Parcel;
 import android.os.Parcelable;
 import android.util.Log;
+import android.view.animation.Animation;
 
 /**
  * Created by Jeffrey on 1/22/2015.
@@ -171,6 +172,7 @@ public class Game implements Parcelable{
         this.players.updatePlayerMiniHands();
     }
 
+    void setMiniHandsSolid() {this.players.adjustMiniHandsAlpha();}
 
     Player getPlayerByIndex(final int iPlayer) {
         return players.get(iPlayer);
@@ -212,6 +214,9 @@ public class Game implements Parcelable{
         return this.players.size();
     }
 
+    void animatePlayerMiniHand(final Player setAnimatedPlayerHand, final Animation bounceAnimation) {
+        this.players.setAnimated(setAnimatedPlayerHand, bounceAnimation);
+    }
 
     /* Starting and ending turns */
     void findBestHandStart() {

@@ -2,6 +2,7 @@ package com.pipperpublishing.fivekings;
 
 import android.app.Activity;
 import android.util.Log;
+import android.view.animation.Animation;
 import android.widget.RelativeLayout;
 
 import java.util.ArrayList;
@@ -11,6 +12,7 @@ import java.util.ArrayList;
  * 3/22/2015    Encapsulates list of players for Game
  * 3/24/2015    Moved next Dealer to initRound() (so we can handle deleting the dealer)
  * 8/29/2015    Layout mini hands relative to draw_and_discard_pile RelativeLayout
+ * 9/21/2015    Record which player hand is animated (should really be pushed down into mini hands itself)
  TODO:A Maybe manage PlayerLayout as well?
  */
 class PlayerList extends ArrayList<Player> {
@@ -19,11 +21,13 @@ class PlayerList extends ArrayList<Player> {
     private Player dealer;
     private Player currentPlayer;
     private Player playerWentOut;
+    private Player animatedPlayerHand;
 
     PlayerList() {
         dealer = null;
         currentPlayer = null;
         playerWentOut = null;
+        animatedPlayerHand = null;
     }
 
     final void addStandardPlayers() {
@@ -40,6 +44,7 @@ class PlayerList extends ArrayList<Player> {
     final void initRound() {
         currentPlayer=this.dealer;
         playerWentOut=null;
+        animatedPlayerHand = null;
         this.dealer = getNextPlayer(currentPlayer);   //set this here so that if we delete the dealer we can advance the dealer
     }
 
@@ -101,6 +106,13 @@ class PlayerList extends ArrayList<Player> {
         return this.currentPlayer;
     }
 
+    //TODO:A Really should be pushed down further to the miniHand or the player
+    void setAnimated(final Player setAnimated, final Animation bounceAnimation) {
+        //if setAnimated == null, then use the saved animatedPlayerHand and reanimate
+        animatedPlayerHand = setAnimated!=null ? setAnimated : animatedPlayerHand ;
+        if (animatedPlayerHand != null) animatedPlayerHand.miniHandLayout.getCardView().startAnimation(bounceAnimation);
+    }
+
     boolean hideHandFromPrevious(Player thisPlayer) {
         //true if previous player is Human and so is this
         boolean hideCurrentHandFromPrevious=false;
@@ -160,7 +172,7 @@ class PlayerList extends ArrayList<Player> {
         }
 
         if (this.dealer == null) throw new RuntimeException("logRoundScores: dealer is null" );
-        //FIXME: Removed this because I don't know why I set it: this.currentPlayer = null;
+        this.currentPlayer = null;
 
     }
 
@@ -190,6 +202,11 @@ class PlayerList extends ArrayList<Player> {
     void updatePlayerMiniHands() {
         for (Player player : this) player.updatePlayerMiniHand(this.currentPlayer == player, true);
     }
+
+    void adjustMiniHandsAlpha() {
+        for (Player player : this) player.getMiniHandLayout().setGreyedOut(false);
+    }
+
 
     void removePlayerMiniHands(Activity a) {
         final RelativeLayout fullScreenContent = (RelativeLayout) a.findViewById(R.id.fullscreen_content);

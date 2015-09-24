@@ -118,6 +118,11 @@ import java.util.List;
                 Redo animateHumanPickup and animateRoundScore to use actual positions on screen
     9/3/2015    We *should * override onSave/onRestore for each custom View to bring it back correctly (and handling layout changes there)
                 Instead, we're refreshing the dynamic elements which makes this fragile
+    9/17/2015   Record whether mini-hands were animated and recreate that way.
+                Bug: If you change orientation when Human is playing, and Draw/Discard are jiggling, it will switch to jiggling the Computer hand
+    9/21/2015   Separate routine for alpha animation of mini hands if you don't do dealing animation
+                Move set/cancel miniHand animation to Game and other calls
+                TODO:A Really all jiggling card animations should be pushed down to the View itself and restarted there
 
 */
 
@@ -172,6 +177,8 @@ public class FiveKings extends Activity {
     private RelativeLayout mCurrentMelds;
     private AnimatorSet dealAnimatorSet;
 
+    private Animation bounceAnimation;
+
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
         // Inflate the menu items for use in the action bar
@@ -218,6 +225,8 @@ public class FiveKings extends Activity {
         spinner = (ProgressBar)findViewById(R.id.progressCircle);
         spinner.setVisibility(View.GONE);
 
+        bounceAnimation = AnimationUtils.loadAnimation(this, R.anim.hand_click_me);
+
         // This section differs whether this is being newly CREATED (Bundle is null) or RESUMED
         if (savedInstanceState == null) {
             dealAnimatorSet = null;
@@ -231,6 +240,7 @@ public class FiveKings extends Activity {
         else {
             mGame = savedInstanceState.getParcelable("mGame");
             mHint = savedInstanceState.getString("mHint", getText(R.string.toStartGameHint).toString());
+            mPlayButton.setText(savedInstanceState.getString("playButtonText", (String) mPlayButton.getText()));
             isAfterDealing = savedInstanceState.getBoolean("isAfterDealing", isAfterDealing);
 
             //Show/Hide state of Draw and Discard pile is whatever it was when saved
@@ -262,6 +272,7 @@ public class FiveKings extends Activity {
         savedInstanceState.putParcelable("mGame", mGame);
         savedInstanceState.putString("mHint", mHint);
         savedInstanceState.putBoolean("isAfterDealing", isAfterDealing);
+        savedInstanceState.putString("playButtonText", (String) mPlayButton.getText());
     }
 
     @Override
@@ -273,16 +284,19 @@ public class FiveKings extends Activity {
             //set it here because we don't know height until the window is focused
             scaledCardHeight = CARD_SCALING * mCurrentCards.getHeight();
 
-            if (needToRefreshCardsMelds && (mGame != null)) {
-                mGame.relayoutPlayerMiniHands(this);
-                //FIXME: First parameter depends on COmputer||showCardsAlways or Human  - override in those
-                updateHandsAndCards(true, mGame.isFinalTurn());
-                needToRefreshCardsMelds = false;
+            if (mGame != null) {
+                if (needToRefreshCardsMelds) {
+                    mGame.relayoutPlayerMiniHands(this);
+                    //TODO:A First parameter depends on COmputer||showCardsAlways or Human  - override in those
+                    updateHandsAndCards(true, mGame.isFinalTurn());
+                    needToRefreshCardsMelds = false;
+                }
+                //if we resume from a screen with the hands dealt, then we need to reset that
+                //so that when you re-lay them out they set the card showing correctly
+                if (isAfterDealing) mGame.setMiniHandsSolid();
+                //animates whichever one was already moving
+                mGame.animatePlayerMiniHand(null, bounceAnimation);
             }
-            //if we resume from a screen with the hands dealt, then we need to reset that
-            //FIXME: This should be handled totally within the miniHands (they should know that a card is showing)
-            //so that when you re-lay them out they set the card showing correctly
-            if (isAfterDealing) this.dealAnimatorSet = animateDealing(mGame.getRoundOf().getRankValue(), mGame.numPlayers(), false);
         }
     }
 
@@ -376,11 +390,18 @@ public class FiveKings extends Activity {
         //starting a round
         else if (GameState.ROUND_START == mGame.getGameState()) {
             mGame.initRound();
+            isAfterDealing = false;
             mCurrentCards.removeAllViews();
             mCurrentMelds.removeAllViews();
             mGame.resetPlayerMiniHandsToRoundStart();
             this.mPlayButton.setText(resFormat(R.string.current_round, mGame.getRoundOf().getString()));
-            this.dealAnimatorSet = animateDealing(mGame.getRoundOf().getRankValue(), mGame.numPlayers(), mGame.isAnimateDealing());
+            if (mGame.isAnimateDealing()) {
+                this.dealAnimatorSet = animateDealing(mGame.getRoundOf().getRankValue(), mGame.numPlayers());
+            }
+            else {
+                afterDealing();
+                mGame.setMiniHandsSolid();
+            }
             mGame.getNextPlayer().findBestHandStart(mGame.isFinalTurn(), mGame.peekDiscardPileCard());
             //Show blank screen with discard pile showing - now in onAnimationEnd
             setmHint(R.string.clickMovingHandHint);
@@ -440,7 +461,7 @@ public class FiveKings extends Activity {
         }
         else if (GameState.TURN_START == gameState) {
             mGame.findBestHandStart();
-            animatePlayerMiniHand(mGame.getNextPlayer().getMiniHandLayout());
+            mGame.animatePlayerMiniHand(mGame.getNextPlayer(), bounceAnimation);
             setmHint(R.string.clickMovingHandHint);
         }
         else if (GameState.GAME_END == gameState) {
@@ -473,7 +494,7 @@ public class FiveKings extends Activity {
         if (foundCardView == null) return false;
         //create trialMeld (one card at a time for now)
 
-        ((HumanPlayer)mGame.getCurrentPlayer()).makeNewMeld(foundCardView.getCard());
+        ((HumanPlayer) mGame.getCurrentPlayer()).makeNewMeld(foundCardView.getCard());
         updateHandsAndCards(true, false);
         return true;
     }
@@ -573,7 +594,7 @@ public class FiveKings extends Activity {
         spinner.invalidate();
     }
 
-    private AnimatorSet animateDealing(final int numCards, final int numPlayers, boolean doDealing) {
+    private AnimatorSet animateDealing(final int numCards, final int numPlayers) {
         final RelativeLayout drawAndDiscardPiles = (RelativeLayout)findViewById(R.id.draw_and_discard_piles);
         showHideDrawAndDiscardPiles(false);
 
@@ -594,7 +615,6 @@ public class FiveKings extends Activity {
 
             @Override
             public void onAnimationEnd(Animator animator) {
-                mPlayButton.setText(resFormat(R.string.current_round, mGame.getRoundOf().getString()));
                 drawAndDiscardPiles.removeView(deck);
                 drawAndDiscardPiles.removeView(dealtCardView);
                 afterDealing();
@@ -621,42 +641,39 @@ public class FiveKings extends Activity {
         //if doDealing is false, we only do the Alpha animation to show the cards
         dealtCardView.setLayoutParams(pileLp);
         drawAndDiscardPiles.addView(dealtCardView);
-        for (int iCard=0; iCard<numCards; iCard++) {
+
+        for (int iCard = 0; iCard < numCards; iCard++) {
             for (int iPlayer = 0; iPlayer < numPlayers; iPlayer++) {
-                if (doDealing) {
-                    dealtCardAnimator = dealtCardAnimator.clone();
-                    dealtCardAnimator.setTarget(dealtCardView);
-                    //offsets where the cards are dealt according to player
-                    ObjectAnimator playerOffsetXAnimator = ObjectAnimator.ofFloat(dealtCardView, "TranslationX", mGame.getPlayerByIndex(iPlayer).getMiniHandLayout().getTranslationX());
-                    ObjectAnimator playerOffsetYAnimator = ObjectAnimator.ofFloat(dealtCardView, "TranslationY", mGame.getPlayerByIndex(iPlayer).getMiniHandLayout().getTranslationY());
-                    if (lastDealtCardAnimator == null)
-                        dealSet.play(dealtCardAnimator).with(playerOffsetXAnimator).with(playerOffsetYAnimator);
-                    else
-                        dealSet.play(dealtCardAnimator).with(playerOffsetXAnimator).with(playerOffsetYAnimator).after(lastDealtCardAnimator);
-                    lastDealtCardAnimator = dealtCardAnimator;
-                }
+                dealtCardAnimator = dealtCardAnimator.clone();
+                dealtCardAnimator.setTarget(dealtCardView);
+                //offsets where the cards are dealt according to player
+                ObjectAnimator playerOffsetXAnimator = ObjectAnimator.ofFloat(dealtCardView, "TranslationX", mGame.getPlayerByIndex(iPlayer).getMiniHandLayout().getTranslationX());
+                ObjectAnimator playerOffsetYAnimator = ObjectAnimator.ofFloat(dealtCardView, "TranslationY", mGame.getPlayerByIndex(iPlayer).getMiniHandLayout().getTranslationY());
+                if (lastDealtCardAnimator == null)
+                    dealSet.play(dealtCardAnimator).with(playerOffsetXAnimator).with(playerOffsetYAnimator);
+                else
+                    dealSet.play(dealtCardAnimator).with(playerOffsetXAnimator).with(playerOffsetYAnimator).after(lastDealtCardAnimator);
+                lastDealtCardAnimator = dealtCardAnimator;
                 //if this is the first card, then add an alpha animation to show the blank hand space being replaces by a card
                 if (iCard == 0) {
                     CardView playerHandCard = mGame.getPlayerByIndex(iPlayer).getMiniHandLayout().getCardView();
-                    alphaAnimator = ObjectAnimator.ofFloat(playerHandCard,"Alpha",ALMOST_TRANSPARENT_ALPHA, 1.0f);
+                    alphaAnimator = ObjectAnimator.ofFloat(playerHandCard, "Alpha", ALMOST_TRANSPARENT_ALPHA, 1.0f);
                     alphaAnimator.setDuration(ANIMATION_100MS);
-                    if (doDealing) dealSet.play(dealtCardAnimator).with(alphaAnimator);
-                    else {
-                        dealSet.play(alphaAnimator);
-                        lastDealtCardAnimator = alphaAnimator;
-                    }
+                    dealSet.play(dealtCardAnimator).with(alphaAnimator);
                 }
-
             }//end for iPlayer
         }//end for numCards
         dealSet.start();
         return dealSet;
     }//end animateDealing
 
+
     private void afterDealing() {
+        mPlayButton.setText(resFormat(R.string.current_round, mGame.getRoundOf().getString()));
         mGame.updatePlayerMiniHands();
         showHideDrawAndDiscardPiles(true);
-        animatePlayerMiniHand(mGame.getNextPlayer().getMiniHandLayout());
+        mGame.animatePlayerMiniHand(mGame.getNextPlayer(), bounceAnimation);
+        setmHint(R.string.clickMovingHandHint);
         isAfterDealing = true;
     }
 
@@ -983,14 +1000,6 @@ public class FiveKings extends Activity {
         scoreYAnimator.setDuration(ANIMATION_2S);
         scaleAndTranslateSet.play(scoreXAnimator).with(scoreYAnimator).with(scaleAnimator);
         scaleAndTranslateSet.start();
-    }
-
-    void animatePlayerMiniHand(PlayerMiniHandLayout playerMiniHandLayout) {
-        final Animation bounceAnimation = AnimationUtils.loadAnimation(this,R.anim.hand_click_me);
-        playerMiniHandLayout.getCardView().startAnimation(bounceAnimation);
-    }
-    void cancelAnimatePlayerMiniHand(PlayerMiniHandLayout playerMiniHandLayout) {
-        playerMiniHandLayout.getCardView().clearAnimation();
     }
 
     private void explodeHand(final Player winningPlayer) {

@@ -70,11 +70,11 @@ public class ComputerPlayer extends Player {
     //Must be some way to simplify showComputerCards and hideHands... into one player call
     void prepareTurn(final FiveKings fKActivity, final boolean hideHandInitially) {
         turnState = TurnState.PLAY_TURN;
-        //FIXME: should use an overridden method updateHandsAndCards so that it can be called correctly elsewhere
+        //TODO:A should use an overridden method updateHandsAndCards so that it can be called correctly elsewhere
         fKActivity.updateHandsAndCards(fKActivity.getmGame().isShowComputerCards(), false);
         //if showCards is false, no reason to force another click - just go ahead and play
         if (!fKActivity.getmGame().isShowComputerCards()) {
-            fKActivity.cancelAnimatePlayerMiniHand(this.getMiniHandLayout());
+            this.getMiniHandLayout().getCardView().clearAnimation();
             takeTurn(fKActivity, null, fKActivity.getmGame().getDeck(),fKActivity.getmGame().isFinalTurn());
         }
     }

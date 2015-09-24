@@ -244,7 +244,7 @@ Save Settings using SharedPreferences.getPreferences()
 v0.7.02
 DONE: Fix Stars to lightning bolts and another color - paint.net
 --------------
->>>v0.7.03 Dynamic landscape mode and recover from pause/orientation change
+0.7.03 Dynamic landscape mode and recover from pause/orientation change
 DONE Dynamic Landscape mode
 DONE Handle restart:
     DONE Handle Task and Home button (currently crashes)
@@ -257,12 +257,14 @@ DONE Handle restart:
 DONE Show Help immediately unless setting is set
 ----------------------------------------------
 v0.7.04 Animation and restart bugs
-- Wrong card starts jiggling after restart
+DONE? Wrong card starts jiggling after restart
+DONE [Start Game] gets rewritten over button on orientation change
+
+---------------------------
+v0.7.05
+
 - Computer/You overwrite the screen on landscape orientation change
-
-
-
-
+- Screen is restarting after a menu call?
 
 
 --------------------------------

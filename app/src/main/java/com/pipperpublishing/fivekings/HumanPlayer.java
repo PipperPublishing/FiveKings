@@ -81,7 +81,7 @@ class HumanPlayer extends Player {
         } else {
             fKActivity.updateHandsAndCards(true, false);
             fKActivity.enableDrawDiscardClick(); //also animates piles and sets the hint
-            fKActivity.cancelAnimatePlayerMiniHand(this.getMiniHandLayout());
+            this.getMiniHandLayout().getCardView().clearAnimation();
         }
     }
 
