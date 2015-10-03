@@ -13,6 +13,8 @@ import java.util.ArrayList;
  * 3/24/2015    Moved next Dealer to initRound() (so we can handle deleting the dealer)
  * 8/29/2015    Layout mini hands relative to draw_and_discard_pile RelativeLayout
  * 9/21/2015    Record which player hand is animated (should really be pushed down into mini hands itself)
+ * 9/30/2015    setAnimated loops through all players to unset animated - this may happen if we animated the wrong hand
+ *              when coming back from an orientation change
  TODO:A Maybe manage PlayerLayout as well?
  */
 class PlayerList extends ArrayList<Player> {
@@ -108,9 +110,14 @@ class PlayerList extends ArrayList<Player> {
 
     //TODO:A Really should be pushed down further to the miniHand or the player
     void setAnimated(final Player setAnimated, final Animation bounceAnimation) {
+        //clear existing animations
+        for (Player player : this) player.getMiniHandLayout().getCardView().clearAnimation();
         //if setAnimated == null, then use the saved animatedPlayerHand and reanimate
         animatedPlayerHand = setAnimated!=null ? setAnimated : animatedPlayerHand ;
-        if (animatedPlayerHand != null) animatedPlayerHand.miniHandLayout.getCardView().startAnimation(bounceAnimation);
+        if ((animatedPlayerHand != null) && (animatedPlayerHand.getTurnState() == Player.TurnState.NOT_MY_TURN))
+        {
+            animatedPlayerHand.miniHandLayout.getCardView().startAnimation(bounceAnimation);
+        }
     }
 
     boolean hideHandFromPrevious(Player thisPlayer) {

@@ -71,20 +71,25 @@ class HumanPlayer extends Player {
     /* Game playing methods (moved from Game) */
     /*----------------------------------------*/
     @Override
-    //TODO:A move to a prepareHumanTurn (including hideHand...)
     void prepareTurn(final FiveKings fKActivity, final boolean hideHandInitially) {
         turnState = TurnState.PLAY_TURN;
         //TODO:A Override a method which returns showComputerCards false or true depending on setting or human
+        //This could then be in the base class prepareTurn
         //if hideHand... is set, then we don't reveal the hand until you click a second time (handled by takeTurn)
         if (hideHandInitially) {
             fKActivity.updateHandsAndCards(false, false);
         } else {
-            fKActivity.updateHandsAndCards(true, false);
+            updateHandsAndCards(fKActivity, false);
             fKActivity.enableDrawDiscardClick(); //also animates piles and sets the hint
             this.getMiniHandLayout().getCardView().clearAnimation();
         }
     }
 
+    @Override
+    //Human cards are always shown
+    void updateHandsAndCards(final FiveKings fkActivity, final boolean afterFinalTurn) {
+        fkActivity.updateHandsAndCards(true, afterFinalTurn);
+    }
 
     @Override
     //TODO:A Bad smell from all those fKActivity calls
@@ -110,7 +115,7 @@ class HumanPlayer extends Player {
             fKActivity.animateHumanPickUp(drawOrDiscardPile);
         } else if (fKActivity.getmGame().getGameState() != GameState.END_HUMAN_TURN) {
             //TODO:A: if GameState not set correctly, then reveal the cards
-            fKActivity.updateHandsAndCards(true, false);
+            updateHandsAndCards(fKActivity, false);
             fKActivity.enableDrawDiscardClick(); //also animates piles and sets the hint
             fKActivity.showHint(null, true);
         } else fKActivity.showHint(null, true);

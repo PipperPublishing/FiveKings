@@ -45,6 +45,7 @@ import java.util.Iterator;
  * 6/18/2015    Sort Hand immediately after dealing
  * 8/30/2015    Implement Parcelable so we can save Game state
  * 9/3/2015     Save TurnState using string/valueOf
+ * 9/30/2015    Added showCards (depends on Human or Computer)
  * TODO:A Move roundScore to Hand (Down from Player)
  */
 abstract class Player implements HandComparator, Parcelable {
@@ -237,6 +238,8 @@ abstract class Player implements HandComparator, Parcelable {
     abstract void takeTurn(final FiveKings fKActivity, Game.PileDecision drawOrDiscardPile, final Deck deck, final boolean isFinalTurn);
 
     abstract void logTurn(final boolean isFinalTurn);
+
+    abstract void updateHandsAndCards(final FiveKings fkActivity, final boolean afterFinalTurn);
 
     void findBestHandStart(final boolean isFinalTurn, final Card addedCard) {
         //default does nothing

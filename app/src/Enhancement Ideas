@@ -261,11 +261,9 @@ DONE? Wrong card starts jiggling after restart
 DONE [Start Game] gets rewritten over button on orientation change
 
 ---------------------------
-v0.7.05
-
-- Computer/You overwrite the screen on landscape orientation change
-- Screen is restarting after a menu call?
-
+ v0.7.05
+FIXED: Computer/You overwrite the screen on landscape orientation change
+FIXED: Toast text is setting to "Meld cards" in many cases
 
 --------------------------------
 v0.7.10 Computer/Human bugs
@@ -274,15 +272,15 @@ BUG: If you change Computer to a Human on the first round, then it doesn't play 
     - Perhaps something to do with the  wait for human code
     - Check Human mode (2 humans, 2 humans + computer)
 BUG: With two Human players, after the deal the Discard is changed after you click on the player
+BUG: New Game (after an old one) doesn't seem to work any more
 - Test with 2-5 players
 - Check Human mode
-
+- Other bugs from Tim
 
 -------------------
 v0.7.50 Graphics
       2. Several times where cards got "stuck" on the bottom of the screen and didn't disappear
-- 5th suit with different shape (cats?)
-
+- Human Pick up animation - card should not shrink to nothing
     - Slide out hand animation
     - Need dashed line on discard pile
     - Animate open hands into view from mini-hands

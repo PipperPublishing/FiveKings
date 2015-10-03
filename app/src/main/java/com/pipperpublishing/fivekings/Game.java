@@ -42,6 +42,8 @@ import android.view.animation.Animation;
  * 4/1/2015     Removed ROUND_END assignment
     8/30/2015   Made Game parcelable as first step towards saving state
  9/3/2015       Switch parceling gameState to toString/valueOf
+ 10/1/2015      checkEndRound sets to ROUND_END to make it easier to restart in the middle
+ 10/3/2015      Moved Meld-and-discard hint out of disableDrawDiscardClick into calling method
  *
  */
 public class Game implements Parcelable{
@@ -99,7 +101,6 @@ public class Game implements Parcelable{
 
         this.players.initRound();
 
-        this.gameState = GameState.TURN_START;
     }//end initRound
 
     final Rank checkEndRound() {
@@ -112,7 +113,7 @@ public class Game implements Parcelable{
             players.logRoundScores();
 
             roundOf = roundOf.getNext();
-            this.gameState = roundOf == null ? GameState.GAME_END : GameState.ROUND_START;
+            this.gameState = roundOf == null ? GameState.GAME_END : GameState.ROUND_END;
         } else this.gameState = GameState.TURN_START;
         return roundOf;
     }
@@ -122,6 +123,8 @@ public class Game implements Parcelable{
     void clickedDrawOrDiscard(final FiveKings fKActivity, final Game.PileDecision drawOrDiscardPile) {
         setGameState(GameState.HUMAN_PICKED_CARD);
         fKActivity.disableDrawDiscardClick();
+        fKActivity.setmHint(R.string.meldAndDragDiscardHint);
+        fKActivity.showHint(null, false);
         //turn on ability to accept drag to DiscardPile
         fKActivity.enableDragToDiscardPile();
         getCurrentPlayer().takeTurn(fKActivity, drawOrDiscardPile, deck, isFinalTurn());
