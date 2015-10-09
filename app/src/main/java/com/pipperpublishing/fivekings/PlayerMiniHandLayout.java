@@ -7,6 +7,7 @@ import android.os.Parcel;
 import android.os.Parcelable;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.LinearLayout;
 import android.widget.RelativeLayout;
 import android.widget.TextView;
 
@@ -34,6 +35,9 @@ import android.widget.TextView;
    6/9/2015     Scale mini hands based on actual size of DiscardPile
  9/1/2015       Save Custom View state as per http://stackoverflow.com/questions/3542333/how-to-prevent-custom-views-from-losing-state-across-screen-orientation-change
  9/21/2015      Not currently using Current View state save./restore (recreating from scratch)
+ 10/8/2015      Change miniHand layout to move them all to a separate miniHand strip - hopefully this will also make it easier to do a slide-out drawer
+                (so no Y translation any more)
+                Use Horizontal Linear Layout with equal weights
  //TODO:A Allow for recreating this during game play, so look at currentPlayer and whether player is out to set border and animation
  */
 class PlayerMiniHandLayout extends RelativeLayout{
@@ -61,12 +65,14 @@ class PlayerMiniHandLayout extends RelativeLayout{
     PlayerMiniHandLayout(final Context c, final Player player, final int iPlayer, final int numPlayers) {
         super(c);
         final FiveKings fKActivity = (FiveKings)c;
-        final RelativeLayout.LayoutParams handLp = new RelativeLayout.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT);
-        handLp.addRule(RelativeLayout.ALIGN_PARENT_TOP);
-        handLp.addRule(RelativeLayout.CENTER_HORIZONTAL);
+        final LinearLayout.LayoutParams handLp = new LinearLayout.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT);
+        handLp.weight = 1;
+        handLp.gravity = CENTER_VERTICAL;
         this.setLayoutParams(handLp);
 
         if (numPlayers <= 1) throw new RuntimeException("You must have at least two players");
+
+        /*
         double angle = 180 * iPlayer/(numPlayers-1);
         //Translate mini-hand center to clear DiscardPile/DrawPile + allowance for Spacer and some extra
         float xMargin = fKActivity.getDrawPileWidth()+ 0.5f * MINI_HAND_SCALING* fKActivity.getDrawPileWidth() + 2*SPACER_WIDTH;
@@ -88,6 +94,7 @@ class PlayerMiniHandLayout extends RelativeLayout{
         }
         this.setTranslationX(TranslationX);
         this.setTranslationY(TranslationY);
+        */
 
         this.setOnLongClickListener(new View.OnLongClickListener() {
             @Override

@@ -12,7 +12,7 @@
     <string name="Draw">Draw</string>
     <string name="Discard">Discard</string>
     <string name="startGame">Start Game</string>
-    <string name="startingGame">Starting new game</string>
+    <string name="startingGame">Add/delete players and then click the Start Game button</string>
     <string name="deals">%1$s dealt</string>
     <string name="nextPlayer">Next Player %s</string>
     <string name="wentOut">%1$s went out - last turns!</string>
@@ -40,7 +40,7 @@
     <string name="confirmDelete">Confirm delete player</string>
     <string name="areYouSureDelete">Are you sure you want to delete player "%s"?</string>
     <string name="yesDelete">Yes, delete</string>
-    <string name="cantAdd">You can\'t add players after the Round of 3\'s; start a new game instead</string>
+    <string name="cantAddDelete">You must start a new game to add or delete players</string>
     <string name="playerName">Name</string>
     <string name="add">Add</string>
     <string name="save">Save</string>
@@ -57,7 +57,7 @@
     <string name="edit_delete_hint">Long click on a player hand to edit or delete</string>
     <string name="show_computer_cards">Show Computer cards</string>
     <string name="animate_dealing">Animate dealing</string>
-    <string name="show_intro">Show game introduction</string>
+    <string name="show_intro">Show introduction and hints</string>
     <string name="about">Problems? Please email us at pipper.publishing@gmail.com</string>
     <string name="help_title">Help</string>
     <string name="help_message">\n

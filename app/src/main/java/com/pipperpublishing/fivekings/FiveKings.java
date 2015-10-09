@@ -21,6 +21,7 @@ import android.view.MenuItem;
 import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewGroup;
+import android.view.animation.AccelerateDecelerateInterpolator;
 import android.view.animation.Animation;
 import android.view.animation.AnimationUtils;
 import android.widget.Button;
@@ -128,6 +129,15 @@ import java.util.List;
     10/1/2015   Animate piles when appropriate
     10/2/2015   Make hand animation, pile animation, and solid cards dependent on GameState and TurnState
     10/3/2015      Moved Meld-and-discard hint out of disableDrawDiscardClick into calling method
+    10/6/2015   Bug: Press [New Game] should cancel the card explosion animation and show the winning score
+                Make explodeSet a class variable so that we can cancel it on New Game
+                Cancel animation removes added cards
+                Add human_from_discardpile.xml and human_from_drawpile to scale picked up cards to 75% rather than 0%
+    10/8/2015   Moved miniHands to their own strip, so dealing and pickup/discard needed adjustment - use same technique as with animate roundScore
+                animate roundScore from top of currentMelds instead of middle
+                Animate dealing from Draw Pile already showing on screen
+    10/9/2015   Don't show hints if showIntroduction is turned off
+                Moved Intro and Player menu items into Action Bar if room
 */
 
 public class FiveKings extends Activity {
@@ -179,8 +189,9 @@ public class FiveKings extends Activity {
     private RelativeLayout mCurrentCards;
     private RelativeLayout mCurrentMelds;
     private AnimatorSet dealAnimatorSet;
+    private AnimatorSet explodeSet;
 
-    private Animation bounceAnimation;
+    private Animation shakeAnimation;
 
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
@@ -228,13 +239,13 @@ public class FiveKings extends Activity {
         spinner = (ProgressBar)findViewById(R.id.progressCircle);
         spinner.setVisibility(View.GONE);
 
-        bounceAnimation = AnimationUtils.loadAnimation(this, R.anim.hand_click_me);
+        shakeAnimation = AnimationUtils.loadAnimation(this, R.anim.hand_click_me);
 
         // This section differs whether this is being newly CREATED (Bundle is null) or RESUMED
         if (savedInstanceState == null) {
             dealAnimatorSet = null;
             mGame = new Game();
-            setupDrawAndDiscardPiles(); //needs deck created in Game
+            layoutDrawAndDiscardPiles(); //needs deck created in Game
             showHideDrawAndDiscardPiles(false);
             mHint = getText(R.string.toStartGameHint).toString();
             mHintToast = Toast.makeText(this,mHint, Toast.LENGTH_SHORT);
@@ -245,7 +256,7 @@ public class FiveKings extends Activity {
             mPlayButton.setText(savedInstanceState.getString("playButtonText", (String) mPlayButton.getText()));
             mHintToast = Toast.makeText(this,mHint, Toast.LENGTH_SHORT);
             //Show/Hide state of Draw and Discard pile is whatever it was when saved
-            setupDrawAndDiscardPiles();
+            layoutDrawAndDiscardPiles();
         }
 
         disableDrawDiscardClick();
@@ -282,6 +293,7 @@ public class FiveKings extends Activity {
             //set it here because we don't know height until the window is focused
             scaledCardHeight = CARD_SCALING * mCurrentCards.getHeight();
 
+            //This logic is if we've resumed or changed orientation and need to re-layout
             if ((mGame != null) && (needToRefreshCardsMelds)) {
                 mGame.relayoutPlayerMiniHands(this);
                 if (mGame.getCurrentPlayer() != null)
@@ -292,10 +304,15 @@ public class FiveKings extends Activity {
                 //so that when you re-lay them out they set the card showing correctly
                 switch (mGame.getGameState()) {
                     case NEW_GAME:
-                    case ROUND_READY_TO_DEAL:
                         break;
+                    case ROUND_READY_TO_DEAL:
+                        this.mPlayButton.setText(resFormat(R.string.current_round, mGame.getRoundOf().getString()));
+                        break;
+
                     case ROUND_START:
                     case TURN_START:
+                        mPlayButton.setText(resFormat(mGame.getGameState() == GameState.ROUND_START ? R.string.nextRound : R.string.current_round,
+                                mGame.getRoundOf().getString()));
                         disableDragToDiscardPile();
                         // Animate draw/discard piles when appropriate
                         if ((mGame.getCurrentPlayer() != null)
@@ -305,7 +322,7 @@ public class FiveKings extends Activity {
                         mGame.setMiniHandsSolid();
                         if (mGame.getGameState() == GameState.TURN_START) {
                             //animates whichever one was already moving if this is NOT_MY_TURN phase
-                            mGame.animatePlayerMiniHand(null, bounceAnimation);
+                            mGame.animatePlayerMiniHand(null, shakeAnimation);
                         }
                         break;
                     case HUMAN_PICKED_CARD:
@@ -389,27 +406,35 @@ public class FiveKings extends Activity {
     }
     public void deletePlayerClicked(final int iPlayerToDelete) {
         //pop up an alert to verify
-        new AlertDialog.Builder(this)
-                .setIcon(android.R.drawable.ic_dialog_alert)
-                .setTitle(R.string.confirmDelete)
-                .setMessage(resFormat(R.string.areYouSureDelete, mGame.getPlayerByIndex(iPlayerToDelete).getName()))
-                .setPositiveButton(R.string.yesDelete, new DialogInterface.OnClickListener()
-                {
-                    @Override
-                    public void onClick(DialogInterface dialog, int which) {
-                        //have to be careful of order and save the layout to delete from the screen
-                        mGame.deletePlayer(iPlayerToDelete, FiveKings.this);
-                    }
-                })
-                .setNegativeButton("No", null)
-                .show();
+        if ((mGame == null) || (mGame.getGameState() != GameState.NEW_GAME)) {
+            showHint(getText(R.string.cantAddDelete).toString(), true);
+            return;
+        }else {
+            new AlertDialog.Builder(this)
+                    .setIcon(android.R.drawable.ic_dialog_alert)
+                    .setTitle(R.string.confirmDelete)
+                    .setMessage(resFormat(R.string.areYouSureDelete, mGame.getPlayerByIndex(iPlayerToDelete).getName()))
+                    .setPositiveButton(R.string.yesDelete, new DialogInterface.OnClickListener() {
+                        @Override
+                        public void onClick(DialogInterface dialog, int which) {
+                            //have to be careful of order and save the layout to delete from the screen
+                            mGame.deletePlayer(iPlayerToDelete, FiveKings.this);
+                        }
+                    })
+                    .setNegativeButton("No", null)
+                    .show();
+        }
     }
 
     //the Event handler for button presses on [Play]
     private void playGameClicked(){
+        //If you're dealing then cancel dealing
         if (dealAnimatorSet != null) dealAnimatorSet.cancel();
+        //If you're exploding hands, then cancel and show the final result
+        if (explodeSet != null) explodeSet.cancel();
+
         if (GameState.NEW_GAME == mGame.getGameState()) {
-            newGame();
+            startGame();
         }
         //starting a round
         else if (GameState.ROUND_START == mGame.getGameState()) {
@@ -429,6 +454,7 @@ public class FiveKings extends Activity {
         mGame.setGameState(GameState.ROUND_READY_TO_DEAL);
     }
     private void dealRound() {
+        showHideDrawAndDiscardPiles(true);
         if (mGame.isAnimateDealing()) {
             this.dealAnimatorSet = animateDealing(mGame.getRoundOf().getRankValue(), mGame.numPlayers());
         }
@@ -453,9 +479,11 @@ public class FiveKings extends Activity {
                     @Override
                     public void onClick(DialogInterface dialog, int which) {
                         Toast.makeText(getApplicationContext(), R.string.startingGame, Toast.LENGTH_LONG).show();
-                        mPlayButton.setText(getText(R.string.newGame));
+                        mPlayButton.setText(getText(R.string.startGame));
                         if (mGame != null) mGame.setGameState(GameState.NEW_GAME);
-                        newGame();
+                        showHideDrawAndDiscardPiles(false);
+                        mCurrentCards.removeAllViews();
+                        mCurrentMelds.removeAllViews();
                     }
                 })
                 .setNegativeButton("No", null)
@@ -463,16 +491,13 @@ public class FiveKings extends Activity {
         return false;
     }
 
-    private boolean newGame() {
-        //User pressed [New Game] button (currently by long-pressing Play), or be finishing a previous game
-        mGame.removePlayerMiniHands(this); // have to do this before we reset the players
-        mGame.init();
+    private boolean startGame() {
+        //User pressed [Start Game] button
+        mGame.removePlayerMiniHands(FiveKings.this); // have to do this before we reset the players
+        mGame.init(); //resets gameState to ROUND_START
         this.mPlayButton.setText(resFormat(R.string.nextRound, mGame.getRoundOf().getString()));
-        mCurrentCards.removeAllViews();
-        mCurrentMelds.removeAllViews();
         mGame.relayoutPlayerMiniHands(this);
-        SharedPreferences settings = getSharedPreferences(SETTINGS_NAME, 0);
-        if (settings.getBoolean(SHOW_HELP, true)) IntroBox.show(FiveKings.this);
+        if (getSharedPreferences(SETTINGS_NAME, 0).getBoolean(SHOW_HELP, true)) IntroBox.show(FiveKings.this);
         return true;
     }
 
@@ -499,13 +524,13 @@ public class FiveKings extends Activity {
         else if (GameState.TURN_START == gameState) {
             //If next hand is Human, findBestHandStart does nothing; if Computer then it starts considering Discard Pile card
             mGame.findBestHandStart();
-            mGame.animatePlayerMiniHand(mGame.getNextPlayer(), bounceAnimation);
+            mGame.animatePlayerMiniHand(mGame.getNextPlayer(), shakeAnimation);
             setmHint(R.string.clickMovingHandHint);
         }
         else if (GameState.GAME_END == gameState) {
             mGame.setGameState(GameState.NEW_GAME);
             mPlayButton.setText(R.string.newGame);
-            explodeHand(mGame.getWinner());
+            this.explodeSet = explodeHand(mGame.getWinner());
             mGame.logFinalScores();
             setmHint(R.string.toStartGameHint);
         }
@@ -632,15 +657,15 @@ public class FiveKings extends Activity {
 
     private AnimatorSet animateDealing(final int numCards, final int numPlayers) {
         final RelativeLayout drawAndDiscardPiles = (RelativeLayout)findViewById(R.id.draw_and_discard_piles);
-        showHideDrawAndDiscardPiles(false);
 
         //the template card that animates from the center point to the hands
-        final CardView deck = new CardView(this, CardView.sBlueBitmapCardBack);
+        // the deck (now showing before this call) remains visible underneath it
         final CardView dealtCardView = new CardView(this, CardView.sBlueBitmapCardBack);
         final RelativeLayout.LayoutParams pileLp = new RelativeLayout.LayoutParams(this.getDrawPileWidth(), this.getDrawPileHeight());
-        pileLp.addRule(RelativeLayout.CENTER_HORIZONTAL);
-        deck.setLayoutParams(pileLp);
-        drawAndDiscardPiles.addView(deck);
+        pileLp.addRule(RelativeLayout.ALIGN_LEFT, mDrawPile.getId());
+        pileLp.addRule(RelativeLayout.ALIGN_TOP, mDrawPile.getId());
+        dealtCardView.setLayoutParams(pileLp);
+        drawAndDiscardPiles.addView(dealtCardView);
 
         final AnimatorSet dealSet = new AnimatorSet();
         dealSet.addListener(new Animator.AnimatorListener() {
@@ -651,7 +676,6 @@ public class FiveKings extends Activity {
 
             @Override
             public void onAnimationEnd(Animator animator) {
-                drawAndDiscardPiles.removeView(deck);
                 drawAndDiscardPiles.removeView(dealtCardView);
                 afterDealing();
             }
@@ -667,24 +691,28 @@ public class FiveKings extends Activity {
             }
         });
 
-        //The card is returned to the home point with the first portion of deal_from_drawpile
-        //so that each card looks like it's coming from the center drawpile
         Animator dealtCardAnimator = AnimatorInflater.loadAnimator(this, R.animator.deal_from_drawpile);
         Animator lastDealtCardAnimator = null;
         ObjectAnimator alphaAnimator;
 
-        //this is the card we animate
-        //if doDealing is false, we only do the Alpha animation to show the cards
-        dealtCardView.setLayoutParams(pileLp);
-        drawAndDiscardPiles.addView(dealtCardView);
-
+        int dealtCardViewLocation[] = new int[2];
+        //have to use location of mDrawPile here, because dealtCardView has not been positioned
+        mDrawPile.getLocationInWindow(dealtCardViewLocation);
         for (int iCard = 0; iCard < numCards; iCard++) {
             for (int iPlayer = 0; iPlayer < numPlayers; iPlayer++) {
                 dealtCardAnimator = dealtCardAnimator.clone();
                 dealtCardAnimator.setTarget(dealtCardView);
+
+                // Now add translation between dealtCard and miniHand
+                int miniHandLayoutLocation[] = new int[2];
+                mGame.getPlayerByIndex(iPlayer).getMiniHandLayout().getCardView().getLocationInWindow(miniHandLayoutLocation);
+                final float translationX = miniHandLayoutLocation[0] - dealtCardViewLocation[0];
+                final float translationY = miniHandLayoutLocation[1] - dealtCardViewLocation[1];
+
                 //offsets where the cards are dealt according to player
-                ObjectAnimator playerOffsetXAnimator = ObjectAnimator.ofFloat(dealtCardView, "TranslationX", mGame.getPlayerByIndex(iPlayer).getMiniHandLayout().getTranslationX());
-                ObjectAnimator playerOffsetYAnimator = ObjectAnimator.ofFloat(dealtCardView, "TranslationY", mGame.getPlayerByIndex(iPlayer).getMiniHandLayout().getTranslationY());
+                ObjectAnimator playerOffsetXAnimator = ObjectAnimator.ofFloat(dealtCardView, "TranslationX", 0f, translationX);
+                ObjectAnimator playerOffsetYAnimator = ObjectAnimator.ofFloat(dealtCardView, "TranslationY", 0f, translationY);
+
                 if (lastDealtCardAnimator == null)
                     dealSet.play(dealtCardAnimator).with(playerOffsetXAnimator).with(playerOffsetYAnimator);
                 else
@@ -705,22 +733,21 @@ public class FiveKings extends Activity {
 
 
     private void afterDealing() {
+        showDiscardPileCard();
         mPlayButton.setText(resFormat(R.string.current_round, mGame.getRoundOf().getString()));
         mGame.updatePlayerMiniHands();
-        showHideDrawAndDiscardPiles(true);
-        mGame.animatePlayerMiniHand(mGame.getNextPlayer(), bounceAnimation);
+        mGame.animatePlayerMiniHand(mGame.getNextPlayer(), shakeAnimation);
         setmHint(R.string.clickMovingHandHint);
     }
 
-    private void setupDrawAndDiscardPiles() {
+    private void layoutDrawAndDiscardPiles() {
         final RelativeLayout drawAndDiscardPiles = (RelativeLayout)findViewById(R.id.draw_and_discard_piles);
-        final Space spacer = (Space) findViewById(R.id.spacer);
 
         //set up Discard Pile
         final RelativeLayout.LayoutParams discardPileLp = new RelativeLayout.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.MATCH_PARENT);
         mDiscardPile = new CardView(this, mGame.peekDiscardPileCard(), DISCARDPILE_VIEW_ID);
         mDiscardPile.setId(DISCARDPILE_VIEW_ID);
-        discardPileLp.addRule(RelativeLayout.RIGHT_OF, spacer.getId());
+        discardPileLp.addRule(RelativeLayout.RIGHT_OF, mPlayButton.getId());
         discardPileLp.addRule(RelativeLayout.ALIGN_PARENT_TOP);
         mDiscardPile.setLayoutParams(discardPileLp);
         mDiscardPile.setAdjustViewBounds(true);
@@ -738,7 +765,7 @@ public class FiveKings extends Activity {
         final RelativeLayout.LayoutParams drawPileLp = new RelativeLayout.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.MATCH_PARENT);
         mDrawPile = new CardView(this, CardView.sBlueBitmapCardBack);
         mDrawPile.setId(DRAWPILE_VIEW_ID);
-        drawPileLp.addRule(RelativeLayout.LEFT_OF, spacer.getId());
+        drawPileLp.addRule(RelativeLayout.LEFT_OF, mPlayButton.getId());
         drawPileLp.addRule(RelativeLayout.ALIGN_PARENT_TOP);
         mDrawPile.setLayoutParams(drawPileLp);
         mDrawPile.setAdjustViewBounds(true);
@@ -766,33 +793,34 @@ public class FiveKings extends Activity {
     }
 
     void animateHumanPickUp(final Game.PileDecision pickedFrom) {
-        final RelativeLayout drawAndDiscardPiles = (RelativeLayout)findViewById(R.id.draw_and_discard_piles);
+        final RelativeLayout drawAndDiscardPiles = (RelativeLayout) findViewById(R.id.draw_and_discard_piles);
         final Space spacer = (Space) findViewById(R.id.spacer);
 
         //Create the fake card we will animate - copied from animateComputerPickUp
         final CardView pileCardView;
         final RelativeLayout.LayoutParams pileLp = new RelativeLayout.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.MATCH_PARENT);
+        int pickedCardLocation[] = new int[2];
+
         if (pickedFrom == Game.PileDecision.DISCARD_PILE) {
             //mDiscardPile still shows the old card if we used it, so we can copy it and then update the pile underneath
             //create a copy of the Discard pile and position over the current Discard Pile
-            pileCardView = new CardView(this,mDiscardPile);
-            pileLp.addRule(RelativeLayout.RIGHT_OF,spacer.getId());
-            pileLp.addRule(RelativeLayout.ALIGN_PARENT_TOP);
+            pileCardView = new CardView(this, mDiscardPile);
+            pileLp.addRule(RelativeLayout.ALIGN_LEFT, mDiscardPile.getId());
+            pileLp.addRule(RelativeLayout.ALIGN_TOP, mDiscardPile.getId());
             pileCardView.setLayoutParams(pileLp);
             //show the card underneath the one we are animating
             showDiscardPileCard();
-        }
-        else {
+            mDiscardPile.getLocationInWindow(pickedCardLocation);
+        } else {
             //create a copy of the top Draw pile card and position over the current pile
             pileCardView = new CardView(this, CardView.sBlueBitmapCardBack);
-            pileLp.addRule(RelativeLayout.LEFT_OF, spacer.getId());
-            pileLp.addRule(RelativeLayout.ALIGN_PARENT_TOP);
+            pileLp.addRule(RelativeLayout.ALIGN_LEFT, mDrawPile.getId());
+            pileLp.addRule(RelativeLayout.ALIGN_TOP, mDrawPile.getId());
             pileCardView.setLayoutParams(pileLp);
+            mDrawPile.getLocationInWindow(pickedCardLocation);
         }
-        pileCardView.setAdjustViewBounds(true);
         drawAndDiscardPiles.addView(pileCardView);
-        drawAndDiscardPiles.setClipChildren(false);
-        drawAndDiscardPiles.setClipToPadding(false);
+
         //stop the cards jiggling since we have now picked
         this.mDrawPile.clearAnimation();
         this.mDiscardPile.clearAnimation();
@@ -800,20 +828,23 @@ public class FiveKings extends Activity {
         //Use Animator animation to combine shrinking behavior (in XML) with translation
         final AnimatorSet pickUpSet = new AnimatorSet();
         final Animator pickedCardAnimator = AnimatorInflater.loadAnimator(this,
-                (pickedFrom == Game.PileDecision.DISCARD_PILE ? R.animator.from_discardpile : R.animator.from_drawpile));
+                (pickedFrom == Game.PileDecision.DISCARD_PILE ? R.animator.human_from_discardpile : R.animator.human_from_drawpile));
         pickedCardAnimator.setTarget(pileCardView);
 
-        // Now add translation based on center of currentCards
+        // Now add translation based on left of cards, or the center of currentCards if there are none
         int mCurrentCardsLocation[] = new int[2];
+        final float translationX;
         mCurrentCards.getLocationInWindow(mCurrentCardsLocation);
-        int spacerLocation[] = new int[2];
-        spacer.getLocationInWindow(spacerLocation);
-        final float translationX = (mCurrentCardsLocation[0] + mCurrentCards.getWidth()/2) - spacerLocation[0];
-        final float translationY = (mCurrentCardsLocation[1] + mCurrentCards.getHeight()/2) - spacerLocation[1];
-        // adjustment accounts for different position of Draw and Discard PIle
-        float adjustmentX = 0.5f * (this.getDrawPileWidth() + PlayerMiniHandLayout.SPACER_WIDTH);
-        final ObjectAnimator pickedCardXAnimator = ObjectAnimator.ofFloat(pileCardView, "TranslationX",
-                translationX+ (pickedFrom == Game.PileDecision.DISCARD_PILE ? -adjustmentX : +adjustmentX));
+        final float translationY = mCurrentCardsLocation[1] - pickedCardLocation[1];
+        if (mCurrentCards.getChildCount() > 0) {
+            mCurrentCards.getChildAt(0).getLocationInWindow(mCurrentCardsLocation);
+            translationX = mCurrentCardsLocation[0] - pickedCardLocation[0];
+        } else {
+            translationX = mCurrentCardsLocation[0] + mCurrentCards.getWidth()/2  - pickedCardLocation[0];
+        }
+
+        pickedCardAnimator.setInterpolator(new AccelerateDecelerateInterpolator());
+        final ObjectAnimator pickedCardXAnimator = ObjectAnimator.ofFloat(pileCardView, "TranslationX", translationX);
         pickedCardXAnimator.setDuration(ANIMATION_1S);
         final ObjectAnimator pickedCardYAnimator = ObjectAnimator.ofFloat(pileCardView, "TranslationY", translationY);
         pickedCardYAnimator.setDuration(ANIMATION_1S);
@@ -843,72 +874,14 @@ public class FiveKings extends Activity {
 
     }//end animateHumanPickUp
 
-    /* replaced with new version that calculates where card should go
-    void animateHumanPickUp(final Game.PileDecision pickedPile) {
-        final RelativeLayout drawAndDiscardPiles = (RelativeLayout)findViewById(R.id.draw_and_discard_piles);
-        final CardView pileCardView;
-        final RelativeLayout.LayoutParams pileLp = new RelativeLayout.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.MATCH_PARENT);
-
-
-        if (pickedPile == Game.PileDecision.DISCARD_PILE) {
-            //mDiscardPile still shows the old card if we used it, so we can copy it and then update the pile underneath
-            //create a copy of the Discard pile and position over the current Discard Pile
-            pileCardView = new CardView(this,mDiscardPile);
-            pileLp.addRule(RelativeLayout.ALIGN_LEFT,mDiscardPile.getId());
-            pileLp.addRule(RelativeLayout.ALIGN_BOTTOM, mDiscardPile.getId());
-            //show the card underneath the one we are animating
-            showDiscardPileCard();
-        }
-        else {
-            //create a copy of the top Draw pile card and position over the current pile
-            //doesn't show the card until it appears in your hand
-            pileCardView = new CardView(this, mGame.getDrawnCard(),-1);
-            pileLp.addRule(RelativeLayout.ALIGN_LEFT, mDrawPile.getId());
-            pileLp.addRule(RelativeLayout.ALIGN_BOTTOM, mDrawPile.getId());
-        }
-        pileCardView.setLayoutParams(pileLp);
-        pileCardView.setAdjustViewBounds(true);
-        drawAndDiscardPiles.addView(pileCardView);
-
-        this.mDrawPile.clearAnimation();
-        this.mDiscardPile.clearAnimation();
-        //Use the old-style Tween animation because we can define it in XML
-        //TODO: Use two animations meeting in the middle (from Discard/Draw and to Hand)
-        //For Computer this is pick, bounce, and discard; for Human it is pick and bounce card
-        final AnimationSet pickAndBounce = new AnimationSet(false);
-        final Animation pickedCardAnimation = AnimationUtils.loadAnimation(this,
-                (pickedPile== Game.PileDecision.DISCARD_PILE) ? R.anim.from_discardpile : R.anim.from_drawpile);
-        final Animation bounceAnimation = AnimationUtils.loadAnimation(this,R.anim.card_bounce);
-        pickAndBounce.addAnimation(pickedCardAnimation);
-        pickAndBounce.addAnimation(bounceAnimation);
-        pickAndBounce.setAnimationListener(new Animation.AnimationListener() {
-            @Override
-            public void onAnimationStart(Animation animation) {
-            }
-
-            @Override
-            public void onAnimationEnd(Animation animation) {
-                updateHandsAndCards(true, false); //true because this is human
-                drawAndDiscardPiles.removeView(pileCardView);
-            }
-
-            @Override
-            public void onAnimationRepeat(Animation animation) {
-            }
-        });
-
-        pileCardView.startAnimation(pickAndBounce);
-    }
-*/
 
     void animateComputerPickUpAndDiscard(final PlayerMiniHandLayout playerMiniHandLayout, final Game.PileDecision pickedFrom) {
         final RelativeLayout drawAndDiscardPiles = (RelativeLayout)findViewById(R.id.draw_and_discard_piles);
-        final Space spacer = (Space) findViewById(R.id.spacer);
 
         final CardView discardCardView = new CardView(this, mGame.getCurrentPlayer().getHandDiscard(),-1);
         final RelativeLayout.LayoutParams discardLp = new RelativeLayout.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.MATCH_PARENT);
-        discardLp.addRule(RelativeLayout.RIGHT_OF, spacer.getId());
-        discardLp.addRule(RelativeLayout.ALIGN_PARENT_TOP);
+        discardLp.addRule(RelativeLayout.ALIGN_LEFT, mDiscardPile.getId());
+        discardLp.addRule(RelativeLayout.ALIGN_TOP, mDiscardPile.getId());
         discardCardView.setLayoutParams(discardLp);
         discardCardView.setAlpha(INVISIBLE_ALPHA);
         discardCardView.setAdjustViewBounds(true);
@@ -918,22 +891,26 @@ public class FiveKings extends Activity {
         //Create the fake card we will animate
         final CardView pileCardView;
         final RelativeLayout.LayoutParams pileLp = new RelativeLayout.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.MATCH_PARENT);
+        int pickedCardLocation[] = new int[2];
+
         if (pickedFrom == Game.PileDecision.DISCARD_PILE) {
             //mDiscardPile still shows the old card if we used it, so we can copy it and then update the pile underneath
             //create a copy of the Discard pile and position over the current Discard Pile
             pileCardView = new CardView(this,mDiscardPile);
-            pileLp.addRule(RelativeLayout.RIGHT_OF,spacer.getId());
-            pileLp.addRule(RelativeLayout.ALIGN_PARENT_TOP);
+            pileLp.addRule(RelativeLayout.ALIGN_LEFT, mDiscardPile.getId());
+            pileLp.addRule(RelativeLayout.ALIGN_TOP, mDiscardPile.getId());
             pileCardView.setLayoutParams(pileLp);
             //show the card underneath the one we are animating
             showDiscardPileCard();
+            mDiscardPile.getLocationInWindow(pickedCardLocation);
         }
         else {
             //create a copy of the top Draw pile card and position over the current pile
             pileCardView = new CardView(this, CardView.sBlueBitmapCardBack);
-            pileLp.addRule(RelativeLayout.LEFT_OF, spacer.getId());
-            pileLp.addRule(RelativeLayout.ALIGN_PARENT_TOP);
+            pileLp.addRule(RelativeLayout.ALIGN_LEFT, mDrawPile.getId());
+            pileLp.addRule(RelativeLayout.ALIGN_TOP, mDrawPile.getId());
             pileCardView.setLayoutParams(pileLp);
+            mDrawPile.getLocationInWindow(pickedCardLocation);
         }
         pileCardView.setAdjustViewBounds(true);
         drawAndDiscardPiles.addView(pileCardView);
@@ -942,26 +919,29 @@ public class FiveKings extends Activity {
         //and then discard to Discard Pile (could be two different cards)
         final AnimatorSet pickAndDiscard = new AnimatorSet();
         final Animator pickedCardAnimator = AnimatorInflater.loadAnimator(this,
-                (pickedFrom == Game.PileDecision.DISCARD_PILE ? R.animator.from_discardpile : R.animator.from_drawpile));
+                (pickedFrom == Game.PileDecision.DISCARD_PILE ? R.animator.computer_from_discardpile : R.animator.computer_from_drawpile));
         pickedCardAnimator.setTarget(pileCardView);
 
-        final float translationX = playerMiniHandLayout.getTranslationX();
-        /* the original translationX was from the center-horizontal of the fullscreen layout
-        but that translation needs to be adjusted by +/-0.5 x (DrawPileWidth + SpacerWidth) for drawing from DiscardPile or DrawPile
-         */
-        float adjustmentX = 0.5f * (this.getDrawPileWidth() + PlayerMiniHandLayout.SPACER_WIDTH);
-        final float translationY = playerMiniHandLayout.getTranslationY();
-        final ObjectAnimator pickedCardXAnimator = ObjectAnimator.ofFloat(pileCardView, "TranslationX",
-                translationX+ (pickedFrom == Game.PileDecision.DISCARD_PILE ? -adjustmentX : +adjustmentX));
+        // Now add translation between pickedCard and miniHand
+        int miniHandLayoutLocation[] = new int[2];
+        playerMiniHandLayout.getCardView().getLocationInWindow(miniHandLayoutLocation);
+        float translationX = miniHandLayoutLocation[0] - pickedCardLocation[0];
+        float translationY = miniHandLayoutLocation[1] - pickedCardLocation[1];
+
+        final ObjectAnimator pickedCardXAnimator = ObjectAnimator.ofFloat(pileCardView, "TranslationX",0f, translationX);
         pickedCardXAnimator.setDuration(ANIMATION_500MS);
-        final ObjectAnimator pickedCardYAnimator = ObjectAnimator.ofFloat(pileCardView, "TranslationY", translationY);
+        final ObjectAnimator pickedCardYAnimator = ObjectAnimator.ofFloat(pileCardView, "TranslationY",0f, translationY);
         pickedCardYAnimator.setDuration(ANIMATION_500MS);
         pickAndDiscard.play(pickedCardAnimator).with(pickedCardXAnimator).with(pickedCardYAnimator);
 
-        /* Here we are always animating back to DiscardPile so the adjustment is always negative*/
+        // animate back to discard pile
+        mDiscardPile.getLocationInWindow(pickedCardLocation);
+        translationX = miniHandLayoutLocation[0] - pickedCardLocation[0];
+        translationY = miniHandLayoutLocation[1] - pickedCardLocation[1];
+
         final Animator discardAnimator = AnimatorInflater.loadAnimator(this, R.animator.to_discardpile);
         discardAnimator.setTarget(discardCardView);
-        final ObjectAnimator discardXAnimator = ObjectAnimator.ofFloat(discardCardView, "TranslationX",translationX-adjustmentX,0f );
+        final ObjectAnimator discardXAnimator = ObjectAnimator.ofFloat(discardCardView, "TranslationX",translationX,0f );
         discardXAnimator.setDuration(ANIMATION_1S);
         final ObjectAnimator discardYAnimator = ObjectAnimator.ofFloat(discardCardView, "TranslationY", translationY,0f);
         discardYAnimator.setDuration(ANIMATION_1S);
@@ -1001,13 +981,13 @@ public class FiveKings extends Activity {
         final Animator scaleAnimator = AnimatorInflater.loadAnimator(this,R.animator.scale_score);
         scaleAnimator.setTarget(roundScoreView);
 
-        // Now add translation based on center of currentMelds
+        // Now add translation based on top of currentMelds (so between currentCards and currentMelds)
         int mCurrentMeldsLocation[] = new int[2];
         mCurrentMelds.getLocationInWindow(mCurrentMeldsLocation);
         int miniHandLayoutLocation[] = new int[2];
         currentPlayer.getMiniHandLayout().getLocationInWindow(miniHandLayoutLocation);
         final float translationX = miniHandLayoutLocation[0] - (mCurrentMeldsLocation[0] + mCurrentMelds.getWidth()/2);
-        final float translationY = miniHandLayoutLocation[1] - (mCurrentMeldsLocation[1] + mCurrentMelds.getHeight()/2);
+        final float translationY = miniHandLayoutLocation[1] - (mCurrentMeldsLocation[1]);
 
         final ObjectAnimator scoreXAnimator = ObjectAnimator.ofFloat(roundScoreView, "TranslationX", -translationX, 0f);
         final ObjectAnimator scoreYAnimator = ObjectAnimator.ofFloat(roundScoreView, "TranslationY", -translationY, 0f);
@@ -1037,8 +1017,8 @@ public class FiveKings extends Activity {
         scaleAndTranslateSet.start();
     }
 
-    private void explodeHand(final Player winningPlayer) {
-        final RelativeLayout fullScreenContent = (RelativeLayout)findViewById(R.id.fullscreen_content);
+    AnimatorSet explodeHand(final Player winningPlayer) {
+        final RelativeLayout draw_and_discard = (RelativeLayout)findViewById(R.id.draw_and_discard_piles);
 
         //get's the location of a point between the Draw and Discard pile (source for dealt cards)
         final RelativeLayout.LayoutParams pileLp = new RelativeLayout.LayoutParams(this.getDrawPileWidth(),this.getDrawPileHeight());
@@ -1064,7 +1044,7 @@ public class FiveKings extends Activity {
             Card card = deck2.deal();
             cardAnimator = cardAnimator.clone();
             addExplodeTranslation(explodeSet, cardAnimatorSet, lastCardAnimatorSet, cardAnimator,
-                    card, pileLp, height, fullScreenContent);
+                    card, pileLp, height, draw_and_discard);
             lastCardAnimatorSet = cardAnimatorSet;
         }
         explodeSet.addListener(new Animator.AnimatorListener() {
@@ -1074,6 +1054,7 @@ public class FiveKings extends Activity {
 
             @Override
             public void onAnimationEnd(Animator animator) {
+
                 new AlertDialog.Builder(FiveKings.this)
                         .setIcon(android.R.drawable.ic_dialog_alert)
                         .setTitle(R.string.congratulationsName)
@@ -1088,15 +1069,18 @@ public class FiveKings extends Activity {
 
             @Override
             public void onAnimationCancel(Animator animator) {
+                draw_and_discard.removeAllViews();
             }
         });
         explodeSet.start();
+
+        return explodeSet;
     }
     private void addExplodeTranslation(final AnimatorSet explodeSet, final AnimatorSet cardAnimatorSet, final AnimatorSet lastCardAnimatorSet, final Animator cardAnimator,
-                                       final Card card, RelativeLayout.LayoutParams pileLp, final float height , final RelativeLayout fullScreenContent) {
+                                       final Card card, RelativeLayout.LayoutParams pileLp, final float height , final RelativeLayout relativeLayout) {
         CardView cardView = new CardView(this, card, -1);
         cardView.setLayoutParams(pileLp);
-        fullScreenContent.addView(cardView);
+        relativeLayout.addView(cardView);
         cardAnimator.setTarget(cardView);
         double randomAngle = Math.toRadians(45 + 90 * Math.random());
         //animate them down from the DrawPile and off the screen
@@ -1260,9 +1244,10 @@ public class FiveKings extends Activity {
     }
 
     //shows the existing hint, unless you pass specific text
+    //Hints are shown until the 4th round unless you turn off showIntroduction
     void showHint(final String mText, boolean forceShow) {
         if ((mGame != null) && (mGame.getRoundOf() != null)
-                && (forceShow || (mGame.getRoundOf().getOrdinal() <= HELP_ROUNDS.getOrdinal()))) {
+                && (forceShow || (getSharedPreferences(SETTINGS_NAME, 0).getBoolean(SHOW_HELP, true) && (mGame.getRoundOf().getOrdinal() <= HELP_ROUNDS.getOrdinal())))) {
             mHintToast.setText(mText==null ? mHint : mText);
             mHintToast.show();
         }
@@ -1270,8 +1255,8 @@ public class FiveKings extends Activity {
 
     //open Add Player dialog
     void showAddPlayers() {
-        if ((mGame != null) && (mGame.getRoundOf() != null) && (mGame.getRoundOf() != Rank.getLowestRank())) {
-            showHint(getText(R.string.cantAdd).toString(), true);
+        if ((mGame == null) || (mGame.getGameState() != GameState.NEW_GAME)) {
+            showHint(getText(R.string.cantAddDelete).toString(), true);
         }else {
             //pop open the Players dialog for the names
             EnterPlayersDialogFragment epdf = EnterPlayersDialogFragment.newInstance(null, false, true, -1);

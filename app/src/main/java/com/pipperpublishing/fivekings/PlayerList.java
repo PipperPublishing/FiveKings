@@ -3,6 +3,7 @@ package com.pipperpublishing.fivekings;
 import android.app.Activity;
 import android.util.Log;
 import android.view.animation.Animation;
+import android.widget.LinearLayout;
 import android.widget.RelativeLayout;
 
 import java.util.ArrayList;
@@ -15,6 +16,8 @@ import java.util.ArrayList;
  * 9/21/2015    Record which player hand is animated (should really be pushed down into mini hands itself)
  * 9/30/2015    setAnimated loops through all players to unset animated - this may happen if we animated the wrong hand
  *              when coming back from an orientation change
+  10/7/2015     removePlayerMiniHands was removing from fullscreen_content, not from draw_and_discard_piles
+ 10/8/2015      Change miniHand layout to move them all to a separate miniHand strip - hopefully this will also make it easier to do a slide-out drawer
  TODO:A Maybe manage PlayerLayout as well?
  */
 class PlayerList extends ArrayList<Player> {
@@ -216,10 +219,10 @@ class PlayerList extends ArrayList<Player> {
 
 
     void removePlayerMiniHands(Activity a) {
-        final RelativeLayout fullScreenContent = (RelativeLayout) a.findViewById(R.id.fullscreen_content);
+        final LinearLayout linearLayout = (LinearLayout) a.findViewById(R.id.mini_hands);
         for (int iPlayer = 0; iPlayer < this.size(); iPlayer++) {
             PlayerMiniHandLayout playerMiniHandLayout = this.get(iPlayer).getMiniHandLayout();
-            fullScreenContent.removeView(playerMiniHandLayout);
+            linearLayout.removeView(playerMiniHandLayout);
             this.get(iPlayer).removePlayerMiniHand();
         }
     }
@@ -227,9 +230,9 @@ class PlayerList extends ArrayList<Player> {
     //re-layout when we've changed number of players by adding/deleting
     void relayoutPlayerMiniHands(Activity a) {
         removePlayerMiniHands(a);
-        final RelativeLayout drawAndDiscardPiles = (RelativeLayout) a.findViewById(R.id.draw_and_discard_piles);
+        final LinearLayout linearLayout = (LinearLayout) a.findViewById(R.id.mini_hands);
         for (int iPlayer = 0; iPlayer < this.size(); iPlayer++) {
-            drawAndDiscardPiles.addView(this.get(iPlayer).addPlayerMiniHandLayout(a, iPlayer, this.size()));
+            linearLayout.addView(this.get(iPlayer).addPlayerMiniHandLayout(a, iPlayer, this.size()));
         }
     }
 }

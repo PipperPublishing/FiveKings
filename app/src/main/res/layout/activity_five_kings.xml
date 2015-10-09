@@ -19,7 +19,7 @@
         android:layout_alignParentLeft="true"
         android:layout_alignParentTop="true"
         android:clipChildren="false"
-        >
+        android:id="@+id/game_area_ll">
 
         <RelativeLayout
             android:id="@+id/draw_and_discard_piles"
@@ -30,7 +30,9 @@
             android:clipChildren="false"
             android:clipToPadding="false"
             android:paddingLeft="5dp"
-            android:paddingRight="5dp">
+            android:paddingRight="5dp"
+            android:layout_marginTop="5dp"
+            android:layout_marginBottom="5dp">
 
             <Space
                 android:id="@+id/spacer"
@@ -41,13 +43,6 @@
                 android:background="@drawable/dashed_border"
                 android:backgroundTint="#ffff3b26"
                 />
-
-        </RelativeLayout>
-
-        <FrameLayout
-            android:layout_width="match_parent"
-            android:layout_height="0dp"
-            android:layout_weight="1">
 
             <Button
                 android:id="@+id/Play"
@@ -60,7 +55,7 @@
                 android:maxLines="1"
                 android:backgroundTint="@android:color/holo_blue_bright"
                 android:background="@android:drawable/dialog_holo_light_frame"
-                />
+                android:layout_centerInParent="true"/>
 
             <ProgressBar
                 android:id="@+id/progressCircle"
@@ -69,7 +64,21 @@
                 android:layout_height="wrap_content"
                 android:visibility="gone"
                 android:layout_gravity="center"/>
-        </FrameLayout>
+
+        </RelativeLayout>
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="0dp"
+            android:layout_weight="1"
+            android:clickable="false"
+            android:id="@+id/mini_hands"
+            android:clipChildren="false"
+            android:clipToPadding="false"
+            android:orientation="horizontal"
+            >
+
+        </LinearLayout>
 
         <RelativeLayout
             android:id="@+id/current_cards"

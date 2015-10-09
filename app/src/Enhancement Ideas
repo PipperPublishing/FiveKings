@@ -268,19 +268,35 @@ FIXED: Toast text is setting to "Meld cards" in many cases
 --------------------------------
 v0.7.10 Computer/Human bugs
 
+FIXED: Add an icon to the action bar to allow this? (human with + sign)
+
+CHECKED: Check Human mode
+
+FIXED: make it so you can only Add/Delete players before click on the Play Round button (grey out the option otherwise)
+FIXED?: New Game (after an old one) doesn't seem to work any more
+FIXED: If you change orientation during dealing, [Skip Dealing] is left on the button
+FIXED: On dealing, the deck should be visible (might also fix the next bug)
+FIXED: After you deal the Discard is changed after you click on the player
+FIXED: [Tim]  If I I add one or two more computer opponents, I can't seem to select an opponent's hand when I start the game..
+FIXED [Tim]If at the end you press New Game while the cards are still animating, the scores are reset to zero so it says "Congratulations you won with a score of 0"
+FIXED: 3 players: the third player appears  under the Play button
+
+-------
+v0.7.11 Clean up animation translations  (have some offsets right now)
+ProgressBar (circle) is on left-hand side of screen?
+
+BUG: If you click next computer hand during discard, you lose your turn
+
 BUG: If you change Computer to a Human on the first round, then it doesn't play it
     - Perhaps something to do with the  wait for human code
     - Check Human mode (2 humans, 2 humans + computer)
-BUG: With two Human players, after the deal the Discard is changed after you click on the player
-BUG: New Game (after an old one) doesn't seem to work any more
 - Test with 2-5 players
-- Check Human mode
-- Other bugs from Tim
+
 
 -------------------
 v0.7.50 Graphics
       2. Several times where cards got "stuck" on the bottom of the screen and didn't disappear
-- Human Pick up animation - card should not shrink to nothing
+DONE Human Pick up animation - card should not shrink to nothing
     - Slide out hand animation
     - Need dashed line on discard pile
     - Animate open hands into view from mini-hands
@@ -288,14 +304,13 @@ v0.7.50 Graphics
 - Show score table at end - possibly with round-by-round scores?
     - Try exploding into middle of screen with fade-out
     - other comments like Phase 10: pick up a discard and say "Thanks! I really needed that" or "Ouch!"
-- Animate dealing discard (use z-axis flip of card over?)
+- z-animation of human pick up from draw pile
 - Hint overlays like Google (arrows and text)
-- Fix translation using exact positions on screen
-    - Instead of using Intrinsic width, should use actual laid out width etc
 =======================
 
 v0.8.01 Scoring and Valuation
 
+[Tim] Option to highlight the wildcard, warn on discarding it, or warn if you didn't meld (perhaps just on the opening rounds)
 
 BUGS
     - I've seen a couple of times when the computer gave itself more points than it should have.  I think it happens if it

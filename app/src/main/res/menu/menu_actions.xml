@@ -1,46 +1,45 @@
-<menu xmlns:android="http://schemas.android.com/apk/res/android"
-    xmlns:fiveKings="http://schemas.android.com/apk/res-auto" >
+<menu xmlns:android="http://schemas.android.com/apk/res/android">
     <!-- Settings, should always be in the overflow -->
     <item android:id="@+id/action_settings"
           android:icon="@drawable/abc_ic_menu_moreoverflow_mtrl_alpha"
           android:title="@string/action_settings"
-          fiveKings:showAsAction="never" />
+          android:showAsAction="never" />
     <item android:id="@+id/action_players"
-          android:icon="@drawable/abc_ic_menu_moreoverflow_mtrl_alpha"
+          android:icon="@drawable/ic_person_white_24dp"
           android:title="@string/action_players"
           android:enabled="true"
-          fiveKings:showAsAction="always">
+          android:showAsAction="ifRoom">
         <menu>
             <item android:id="@+id/action_add_player"
-                  android:icon="@android:drawable/ic_menu_add"
+                  android:icon="@drawable/ic_person_add_white_24dp"
                   android:title="@string/add_player"
                   android:enabled="true"
-                  fiveKings:showAsAction="always" />
+                  android:showAsAction="ifRoom" />
             <item android:id="@+id/action_edit_player"
                   android:icon="@android:drawable/ic_menu_edit"
                   android:title="@string/edit_player"
                   android:enabled="true"
-                  fiveKings:showAsAction="ifRoom" />
+                  android:showAsAction="never" />
             <item android:id="@+id/action_delete_player"
                   android:icon="@android:drawable/ic_menu_delete"
                   android:title="@string/delete_player"
                   android:enabled="true"
-                  fiveKings:showAsAction="ifRoom" />
+                  android:showAsAction="never" />
         </menu>
     </item>
     <item android:id="@+id/action_new_game"
           android:icon="@drawable/abc_ic_menu_moreoverflow_mtrl_alpha"
           android:title="@string/newGame"
-          fiveKings:showAsAction="never" />
+          android:showAsAction="never" />
     <item android:id="@+id/action_help"
           android:icon="@android:drawable/ic_menu_help"
           android:title="@string/action_help"
           android:enabled="true"
-          fiveKings:showAsAction="ifRoom" />
+          android:showAsAction="ifRoom" />
     <item android:id="@+id/action_about"
           android:icon="@android:drawable/ic_dialog_info"
           android:title="@string/action_about"
           android:enabled="true"
-          fiveKings:showAsAction="never" />
+          android:showAsAction="never" />
 
 </menu>
