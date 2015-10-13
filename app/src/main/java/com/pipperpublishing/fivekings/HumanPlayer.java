@@ -6,6 +6,7 @@ import android.util.Log;
  * Created by Jeffrey on 3/12/2015.
  * 3/15/2015    Moved discardFromHand here - actually does discard
  * 3/31/2015    Pushed takeTurn and logTurn here so that we don't have Human vs. Computer checks in Game
+ * 10/12/2015   Pass drawnCard to animateHumanPickup to further separate logic from View
  *
  */
 class HumanPlayer extends Player {
@@ -97,7 +98,7 @@ class HumanPlayer extends Player {
         if (fKActivity.getmGame().getGameState() == GameState.HUMAN_PICKED_CARD) {
             final StringBuilder turnInfo = new StringBuilder(100);
             turnInfo.setLength(0);
-            final String turnInfoFormat = fKActivity.getText(R.string.humanTurnInfo).toString();
+            final String turnInfoFormat = fKActivity.getString(R.string.humanTurnInfo);
 
             logTurn(isFinalTurn);
 
@@ -112,7 +113,7 @@ class HumanPlayer extends Player {
             fKActivity.getmGame().setGameState(GameState.END_HUMAN_TURN);
             //at this point the DiscardPile still shows the old card if you picked it
             //handles animating the card off the appropriate pile and making it appear in the hand
-            fKActivity.animateHumanPickUp(drawOrDiscardPile);
+            fKActivity.animateHumanPickUp(drawOrDiscardPile,drawnCard);
         } else if (fKActivity.getmGame().getGameState() != GameState.END_HUMAN_TURN) {
             //TODO:A: if GameState not set correctly, then reveal the cards
             updateHandsAndCards(fKActivity, false);

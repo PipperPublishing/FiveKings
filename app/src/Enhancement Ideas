@@ -281,71 +281,60 @@ FIXED: [Tim]  If I I add one or two more computer opponents, I can't seem to sel
 FIXED [Tim]If at the end you press New Game while the cards are still animating, the scores are reset to zero so it says "Congratulations you won with a score of 0"
 FIXED: 3 players: the third player appears  under the Play button
 
--------
-v0.7.11 Clean up animation translations  (have some offsets right now)
-ProgressBar (circle) is on left-hand side of screen?
+0.7.10 [Released to Google Play Beta]
+============
+>>> v0.7.11
 
-BUG: If you click next computer hand during discard, you lose your turn
-
-BUG: If you change Computer to a Human on the first round, then it doesn't play it
-    - Perhaps something to do with the  wait for human code
-    - Check Human mode (2 humans, 2 humans + computer)
+CHECKED: Add a Human player, change first Human to Computer, and then start New Game
+CHECKED: Check Human mode (2 humans, 2 humans + computer)
 - Test with 2-5 players
 
+- Shows draw pile card immediately; also fixed animation to left of current cards
+- Fix where human drawn card goes on screen
+
+FIXED : If you turn off Intro/Hints, should still show the hint at the end of the game (forceShow)
+FIXED: Discard from previous round shows during dealing - should just be discard outline showing
+    (should be able to do just by removing the DiscardPile so null shows)
+FIXED: Switch Computer and Human to make it easier to play for right-handed
+FIXED: Outline around where the discard pile should be
+FIXED: If you change Human to Computer it crashes sometimes
+
+FIXED: ProgressBar (circle) is on left-hand side of screen?
+FIXED: If you click next computer hand during discard, you lose your turn
+FIXED: If you change Computer to a Human on the first round, then it doesn't play it
+
+------------
+v0.7.12
+
+Tim's bugs:[Nexus 9?]
+BUG: Sometimes the score overlays on the card
+BUG: In landscape mode on Nexus 9? , melds can go off the screen (round 10?)
+BUG: Nexus 9: Sizes are not scaled correctly in landscape mode
+BUG: If you change from landscape to portrait after the computer discards and before you click on your own hand, you can see the computer's hand and what it is working on...
+
 
 -------------------
-v0.7.50 Graphics
-      2. Several times where cards got "stuck" on the bottom of the screen and didn't disappear
-DONE Human Pick up animation - card should not shrink to nothing
-    - Slide out hand animation
-    - Need dashed line on discard pile
-    - Animate open hands into view from mini-hands
-- 1. Expect the game to play the compute turn without clicking, while showing your (human) hand still
-- Show score table at end - possibly with round-by-round scores?
-    - Try exploding into middle of screen with fade-out
-    - other comments like Phase 10: pick up a discard and say "Thanks! I really needed that" or "Ouch!"
-- z-animation of human pick up from draw pile
-- Hint overlays like Google (arrows and text)
-=======================
+v0.7.50 Helpful Graphics
+(Merge with 0.7.12?)
+- Bounce the picked up card once it's in the hand (or highlight it?)
 
-v0.8.01 Scoring and Valuation
-
+- animate one card to discardPile at end of dealing
 [Tim] Option to highlight the wildcard, warn on discarding it, or warn if you didn't meld (perhaps just on the opening rounds)
 
-BUGS
-    - I've seen a couple of times when the computer gave itself more points than it should have.  I think it happens if it
-      is saving one card for a run, e.g. 10C,JC, but has two other of one of those cards (JS,JD).  It doesn't move the jack
-      over to the pair to meld them.
-
-BUG: Meld.check on Heuristics is showing Joker-3-4
+BUGS:
+      2. Several times where cards got "stuck" on the bottom of the screen and didn't disappear
 
 
-- Look at melding "potential" of single unmelded cards you keep (not just partial melds)
-- Don't discard what others want (wild cards, or cards they picked up)
-Permutations:
-- Look at descending sequences so we can throw them out sooner
-- Eliminate looking at other perms that are equivalent score (e.g. (K* KS KH) = (KS K* KH)) - use a hash?
-- ??use sorted lists
-- implement Meld.needsCheck
-- track what is left in DrawPile (or cheat and remember it)
-- Cheat mode where it peeks at draw pile card (in Settings)
-
-
-Use Meld.check somehow?
-    - note the numCard breakpoint when we switched to permutations and don't look for sequences bigger than this
-    - should allow us to build bigger sequences
-
--------------------
-v0.8.03 Clean up
+====================
+v0.8.x CLEAN UP CODE
+v0.8.01 Clean up
 - Remove smells where possible :)
 - LOTS of cleaning up in FiveKings - follow flow
 - Player methods use fKActivity and a lot of convoluted logic
-
     - Improve logic flow and understandability of FiveKings, Game, PlayerLayout etc
     - Clean up Game state flow and handling
     - push player Hand updates to individual players rather than mass updates of screen
     - more sub-classing rather than if (isHuman) type logic
-- Save state when I navigate away
 -----------------
 v0.8.04
 BUG:A Check if still true? Heuristics is throwing away wildcard when you have a partial meld of 4-4 and only full melds;
@@ -356,14 +345,23 @@ BUG:A Heuristics won't build a sequence X-Y-Jok-Z; not looking at this - use mel
 Add in more than one sequence and longer sequences than 3
 - Loop over fullMeld and fullSequence alternatives (use perms?)
 
-
     - Logic for pick up and discard on final turn is different. Goal is only to minimize score. So DrawVsDiscard comparator should only be comparing that potential.
       After picking from  Discard pile, no change should be necessary. After picking from Draw pile minimize score.
 
 
-----------------
-v0.9.01 Menu
-- Make hiding hand from Human an option
+=======================
+v0.9.01
+    - Slide out hand animation
+    - Animate open hands into view from mini-hands
+- 1. Expect the game to play the compute turn without clicking, while showing your (human) hand still
+- Show score table at end - possibly with round-by-round scores?
+    - Try exploding into middle of screen with fade-out
+    - other comments like Phase 10: pick up a discard and say "Thanks! I really needed that" or "Ouch!"
+- Hint overlays like Google (arrows and text)
+
+
+v0.9.02 Menu
+- ???? Make hiding hand from Human an option
 - Setting to control how long (how many rounds) you see Help/Hints
     - also look at other constants
 
@@ -372,9 +370,31 @@ v0.9.01 Menu
     - automatic ordering
 - investigate using Callback instead of Listener (does it make it easier to find card?)
 
------------------
-v1.1.01 Optimization
-DONE Use multi-threading to preprocess computer hands while waiting for button presses
+=====================
+v1.1.01 Improving Scoring and Valuation
+(deemphasize this because computer is good enough)
+
+BUGS
+[Carolyn]
+    - I've seen a couple of times when the computer gave itself more points than it should have.  I think it happens if it
+      is saving one card for a run, e.g. 10C,JC, but has two other of one of those cards (JS,JD).  It doesn't move the jack
+      over to the pair to meld them.
+
+BUG: Meld.check on Heuristics is showing Joker-3-4
+- Option to use Easy Computer algorithm
+- Look at melding "potential" of single unmelded cards you keep (not just partial melds)
+- Don't discard what others want (wild cards, or cards they picked up)
+Permutations:
+- Look at descending sequences so we can throw them out sooner
+- Eliminate looking at other perms that are equivalent score (e.g. (K* KS KH) = (KS K* KH)) - use a hash?
+- ??use sorted lists
+- implement Meld.needsCheck
+- track what is left in DrawPile (or cheat and remember it)
+
+Use Meld.check somehow?
+    - note the numCard breakpoint when we switched to permutations and don't look for sequences bigger than this
+    - should allow us to build bigger sequences
+
 
 ======================
 QUESTIONS:

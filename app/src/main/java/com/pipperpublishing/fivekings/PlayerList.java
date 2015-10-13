@@ -18,6 +18,8 @@ import java.util.ArrayList;
  *              when coming back from an orientation change
   10/7/2015     removePlayerMiniHands was removing from fullscreen_content, not from draw_and_discard_piles
  10/8/2015      Change miniHand layout to move them all to a separate miniHand strip - hopefully this will also make it easier to do a slide-out drawer
+ 10/12/2015     Switch order of Standard Players so Human ends up on the right
+                Moved the addDefaultPlayers call to Game so this class can stay generic
  TODO:A Maybe manage PlayerLayout as well?
  */
 class PlayerList extends ArrayList<Player> {
@@ -33,11 +35,6 @@ class PlayerList extends ArrayList<Player> {
         currentPlayer = null;
         playerWentOut = null;
         animatedPlayerHand = null;
-    }
-
-    final void addStandardPlayers() {
-        this.addPlayer("You", PlayerList.PlayerType.HUMAN);
-        this.addPlayer("Computer", PlayerList.PlayerType.EXPERT_COMPUTER);
     }
 
     //Called on first game and then if you want another game
@@ -93,6 +90,7 @@ class PlayerList extends ArrayList<Player> {
         final Player newPlayer;
         if (isHuman != this.get(iPlayer).isHuman()) {
             //if we're changing Human <-> Computer, then we need to create a new one as a copy
+            // this also updates the miniHand to the new player reference
             newPlayer = isHuman ? new HumanPlayer(oldPlayer) : new ComputerPlayer(oldPlayer);
             this.set(iPlayer, newPlayer);
             if (oldPlayer == currentPlayer) currentPlayer = newPlayer;

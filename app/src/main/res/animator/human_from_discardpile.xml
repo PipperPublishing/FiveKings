@@ -4,6 +4,18 @@
     android:ordering="sequentially">
     <set android:ordering="together">
         <objectAnimator
+            android:propertyName="pivotX"
+            android:duration="1000"
+            android:valueFrom="0.0"
+            android:valueTo="0.0"
+            android:valueType="floatType"/>
+        <objectAnimator
+            android:propertyName="pivotY"
+            android:duration="1000"
+            android:valueFrom="0.0"
+            android:valueTo="0.0"
+            android:valueType="floatType"/>
+        <objectAnimator
             android:propertyName="scaleX"
             android:duration="1000"
             android:valueFrom="1.0"

@@ -12,7 +12,6 @@
     <string name="Draw">Draw</string>
     <string name="Discard">Discard</string>
     <string name="startGame">Start Game</string>
-    <string name="startingGame">Add/delete players and then click the Start Game button</string>
     <string name="deals">%1$s dealt</string>
     <string name="nextPlayer">Next Player %s</string>
     <string name="wentOut">%1$s went out - last turns!</string>
@@ -22,7 +21,7 @@
     <string name="nextRound">Play %s\'s round</string>
     <string name="skipDealing">Skip dealing</string>
     <string name="toDisableDealing">You can turn off the dealing animation in Settings</string>
-    <string name="toStartGameHint">Click on the Start Game button</string>
+    <string name="toStartGameHint">Add/delete players and then click the Start Game button</string>
     <string name="nextRoundHint">Click on the Play round button</string>
     <string name="clickMovingHandHint">Click the moving hand to play its cards</string>
     <string name="pickFromDrawOrDiscardHint">Pick from the Draw or Discard pile</string>
@@ -35,6 +34,8 @@
     <string name="congratulationsDetails">%1$s won with the lowest score of %2$s. Winner cleans up!</string>
     <string name="isHuman">human</string>
     <string name="isComputer">computer</string>
+    <string name="defaultHumanPlayer">You</string>
+    <string name="defaultComputerPlayer">Droid</string>
     <string name="addPlayersTitle">Add player</string>
     <string name="editPlayersTitle">Edit player</string>
     <string name="confirmDelete">Confirm delete player</string>

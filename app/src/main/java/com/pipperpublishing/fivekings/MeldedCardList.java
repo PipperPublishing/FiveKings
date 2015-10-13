@@ -179,11 +179,14 @@ class MeldedCardList extends CardList{
 
     protected CardList getSingles() {return singles;}
 
+    protected Rank getRoundOf() {
+        return roundOf;
+    }
 
     /* 3/17/2015    Removed numCards argument; just initialize capacity as MAX_CARDS
-        3/19/2015   Replace isSequenceMeld and isRankMeld with meldType (SEQUENCE, RANK, or null)
-     3/19/2015    decomposeAndCheck: Simplify isRankMeld logic. Categorize melds by isSequenceMeld etc flag
-     */
+            3/19/2015   Replace isSequenceMeld and isRankMeld with meldType (SEQUENCE, RANK, or null)
+         3/19/2015    decomposeAndCheck: Simplify isRankMeld logic. Categorize melds by isSequenceMeld etc flag
+         */
     static enum MeldMethod {PERMUTATIONS, HEURISTICS}
     static enum MeldComplete {FULL, PARTIAL, SINGLES}
     //a meld of Q-*-* is EITHER type

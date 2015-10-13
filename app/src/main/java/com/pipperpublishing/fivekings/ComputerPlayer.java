@@ -12,6 +12,10 @@ import android.util.Log;
  *              Moved actually drawing from DrawPile here as part of tryDiscardOrDraw
  * 4/4/2015     Add support for multi-threading (inherited by StrategyComputerPlayer)
  * 4/5/2015     startFindBestDiscard kicks off threads for Discard pile
+ * 10/10/2015   Remove setting turnState in postExecute (needs to wait for animationEnd, and was
+ *              already being set in Player.endTurn
+ *              When converting from Human to Computer, you need to do the per-round initialization that happens
+ *              in initAndDealNewHand
  */
 
 public class ComputerPlayer extends Player {
@@ -29,6 +33,10 @@ public class ComputerPlayer extends Player {
 
     ComputerPlayer(final Player player) {
         super(player);
+
+        //Set the class variables that are additional to ComputerPlayer
+        this.method = MeldedCardList.MeldMethod.HEURISTICS;
+        initAfterUpdateToComputer();
     }
 
     @Override
@@ -44,12 +52,19 @@ public class ComputerPlayer extends Player {
     @Override
     final boolean initAndDealNewHand(final Deck.DrawPile drawPile,final Rank roundOf) {
         super.initAndDealNewHand(drawPile, roundOf);
-        //TODO:B use the current method instead of always using heuristics to do the initial meld
-        hand.meldAndEvaluate(method, false);
-        this.numThreads = roundOf.getRankValue()+1;
-        t = new Thread[numThreads];
-        testHand = new ThreadedHand[numThreads];
+        initAfterUpdateToComputer();
         return true;
+    }
+
+    final void initAfterUpdateToComputer() {
+        //TODO:B use the current method instead of always using heuristics to do the initial meld
+        //If hand is null then we haven't dealt yet and these will get initialized at that point
+        if (hand != null) {
+            hand.meldAndEvaluate(method, false);
+            this.numThreads = this.hand.getRoundOf().getRankValue() + 1;
+            t = new Thread[numThreads];
+            testHand = new ThreadedHand[numThreads];
+        }
     }
 
     @Override
@@ -89,14 +104,13 @@ public class ComputerPlayer extends Player {
 
         final StringBuilder turnInfo = new StringBuilder(100);
         turnInfo.setLength(0);
-        final String turnInfoFormat = fKActivity.getText(R.string.computerTurnInfo).toString();
+        final String turnInfoFormat = fKActivity.getString(R.string.computerTurnInfo);
 
         logTurn(isFinalTurn);
 
         //improve hand by picking up from Discard pile or from Draw pile - use pickFromDiscardPile to decide
         //Pick from drawPile unless you can meld/match from discardPile
 
-        //if Computer, we decide here whether to draw or discard
         final long playerStartTime = System.currentTimeMillis();
 
         //put this on a separate thread so we display a spinner while it works
@@ -140,7 +154,7 @@ public class ComputerPlayer extends Player {
                 //at this point the DiscardPile still shows the old card
                 //animate... also calls syncDisplay and checkEndRound() in the OnAnimationEnd listener
                 fKActivity.animateComputerPickUpAndDiscard(ComputerPlayer.this.getMiniHandLayout(), pickFrom);
-                turnState = TurnState.NOT_MY_TURN;
+                //turnState is set to NOT_MY_TURN in endTurn (in onAnimationEnd)
             }
         }
         DiscardOrDrawTask discardOrDrawTask= new DiscardOrDrawTask();

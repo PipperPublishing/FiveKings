@@ -44,6 +44,7 @@ import android.view.animation.Animation;
  9/3/2015       Switch parceling gameState to toString/valueOf
  10/1/2015      checkEndRound sets to ROUND_END to make it easier to restart in the middle
  10/3/2015      Moved Meld-and-discard hint out of disableDrawDiscardClick into calling method
+ 10/12/2015     Moved default player setup to Game() constructor
  *
  */
 public class Game implements Parcelable{
@@ -66,10 +67,11 @@ public class Game implements Parcelable{
     static enum PileDecision {DISCARD_PILE, DRAW_PILE}
 
 
-    Game() {
+    Game(final FiveKings fKActivity) {
         this.deck = Deck.getInstance(true);
         this.players = new PlayerList();
-        this.players.addStandardPlayers();
+        addPlayer(fKActivity.getString(R.string.defaultComputerPlayer), PlayerList.PlayerType.EXPERT_COMPUTER);
+        addPlayer(fKActivity.getString(R.string.defaultHumanPlayer), PlayerList.PlayerType.HUMAN);
         this.gameState = GameState.NEW_GAME;
         roundStartTime = 0;
         roundStopTime = 0;
@@ -146,8 +148,8 @@ public class Game implements Parcelable{
         players.getCurrentPlayer().setHandDiscard(discard);
     }
 
-    void addPlayer(final String playerName, final boolean isHuman) {
-        this.players.addPlayer(playerName, isHuman ? PlayerList.PlayerType.HUMAN : PlayerList.PlayerType.EXPERT_COMPUTER);
+    void addPlayer(final String playerName, final PlayerList.PlayerType playerType) {
+        this.players.addPlayer(playerName, playerType);
     }
 
     void updatePlayer(final String playerName, final boolean isHuman, final int iPlayer) {

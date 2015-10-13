@@ -38,6 +38,8 @@ import android.widget.TextView;
  10/8/2015      Change miniHand layout to move them all to a separate miniHand strip - hopefully this will also make it easier to do a slide-out drawer
                 (so no Y translation any more)
                 Use Horizontal Linear Layout with equal weights
+ 10/10/2015     Store and update the player that this miniHand refers to (otherwise when we update a player, the miniHand is
+                left pointing to the old player)
  //TODO:A Allow for recreating this during game play, so look at currentPlayer and whether player is out to set border and animation
  */
 class PlayerMiniHandLayout extends RelativeLayout{
@@ -54,6 +56,7 @@ class PlayerMiniHandLayout extends RelativeLayout{
     private static final int YELLOW_SCORE = 20;
 
     //include here the views that we want to update easily
+    private Player player;  //the reverse connection to the player so we know who is clicked
     private final CardView cardView;
     private final TextView roundScoreView;
     private final TextView cumScoreView;
@@ -62,7 +65,7 @@ class PlayerMiniHandLayout extends RelativeLayout{
     private boolean playedInFinalTurn;
 
     //Constructor - also lays out the Player layout
-    PlayerMiniHandLayout(final Context c, final Player player, final int iPlayer, final int numPlayers) {
+    PlayerMiniHandLayout(final Context c, final Player initialPlayer, final int iPlayer, final int numPlayers) {
         super(c);
         final FiveKings fKActivity = (FiveKings)c;
         final LinearLayout.LayoutParams handLp = new LinearLayout.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT);
@@ -71,6 +74,8 @@ class PlayerMiniHandLayout extends RelativeLayout{
         this.setLayoutParams(handLp);
 
         if (numPlayers <= 1) throw new RuntimeException("You must have at least two players");
+
+        this.player = initialPlayer;
 
         /*
         double angle = 180 * iPlayer/(numPlayers-1);
@@ -99,7 +104,7 @@ class PlayerMiniHandLayout extends RelativeLayout{
         this.setOnLongClickListener(new View.OnLongClickListener() {
             @Override
             public boolean onLongClick(View tv) {
-                ((FiveKings) c).showEditPlayer(player.getName(), player.isHuman(), iPlayer);
+                ((FiveKings) c).showEditPlayer(PlayerMiniHandLayout.this.player.getName(), PlayerMiniHandLayout.this.player.isHuman(), iPlayer);
                 return true;
             }
         });
@@ -108,7 +113,7 @@ class PlayerMiniHandLayout extends RelativeLayout{
             @Override
             public void onClick(View tv) {
                 //if this the next player, and the current player has finished its turn, move to this player
-                if ((player == fKActivity.getmGame().getNextPlayer()) && (fKActivity.getmGame().getCurrentPlayer().getTurnState() == Player.TurnState.NOT_MY_TURN)) {
+                if ((PlayerMiniHandLayout.this.player == fKActivity.getmGame().getNextPlayer()) && (fKActivity.getmGame().getCurrentPlayer().getTurnState() == Player.TurnState.NOT_MY_TURN)) {
                     //if the current player is Human and this player is Human, we'll hide the hands initially
                     boolean hideHandInitially = fKActivity.getmGame().hideHandFromPreviousPlayer(player);
                     fKActivity.getmGame().rotatePlayer(); //also sets PREPARE_TURN
@@ -262,6 +267,10 @@ class PlayerMiniHandLayout extends RelativeLayout{
 
     final void updateName(final String newName) {
         nameView.setText(newName);
+    }
+
+    final void updatePlayer(final Player updatedPlayer) {
+        this.player = updatedPlayer;
     }
 
     //grey out Card because we're looking at it

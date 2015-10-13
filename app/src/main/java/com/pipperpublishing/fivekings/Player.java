@@ -47,6 +47,7 @@ import java.util.Iterator;
  * 9/3/2015     Save TurnState using string/valueOf
  * 9/30/2015    Added showCards (depends on Human or Computer)
  * TODO:A Move roundScore to Hand (Down from Player)
+ * 10/10/2015   turnState was not being copied in Copy Constructor which messes up player updates
  */
 abstract class Player implements HandComparator, Parcelable {
     private String name;
@@ -80,8 +81,14 @@ abstract class Player implements HandComparator, Parcelable {
         this.roundScore = player.roundScore;
         this.cumulativeScore = player.cumulativeScore;
         this.hand = player.hand;
+        this.drawnCard = player.drawnCard;
+        this.turnState = player.turnState;
         this.miniHandLayout = player.miniHandLayout;
+
+        //Update the miniHandLayout to point to the new player
+        this.miniHandLayout.updatePlayer(this);
     }
+
 
 
     boolean initGame() {
@@ -589,6 +596,7 @@ abstract class Player implements HandComparator, Parcelable {
             if (null == discard) throw new RuntimeException("setDiscard: discard == null");
             this.discard = discard;
         }
+
 
 
     }//end Inner Class Hand
