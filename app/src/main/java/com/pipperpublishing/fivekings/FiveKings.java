@@ -144,6 +144,8 @@ import java.util.List;
                 Change getText..toString to getString calls on resource IDs
                 Show card we pick up from DrawPile
     10/13/2015  Moved "toStartGameHint" after congrats dialog (was getting covered by explode animation?)
+    10/15/2015  showCards was not offsetting the meld by xCardOffset
+                Reduce X_MELD_OFFSET_RATIO to 0.1
 */
 
 public class FiveKings extends Activity {
@@ -154,7 +156,7 @@ public class FiveKings extends Activity {
 
     static final float CARD_OFFSET_RATIO = 0.2f;
     static final float CARD_SCALING = 0.6f; //in the meld area, the cards are 1.5 x CARD_SCALING + a margin for the border, to fit in the meld area
-    static final float X_MELD_OFFSET_RATIO = 0.3f;
+    static final float X_MELD_OFFSET_RATIO = 0.1f;
     static final float Y_MELD_OFFSET_RATIO = 0.25f; //each meld is +/-25% of card height from the center-line
     //static final int TOAST_X_OFFSET = 20;
     //static final int TOAST_Y_OFFSET = +600;
@@ -1145,30 +1147,11 @@ public class FiveKings extends Activity {
     private void showNothing(final int numCards, final RelativeLayout cardsLayout, final RelativeLayout meldsLayout) {
         cardsLayout.removeAllViews();
         meldsLayout.removeAllViews();
-        /* show just the backs of cards
-        ArrayList<CardView> cardLayers = new ArrayList<>(Game.MAX_CARDS);
-        float xOffset=0f;
-        for (int iCard=0; iCard<numCards; iCard++) {
-            CardView cv = new CardView(this, CardView.sBlueBitmapCardBack );
-            cv.setTranslationX(xOffset);
-            cv.bringToFront();
-            cv.setClickable(false);
-            cardLayers.add(cv);
-            xOffset += (CARD_OFFSET_RATIO * CardView.INTRINSIC_WIDTH);
-        }
-        xOffset -= (CARD_OFFSET_RATIO * CardView.INTRINSIC_WIDTH);
-        if (!cardLayers.isEmpty()) {
-            for (CardView cv : cardLayers) {
-                cv.setTranslationX(cv.getTranslationX()-0.5f*xOffset);
-                cardsLayout.addView(cv);
-            }
-        }
-        */
     }
 
     private int showCards(final ArrayList<CardList> meldLists, final RelativeLayout relativeLayout, final int iViewBase, final boolean showBorder, final boolean allowDragging) {
         int iView=iViewBase;
-        float cardScaleFactor = scaledCardHeight / CardView.INTRINSIC_HEIGHT ;
+        final float cardScaleFactor = scaledCardHeight / CardView.INTRINSIC_HEIGHT ;
         int xMeldOffset=0;
         int xCardOffset=0;
         int yMeldOffset= (int) (+Y_MELD_OFFSET_RATIO * scaledCardHeight);
@@ -1183,9 +1166,10 @@ public class FiveKings extends Activity {
             cvTemplate.setVisibility(View.INVISIBLE);
             //the final width is the first card + the offsets of the others x the height scale factor
             nestedLayout.addView(cvTemplate, (int) ((CardView.INTRINSIC_WIDTH + (cardList.size() - 1) * CARD_OFFSET_RATIO * CardView.INTRINSIC_WIDTH) * cardScaleFactor), (int) scaledCardHeight);
+            //translate this meld from the LHS by the width of the last meld + the extra meld offset
             nestedLayout.setTranslationX(xMeldOffset + xCardOffset);
             nestedLayout.setTranslationY(yMeldOffset);
-            xMeldOffset += cardScaleFactor * ((X_MELD_OFFSET_RATIO * CardView.INTRINSIC_WIDTH) + xCardOffset);
+            xMeldOffset += cardScaleFactor * (X_MELD_OFFSET_RATIO * CardView.INTRINSIC_WIDTH) + xCardOffset;
             yMeldOffset = -yMeldOffset;
 
 

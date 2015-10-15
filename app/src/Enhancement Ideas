@@ -283,7 +283,7 @@ FIXED: 3 players: the third player appears  under the Play button
 
 0.7.10 [Released to Google Play Beta]
 ============
->>> v0.7.11
+v0.7.11
 
 CHECKED: Add a Human player, change first Human to Computer, and then start New Game
 CHECKED: Check Human mode (2 humans, 2 humans + computer)
@@ -303,27 +303,37 @@ FIXED: ProgressBar (circle) is on left-hand side of screen?
 FIXED: If you click next computer hand during discard, you lose your turn
 FIXED: If you change Computer to a Human on the first round, then it doesn't play it
 
+[Released to Google Play Beta]
 ------------
-v0.7.12
+>>>v0.7.12 Graphics bugs and tweaks for tablets
+- Copied 500x726 versions of cards to xhdpi folder for larger tablets
 
 Tim's bugs:[Nexus 9?]
-BUG: Sometimes the score overlays on the card
-BUG: In landscape mode on Nexus 9? , melds can go off the screen (round 10?)
-BUG: Nexus 9: Sizes are not scaled correctly in landscape mode
+FIXED?: Sometimes the score overlays on the card
+FIXED: Need to have a 500x726 version of the lightning bolt cards
+FIXED?: In landscape mode on Nexus 9? , melds can go off the screen (round 10?)
+FIXED: Outline for the discard pile on N9 is all stretched out vertically when in landscape... Better in portrait..
+FIXED: Nexus 9: Sizes are not scaled correctly in landscape mode
+    - need cards and card backs scaled to hdpi,., xhdpi, and xxhdpi
+
+[Kim] Samsung 8 tablet
+FIXED?: Kim sez meld piles go off screen after 3 stacks on her Samsung 8 tablet in portrait...
+    (Reduced the inter-meld spacing)
+
+----------------------------------------
+0.7.20 Logic and helpful graphics
+BUGS
+[Tim] When it's the computer's turn, if you double-click on the computer hand it plays twice
+    - this is almost certainly a consequence of removing the problem with clicking human hand would skip your turn
 BUG: If you change from landscape to portrait after the computer discards and before you click on your own hand, you can see the computer's hand and what it is working on...
+BUG: miniHands are meant to be centered vertically but aren't
+BUG: Several times where cards got "stuck" on the bottom of the screen and didn't disappear
 
-
--------------------
-v0.7.50 Helpful Graphics
-(Merge with 0.7.12?)
+CHANGES:
 - Bounce the picked up card once it's in the hand (or highlight it?)
-
 - animate one card to discardPile at end of dealing
+- If Human-after-Human logic applies, add a forced hint
 [Tim] Option to highlight the wildcard, warn on discarding it, or warn if you didn't meld (perhaps just on the opening rounds)
-
-BUGS:
-      2. Several times where cards got "stuck" on the bottom of the screen and didn't disappear
-
 
 ====================
 v0.8.x CLEAN UP CODE
@@ -335,6 +345,11 @@ v0.8.01 Clean up
     - Clean up Game state flow and handling
     - push player Hand updates to individual players rather than mass updates of screen
     - more sub-classing rather than if (isHuman) type logic
+- Look at CardList implementation and consider LinkedHashSet or others which provide
+    - check for non-duplicates
+    - automatic ordering
+- investigate using Callback instead of Listener (does it make it easier to find card?)
+
 -----------------
 v0.8.04
 BUG:A Check if still true? Heuristics is throwing away wildcard when you have a partial meld of 4-4 and only full melds;
@@ -350,7 +365,9 @@ Add in more than one sequence and longer sequences than 3
 
 
 =======================
-v0.9.01
+v0.9.01 Graphics
+
+- New icon and screen shots (including tablet ones)
     - Slide out hand animation
     - Animate open hands into view from mini-hands
 - 1. Expect the game to play the compute turn without clicking, while showing your (human) hand still
@@ -358,17 +375,7 @@ v0.9.01
     - Try exploding into middle of screen with fade-out
     - other comments like Phase 10: pick up a discard and say "Thanks! I really needed that" or "Ouch!"
 - Hint overlays like Google (arrows and text)
-
-
-v0.9.02 Menu
-- ???? Make hiding hand from Human an option
-- Setting to control how long (how many rounds) you see Help/Hints
-    - also look at other constants
-
-- Look at CardList implementation and consider LinkedHashSet or others which provide
-    - check for non-duplicates
-    - automatic ordering
-- investigate using Callback instead of Listener (does it make it easier to find card?)
+- [Play] button and Scores on cards should scale to card size
 
 =====================
 v1.1.01 Improving Scoring and Valuation
