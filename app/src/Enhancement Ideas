@@ -305,7 +305,7 @@ FIXED: If you change Computer to a Human on the first round, then it doesn't pla
 
 [Released to Google Play Beta]
 ------------
->>>v0.7.12 Graphics bugs and tweaks for tablets
+v0.7.12 Graphics bugs and tweaks for tablets
 - Copied 500x726 versions of cards to xhdpi folder for larger tablets
 
 Tim's bugs:[Nexus 9?]
@@ -319,21 +319,30 @@ FIXED: Nexus 9: Sizes are not scaled correctly in landscape mode
 [Kim] Samsung 8 tablet
 FIXED?: Kim sez meld piles go off screen after 3 stacks on her Samsung 8 tablet in portrait...
     (Reduced the inter-meld spacing)
-
+[Released to Google Player Beta]
 ----------------------------------------
-0.7.20 Logic and helpful graphics
+0.7.19 Logic and helpful graphics
 BUGS
-[Tim] When it's the computer's turn, if you double-click on the computer hand it plays twice
+[Tim]
+FIXED When it's the computer's turn, if you double-click on the computer hand it plays twice
     - this is almost certainly a consequence of removing the problem with clicking human hand would skip your turn
-BUG: If you change from landscape to portrait after the computer discards and before you click on your own hand, you can see the computer's hand and what it is working on...
-BUG: miniHands are meant to be centered vertically but aren't
-BUG: Several times where cards got "stuck" on the bottom of the screen and didn't disappear
+FIXED If you change from landscape to portrait after the computer discards and before you click on your own hand, you can see the computer's hand and what it is working on...
+FIXED: If you change orientation after the first click on pass-and-play, you get another turn
+FIXED: Discard pile outline is big when there's no card there
+
+FIXED?: Sometimes small score is colored red (generally the last hand - perhaps because it was red the previous hand?)
+FIXED: If you change orientation *before* the first human player, it screws up which hand is jiggling
+
 
 CHANGES:
-- Bounce the picked up card once it's in the hand (or highlight it?)
-- animate one card to discardPile at end of dealing
-- If Human-after-Human logic applies, add a forced hint
-[Tim] Option to highlight the wildcard, warn on discarding it, or warn if you didn't meld (perhaps just on the opening rounds)
+DONE: animate one card to discardPile at end of dealing
+DONE: If Human-after-Human logic applies, add a forced hint
+DONE: Automatically hide human hand if next hand is human
+-----------------------
+0.7.20 Remaining graphics bugs
+
+BUG: Sometimes when you delete a player it doesn't disappear properly
+BUG?: Hiding Hand hint shows when you change orientation some time
 
 ====================
 v0.8.x CLEAN UP CODE
@@ -345,10 +354,6 @@ v0.8.01 Clean up
     - Clean up Game state flow and handling
     - push player Hand updates to individual players rather than mass updates of screen
     - more sub-classing rather than if (isHuman) type logic
-- Look at CardList implementation and consider LinkedHashSet or others which provide
-    - check for non-duplicates
-    - automatic ordering
-- investigate using Callback instead of Listener (does it make it easier to find card?)
 
 -----------------
 v0.8.04
@@ -367,6 +372,8 @@ Add in more than one sequence and longer sequences than 3
 =======================
 v0.9.01 Graphics
 
+[Tim] Option to highlight the wildcard, warn on discarding it, or warn if you didn't meld (perhaps just on the opening rounds)
+- Bounce the picked up card once it's in the hand (or highlight it?)
 - New icon and screen shots (including tablet ones)
     - Slide out hand animation
     - Animate open hands into view from mini-hands
@@ -376,6 +383,7 @@ v0.9.01 Graphics
     - other comments like Phase 10: pick up a discard and say "Thanks! I really needed that" or "Ouch!"
 - Hint overlays like Google (arrows and text)
 - [Play] button and Scores on cards should scale to card size
+BUG: Several times where cards got "stuck" on the bottom of the screen and didn't disappear
 
 =====================
 v1.1.01 Improving Scoring and Valuation
@@ -401,6 +409,13 @@ Permutations:
 Use Meld.check somehow?
     - note the numCard breakpoint when we switched to permutations and don't look for sequences bigger than this
     - should allow us to build bigger sequences
+
+v1.x
+- Look at CardList implementation and consider LinkedHashSet or others which provide
+    - check for non-duplicates
+    - automatic ordering
+- investigate using Callback instead of Listener (does it make it easier to find card?)
+
 
 
 ======================

@@ -45,6 +45,7 @@ import android.view.animation.Animation;
  10/1/2015      checkEndRound sets to ROUND_END to make it easier to restart in the middle
  10/3/2015      Moved Meld-and-discard hint out of disableDrawDiscardClick into calling method
  10/12/2015     Moved default player setup to Game() constructor
+ 10/16/2015     Removed discard from player step into endTurnCheckRound so no longer have to pass deck
  *
  */
 public class Game implements Parcelable{
@@ -125,8 +126,7 @@ public class Game implements Parcelable{
     void clickedDrawOrDiscard(final FiveKings fKActivity, final Game.PileDecision drawOrDiscardPile) {
         setGameState(GameState.HUMAN_PICKED_CARD);
         fKActivity.disableDrawDiscardClick();
-        fKActivity.setmHint(R.string.meldAndDragDiscardHint);
-        fKActivity.showHint(null, false);
+        fKActivity.setShowHint(R.string.meldAndDragDiscardHint, FiveKings.HandleHint.SET_AND_SHOW_HINT, false);
         //turn on ability to accept drag to DiscardPile
         fKActivity.enableDragToDiscardPile();
         getCurrentPlayer().takeTurn(fKActivity, drawOrDiscardPile, deck, isFinalTurn());
@@ -195,20 +195,12 @@ public class Game implements Parcelable{
         return players.getNextPlayer();
     }
 
-    boolean hideHandFromPreviousPlayer(final Player player) {
-        return players.hideHandFromPrevious(player);
-    }
-
     Player getWinner() {
         return players.getWinner();
     }
 
     boolean isFinalTurn() {
         return players.getPlayerWentOut() != null;
-    }
-
-    Card getDrawnCard() {
-        return getCurrentPlayer().getDrawnCard();
     }
 
     void rotatePlayer() {
@@ -220,7 +212,12 @@ public class Game implements Parcelable{
     }
 
     void animatePlayerMiniHand(final Player setAnimatedPlayerHand, final Animation bounceAnimation) {
+        //starts animation on the appropriate hand and passes back special hint if Human->Human
         this.players.setAnimated(setAnimatedPlayerHand, bounceAnimation);
+    }
+
+    boolean currentAndNextAreHuman() {
+        return players.getCurrentPlayer().isHuman() && players.getNextPlayer().isHuman();
     }
 
     /* Starting and ending turns */
@@ -229,7 +226,7 @@ public class Game implements Parcelable{
     }
 
     Player endCurrentPlayerTurn() {
-        return players.endCurrentPlayerTurn(deck);
+        return players.endCurrentPlayerTurn();
     }
 
 

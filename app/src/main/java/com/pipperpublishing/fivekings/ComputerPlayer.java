@@ -16,6 +16,7 @@ import android.util.Log;
  *              already being set in Player.endTurn
  *              When converting from Human to Computer, you need to do the per-round initialization that happens
  *              in initAndDealNewHand
+ * 10/16/2015   Moved endTurnCheckRound out of animation loop so that it happens immediately and next hand doesn't have to wait for animation finish
  */
 
 public class ComputerPlayer extends Player {
@@ -83,7 +84,7 @@ public class ComputerPlayer extends Player {
     @Override
     //TODO:A move to a prepareComputerTurn
     //Must be some way to simplify showComputerCards and hideHands... into one player call
-    void prepareTurn(final FiveKings fKActivity, final boolean hideHandInitially) {
+    void prepareTurn(final FiveKings fKActivity) {
         turnState = TurnState.PLAY_TURN;
         updateHandsAndCards(fKActivity, false);
         //if showCards is false, no reason to force another click - just go ahead and play
@@ -149,11 +150,13 @@ public class ComputerPlayer extends Player {
             protected void onPostExecute(final Game.PileDecision pickFrom) {
                 fKActivity.showSpinner(false);
                 //Moved actual discard into endCurrentPlayerTurn so we can do animation at same time
-                fKActivity.showHint(turnInfo.toString(), false);
+                fKActivity.setShowHint(turnInfo.toString(), FiveKings.HandleHint.SHOW_HINT, false);
 
                 //at this point the DiscardPile still shows the old card
                 //animate... also calls syncDisplay and checkEndRound() in the OnAnimationEnd listener
                 fKActivity.animateComputerPickUpAndDiscard(ComputerPlayer.this.getMiniHandLayout(), pickFrom);
+                fKActivity.endTurnCheckRound(fKActivity.getmGame().isShowComputerCards()); //Also sets TurnState to NOT_MY_TURN
+
                 //turnState is set to NOT_MY_TURN in endTurn (in onAnimationEnd)
             }
         }

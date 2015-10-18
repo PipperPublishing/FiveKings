@@ -40,7 +40,7 @@ class DiscardPileDragEventListener implements View.OnDragListener {
                     return true;
                 } else {
                     //remind user what they should be doing if in the first few rounds
-                    ((FiveKings) cv.getContext()).showHint(null, false);
+                    ((FiveKings) cv.getContext()).setShowHint(null, FiveKings.HandleHint.SHOW_HINT, false);
                     // Returns false. During the current drag and drop operation, this View will
                     // not receive events again until ACTION_DRAG_ENDED is sent.
                     return false;

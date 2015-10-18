@@ -24,6 +24,7 @@
     <string name="toStartGameHint">Add/delete players and then click the Start Game button</string>
     <string name="nextRoundHint">Click on the Play round button</string>
     <string name="clickMovingHandHint">Click the moving hand to play its cards</string>
+    <string name="hidingYourHandHint">Hiding your hand; pass the game to the next player</string>
     <string name="pickFromDrawOrDiscardHint">Pick from the Draw or Discard pile</string>
     <string name="dragYourCards">Drag here for a new meld</string>
     <string name="displayScores">Displaying current scores</string>

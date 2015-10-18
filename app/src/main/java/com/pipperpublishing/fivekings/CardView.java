@@ -13,6 +13,7 @@ import android.widget.ImageView;
  * 4/9/2015     Add acceptDrag to accept/deny drag (for now just to DiscardPile)
  * 6/7/2015     Now that DiscardPile is wrap_content, we need to have an invisible card there when it is null
  * 6/9/2015     Add getHeight and getWidth
+ * 10/16/2015   Call setCard from CardView constructor;
  */
 class CardView extends ImageView {
     private Card card; //TODO:A would like to make this final again and maybe keep CardViews rather than cards
@@ -39,11 +40,8 @@ class CardView extends ImageView {
         super(c);
         checkSetIntrinsic(c);
         this.viewIndex = viewIndex;
-        this.card = card;
         this.acceptDrag = false;
-        if (card == null) this.setImageDrawable(null);
-        else if (card.isJoker()) setImageDrawable(c.getResources().getDrawable(R.drawable.joker1));
-        else setImageDrawable(c.getResources().getDrawable(sBitmapResource[card.getSuit().getOrdinal()][card.getRank().getOrdinal()]));
+        setCard(c, card);
     }
 
     //for card back and any other non-face-card which doesn't need viewIndex or card
@@ -82,7 +80,7 @@ class CardView extends ImageView {
     void setCard(final Context c, final Card card) {
         this.card = card;
 
-        if (card == null) this.setImageDrawable(null);
+        if (card == null) this.setImageDrawable(c.getResources().getDrawable(R.drawable.transparent_card));
         else if (card.isJoker()) setImageDrawable(c.getResources().getDrawable(R.drawable.joker1));
         else setImageDrawable(c.getResources().getDrawable(sBitmapResource[card.getSuit().getOrdinal()][card.getRank().getOrdinal()]));
 

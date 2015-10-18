@@ -240,7 +240,7 @@ abstract class Player implements HandComparator, Parcelable {
     /*-----------------------------------------------------*/
     /* GAME PLAYING TURNS - depends on what type of player */
     /*-----------------------------------------------------*/
-    abstract void prepareTurn(final FiveKings fKActivity, final boolean hideHandInitially);
+    abstract void prepareTurn(final FiveKings fKActivity);
 
     abstract void takeTurn(final FiveKings fKActivity, Game.PileDecision drawOrDiscardPile, final Deck deck, final boolean isFinalTurn);
 
@@ -252,11 +252,9 @@ abstract class Player implements HandComparator, Parcelable {
         //default does nothing
     }
 
-    final Player endTurn(final Player passedPlayerWentOut, final Deck deck) {
+    final Player endTurn(final Player passedPlayerWentOut) {
         Player playerWentOut = passedPlayerWentOut;
-        //TODO:A Nasty that we have to pass deck down all this way to do discard
-        //remove discard from player's hand and add to discardPile
-        deck.discardPile.add(this.discardFromHand(this.getHandDiscard()));
+
         //only HumanPlayer does anything
         this.checkMeldsAndEvaluate(playerWentOut != null);
 

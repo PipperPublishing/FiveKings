@@ -109,7 +109,8 @@ class PlayerList extends ArrayList<Player> {
         return this.currentPlayer;
     }
 
-    //TODO:A Really should be pushed down further to the miniHand or the player
+    //TODO:A: Really should be pushed down further to the miniHand or the player, or brought up to FiveKings
+    //(Shouldn't be starting animations from outside FiveKings or related code)
     void setAnimated(final Player setAnimated, final Animation bounceAnimation) {
         //clear existing animations
         for (Player player : this) player.getMiniHandLayout().getCardView().clearAnimation();
@@ -121,15 +122,15 @@ class PlayerList extends ArrayList<Player> {
         }
     }
 
-    boolean hideHandFromPrevious(Player thisPlayer) {
+    boolean previousAndThisAreHuman(Player thisPlayer) {
         //true if previous player is Human and so is this
-        boolean hideCurrentHandFromPrevious=false;
         for (Player player : this) {
             if (getNextPlayer(player) == thisPlayer) {
-                hideCurrentHandFromPrevious = player.isHuman() && thisPlayer.isHuman();
+                return player.isHuman() && thisPlayer.isHuman();
             }
         }
-        return hideCurrentHandFromPrevious;
+        //
+        throw new RuntimeException("previousAndThisAreHuman: Did not find player");
     }
 
     Player getNextPlayer() {
@@ -164,8 +165,8 @@ class PlayerList extends ArrayList<Player> {
         return (getNextPlayer(currentPlayer) == playerWentOut);
     }
 
-    Player endCurrentPlayerTurn(final Deck deck) {
-        this.playerWentOut = this.getCurrentPlayer().endTurn(this.getPlayerWentOut(), deck);
+    Player endCurrentPlayerTurn() {
+        this.playerWentOut = this.getCurrentPlayer().endTurn(this.getPlayerWentOut());
         return this.playerWentOut;
     }
 
