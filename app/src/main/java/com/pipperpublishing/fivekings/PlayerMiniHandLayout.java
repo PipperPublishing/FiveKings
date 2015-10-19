@@ -252,7 +252,11 @@ class PlayerMiniHandLayout extends RelativeLayout{
             this.cardView.setBackgroundDrawable(getResources().getDrawable(R.drawable.no_pad_solid_green_border));
             this.roundScoreView.setTextColor(Color.GREEN);
             this.nameView.setTextColor(Color.GREEN);
-        } else resetToPlain();
+        } else {
+            // leave the border alone (also shows who is the current player)
+            this.roundScoreView.setTextColor(getResources().getColor(android.R.color.white));
+            this.nameView.setTextColor(getResources().getColor(android.R.color.white));
+        }
 
         if (roundScore >= YELLOW_SCORE) {
             roundScoreView.setTextColor(Color.YELLOW);

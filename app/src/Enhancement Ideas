@@ -333,7 +333,6 @@ FIXED: Discard pile outline is big when there's no card there
 FIXED?: Sometimes small score is colored red (generally the last hand - perhaps because it was red the previous hand?)
 FIXED: If you change orientation *before* the first human player, it screws up which hand is jiggling
 
-
 CHANGES:
 DONE: animate one card to discardPile at end of dealing
 DONE: If Human-after-Human logic applies, add a forced hint
@@ -341,8 +340,10 @@ DONE: Automatically hide human hand if next hand is human
 -----------------------
 0.7.20 Remaining graphics bugs
 
-BUG: Sometimes when you delete a player it doesn't disappear properly
-BUG?: Hiding Hand hint shows when you change orientation some time
+FIXED?: Sometimes when you delete a player it doesn't disappear properly
+FIXED?: [New Game] through menu doesn't seem to let you add players
+FIXED?: Hiding Hand hint shows when you change orientation some time - because updateHandsAndCards always calls the human one
+FIXED: Current hand outline wasn't showing
 
 ====================
 v0.8.x CLEAN UP CODE

@@ -46,6 +46,7 @@ import android.view.animation.Animation;
  10/3/2015      Moved Meld-and-discard hint out of disableDrawDiscardClick into calling method
  10/12/2015     Moved default player setup to Game() constructor
  10/16/2015     Removed discard from player step into endTurnCheckRound so no longer have to pass deck
+ 10/18/2015     checkEndRound now sets TURN_END which clicking on a new player will change to TURN_START
  *
  */
 public class Game implements Parcelable{
@@ -117,7 +118,7 @@ public class Game implements Parcelable{
 
             roundOf = roundOf.getNext();
             this.gameState = roundOf == null ? GameState.GAME_END : GameState.ROUND_END;
-        } else this.gameState = GameState.TURN_START;
+        } else this.gameState = GameState.TURN_END ;
         return roundOf;
     }
 
@@ -204,6 +205,7 @@ public class Game implements Parcelable{
     }
 
     void rotatePlayer() {
+        this.gameState = GameState.TURN_START;
         this.players.rotatePlayer();
     }
 

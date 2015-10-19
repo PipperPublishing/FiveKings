@@ -4,7 +4,6 @@ import android.app.Activity;
 import android.util.Log;
 import android.view.animation.Animation;
 import android.widget.LinearLayout;
-import android.widget.RelativeLayout;
 
 import java.util.ArrayList;
 
@@ -20,6 +19,7 @@ import java.util.ArrayList;
  10/8/2015      Change miniHand layout to move them all to a separate miniHand strip - hopefully this will also make it easier to do a slide-out drawer
  10/12/2015     Switch order of Standard Players so Human ends up on the right
                 Moved the addDefaultPlayers call to Game so this class can stay generic
+ 10/18/2015     deletePlayer was removing layout from wrong view
  TODO:A Maybe manage PlayerLayout as well?
  */
 class PlayerList extends ArrayList<Player> {
@@ -76,10 +76,10 @@ class PlayerList extends ArrayList<Player> {
         if (this.get(iDeletedPlayer) == dealer) dealer = getNextPlayer(dealer);
 
         //remove the PlayerLayout
-        final RelativeLayout fullScreenContent = (RelativeLayout) activity.findViewById(R.id.fullscreen_content);
+        final LinearLayout miniHands = (LinearLayout) activity.findViewById(R.id.mini_hands);
         final PlayerMiniHandLayout deletedPlayerMiniHandLayout = this.getPlayer(iDeletedPlayer).getMiniHandLayout();
         //this one won't be deleted in the loop because we deleted it from the player list
-        if (null != deletedPlayerMiniHandLayout) fullScreenContent.removeView(deletedPlayerMiniHandLayout);
+        if (null != deletedPlayerMiniHandLayout) miniHands.removeView(deletedPlayerMiniHandLayout);
         this.remove(iDeletedPlayer);
 
         relayoutPlayerMiniHands(activity);
@@ -122,16 +122,6 @@ class PlayerList extends ArrayList<Player> {
         }
     }
 
-    boolean previousAndThisAreHuman(Player thisPlayer) {
-        //true if previous player is Human and so is this
-        for (Player player : this) {
-            if (getNextPlayer(player) == thisPlayer) {
-                return player.isHuman() && thisPlayer.isHuman();
-            }
-        }
-        //
-        throw new RuntimeException("previousAndThisAreHuman: Did not find player");
-    }
 
     Player getNextPlayer() {
         return getNextPlayer(this.currentPlayer);

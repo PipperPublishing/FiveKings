@@ -151,6 +151,8 @@ import java.util.List;
     10/16/2015  Remove showDiscardPileCard to only the places it gets changed (after dealing, and discards)
                 Add setShowHint to combine setmHint and showHint...
     10/17/2015  Automatically hide hand if Human to Human
+    10/18/2015  More granular control of updateHandsAndCards on restart
+                Change per player updateHandsAndCards to returning a showCards flag
 */
 
 public class FiveKings extends Activity {
@@ -311,23 +313,19 @@ public class FiveKings extends Activity {
             //This logic is if we've resumed or changed orientation and need to re-layout
             if ((mGame != null) && (needToRefreshCardsMelds)) {
                 mGame.relayoutPlayerMiniHands(this);
-                if (mGame.getCurrentPlayer() != null)
-                    mGame.getCurrentPlayer().updateHandsAndCards(this, false);
-                else updateHandsAndCards(false, false);
 
                 //if we resume from a screen with the hands dealt, then we need to reset that
                 //so that when you re-lay them out they set the card showing correctly
                 switch (mGame.getGameState()) {
                     case NEW_GAME:
                         break;
+
                     case ROUND_READY_TO_DEAL:
                         this.mPlayButton.setText(resFormat(R.string.current_round, mGame.getRoundOf().getString()));
                         break;
 
                     case ROUND_START:
-                    case TURN_START:
-                        mPlayButton.setText(resFormat(mGame.getGameState() == GameState.ROUND_START ? R.string.nextRound : R.string.current_round,
-                                mGame.getRoundOf().getString()));
+                        mPlayButton.setText(resFormat(R.string.nextRound, mGame.getRoundOf().getString()));
                         disableDragToDiscardPile();
                         // Animate draw/discard piles when appropriate
                         if ((mGame.getCurrentPlayer() != null)
@@ -335,20 +333,36 @@ public class FiveKings extends Activity {
                             enableDrawDiscardClick();
                         }
                         mGame.setMiniHandsSolid();
-                        if (mGame.getGameState() == GameState.TURN_START) {
-                            //animates whichever one was already moving if this is NOT_MY_TURN phase
-                            mGame.animatePlayerMiniHand(null, shakeAnimation);
-                            //if next player is also human, then force show hint about hiding the hand and passing the game
-                            setShowHint((mGame.currentAndNextAreHuman() && !mGame.isFinalTurn()) ? getString(R.string.hidingYourHandHint) : getString(R.string.clickMovingHandHint),
-                                    HandleHint.SET_AND_SHOW_HINT , (mGame.currentAndNextAreHuman() && !mGame.isFinalTurn()));
-                        }
                         break;
+
+                    case TURN_END:
+                        //animates whichever one was already moving if this is NOT_MY_TURN phase
+                        mGame.animatePlayerMiniHand(null, shakeAnimation);
+                        setShowHint(getString(R.string.clickMovingHandHint), HandleHint.SET_AND_SHOW_HINT, false);
+                        mGame.setMiniHandsSolid();
+                        if ((mGame.getCurrentPlayer() == null) || mGame.currentAndNextAreHuman()) updateHandsAndCards(false, false);
+                        else  updateHandsAndCards(mGame.getCurrentPlayer().showCards(mGame.isFinalTurn()), false);
+                        break;
+
+                    case TURN_START:
+                        mPlayButton.setText(resFormat(R.string.current_round, mGame.getRoundOf().getString()));
+                        disableDragToDiscardPile();
+                        // Animate draw/discard piles when appropriate
+                        if ((mGame.getCurrentPlayer() != null) && (mGame.getCurrentPlayer().getTurnState() == Player.TurnState.PLAY_TURN)) {
+                            enableDrawDiscardClick();
+                        }
+                        mGame.setMiniHandsSolid();
+                        updateHandsAndCards(mGame.getCurrentPlayer() == null ? false : mGame.getCurrentPlayer().showCards(mGame.isFinalTurn()), false);
+                        break;
+
                     case HUMAN_PICKED_CARD:
-                    case END_HUMAN_TURN:
+                    case HUMAN_READY_TO_DISCARD:
                         disableDrawDiscardClick();
                         enableDragToDiscardPile();
                         mGame.setMiniHandsSolid();
+                        updateHandsAndCards(mGame.getCurrentPlayer().showCards(mGame.isFinalTurn()), false);
                         break;
+
                     default:
                         mGame.setMiniHandsSolid();
                 }
@@ -484,7 +498,7 @@ public class FiveKings extends Activity {
             afterDealing();
             mGame.setMiniHandsSolid();
         }
-        mGame.setGameState(GameState.TURN_START);
+        mGame.setGameState(GameState.TURN_END);
         //If next hand is Human, findBestHandStart does nothing; if Computer then it starts considering Discard Pile card
         mGame.findBestHandStart();
     }
@@ -526,16 +540,16 @@ public class FiveKings extends Activity {
         //TODO:A UGLY!
         mGame.getDeck().discardPile.add(mGame.getCurrentPlayer().discardFromHand(mGame.getCurrentPlayer().getHandDiscard()));
         mGame.endCurrentPlayerTurn();
-        //TODO:A This is the ONLY call where the second parameter could be true
-        // (controls whether you can drag cards after final human turn, or whether computer cards show)
+        // if isFinalTurn then we always show cards (because they put down their hand)
         updateHandsAndCards(showCards, mGame.isFinalTurn());
+        // (isFinalTurn controls whether you can drag cards after final human turn, or whether computer cards show)
         if (mGame.isFinalTurn()) {
             // addToCumulativeScore() moved from animateRoundScore, because logging in checkEndRound continues before animation completes
             // maintain a separate displayed score in the miniHand
             mGame.getCurrentPlayer().addToCumulativeScore();
             animateRoundScore(mGame.getCurrentPlayer());
         }
-        //checkEndRound sets GameState to one of these 3 options: Round End, Turn Start, Game End
+        //checkEndRound sets GameState to one of these 3 options: Round End, Turn End, Game End
         mGame.checkEndRound();
         GameState gameState = mGame.getGameState();
         if (GameState.ROUND_END == gameState) {
@@ -544,7 +558,7 @@ public class FiveKings extends Activity {
             setShowHint(resFormat(R.string.displayScores, null),HandleHint.SHOW_HINT , false);
             setShowHint(R.string.nextRoundHint,HandleHint.SET_HINT, false);
         }
-        else if (GameState.TURN_START == gameState) {
+        else if (GameState.TURN_END == gameState) {
             //If next hand is Human, findBestHandStart does nothing; if Computer then it starts considering Discard Pile card
             mGame.findBestHandStart();
 
@@ -587,7 +601,7 @@ public class FiveKings extends Activity {
         //create trialMeld (one card at a time for now)
 
         ((HumanPlayer) mGame.getCurrentPlayer()).makeNewMeld(foundCardView.getCard());
-        mGame.getCurrentPlayer().updateHandsAndCards(this, false);
+        updateHandsAndCards(mGame.getCurrentPlayer().showCards(mGame.isFinalTurn()), false);
         return true;
     }
 
@@ -598,7 +612,7 @@ public class FiveKings extends Activity {
         //add to existing meld
 
         ((HumanPlayer)mGame.getCurrentPlayer()).addToMeld(meld, foundCardView.getCard());
-        mGame.getCurrentPlayer().updateHandsAndCards(this, false);
+        updateHandsAndCards(mGame.getCurrentPlayer().showCards(mGame.isFinalTurn()), false);
         return true;
     }
 
@@ -898,7 +912,7 @@ public class FiveKings extends Activity {
 
             @Override
             public void onAnimationEnd(Animator animator) {
-                mGame.getCurrentPlayer().updateHandsAndCards(FiveKings.this, false);
+                updateHandsAndCards(mGame.getCurrentPlayer().showCards(mGame.isFinalTurn()), false);
                 //remove extra cards created for the purpose of animation
                 drawAndDiscardPiles.removeView(pileCardView);
             }

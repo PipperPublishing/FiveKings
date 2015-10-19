@@ -17,6 +17,7 @@ import android.util.Log;
  *              When converting from Human to Computer, you need to do the per-round initialization that happens
  *              in initAndDealNewHand
  * 10/16/2015   Moved endTurnCheckRound out of animation loop so that it happens immediately and next hand doesn't have to wait for animation finish
+ *  * 10/18/2015   Change per player updateHandsAndCards to returning a showCards flag
  */
 
 public class ComputerPlayer extends Player {
@@ -86,7 +87,7 @@ public class ComputerPlayer extends Player {
     //Must be some way to simplify showComputerCards and hideHands... into one player call
     void prepareTurn(final FiveKings fKActivity) {
         turnState = TurnState.PLAY_TURN;
-        updateHandsAndCards(fKActivity, false);
+        fKActivity.updateHandsAndCards(showCards(fKActivity.getmGame().isShowComputerCards()), false);
         //if showCards is false, no reason to force another click - just go ahead and play
         if (!fKActivity.getmGame().isShowComputerCards()) {
             this.getMiniHandLayout().getCardView().clearAnimation();
@@ -95,9 +96,8 @@ public class ComputerPlayer extends Player {
     }
 
     @Override
-    //TODO:A There still has to be a better way of doing this
-    void updateHandsAndCards(final FiveKings fkActivity, final boolean afterFinalTurn) {
-        fkActivity.updateHandsAndCards(fkActivity.getmGame().isShowComputerCards(), afterFinalTurn);
+    boolean showCards(final boolean isShowComputerCards) {
+        return isShowComputerCards;
     }
 
     @Override

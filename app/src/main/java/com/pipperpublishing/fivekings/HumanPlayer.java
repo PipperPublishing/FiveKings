@@ -7,6 +7,8 @@ import android.util.Log;
  * 3/15/2015    Moved discardFromHand here - actually does discard
  * 3/31/2015    Pushed takeTurn and logTurn here so that we don't have Human vs. Computer checks in Game
  * 10/12/2015   Pass drawnCard to animateHumanPickup to further separate logic from View
+ *  * 10/18/2015   Change per player updateHandsAndCards to returning a showCards flag
+ 10/18/2015     Removed second click logic that would expose the hand if it was hidden
  *
  */
 class HumanPlayer extends Player {
@@ -77,20 +79,23 @@ class HumanPlayer extends Player {
         //TODO:A Override a method which returns showComputerCards false or true depending on setting or human
         //This could then be in the base class prepareTurn
 
-        updateHandsAndCards(fKActivity, false);
+        fKActivity.updateHandsAndCards(showCards(fKActivity.getmGame().isShowComputerCards()), false);
         fKActivity.enableDrawDiscardClick(); //also animates piles and sets the hint
         this.getMiniHandLayout().getCardView().clearAnimation();
     }
 
     @Override
-    //Human cards are always shown
-    void updateHandsAndCards(final FiveKings fkActivity, final boolean afterFinalTurn) {
-        fkActivity.updateHandsAndCards(true, afterFinalTurn);
+    //Human cards are always shown, unless the next player is also human and this is the end of the turn
+    boolean showCards(final boolean isShowComputerCards) {
+        return true;
     }
 
     @Override
     //TODO:A Bad smell from all those fKActivity calls
     void takeTurn(final FiveKings fKActivity, final Game.PileDecision drawOrDiscardPile, final Deck deck, final boolean isFinalTurn) {
+        /* If you click on the Human hand a second time then takeTurn is called
+        If a card was picked, then show the animation; if not, then show a hint
+        */
         if (fKActivity.getmGame().getGameState() == GameState.HUMAN_PICKED_CARD) {
             final StringBuilder turnInfo = new StringBuilder(100);
             turnInfo.setLength(0);
@@ -106,15 +111,10 @@ class HumanPlayer extends Player {
             Log.d(Game.APP_TAG, turnInfo.toString());
             //don't meld, because it was done as part of evaluation
 
-            fKActivity.getmGame().setGameState(GameState.END_HUMAN_TURN);
+            fKActivity.getmGame().setGameState(GameState.HUMAN_READY_TO_DISCARD);
             //at this point the DiscardPile still shows the old card if you picked it
             //handles animating the card off the appropriate pile and making it appear in the hand
             fKActivity.animateHumanPickUp(drawOrDiscardPile,drawnCard);
-        } else if (fKActivity.getmGame().getGameState() != GameState.END_HUMAN_TURN) {
-            //TODO:A: if GameState not set correctly, then reveal the cards
-            updateHandsAndCards(fKActivity, false);
-            fKActivity.enableDrawDiscardClick(); //also animates piles and sets the hint
-            fKActivity.setShowHint(null, FiveKings.HandleHint.SHOW_HINT, true);
         } else fKActivity.setShowHint(null, FiveKings.HandleHint.SHOW_HINT , true);
     }
 
