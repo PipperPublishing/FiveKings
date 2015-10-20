@@ -13,6 +13,7 @@ import com.pipperpublishing.fivekings.util.Utilities;
  * Created by Jeffrey on 2/27/2015.
  * An existing meld listens for a card being dragged on top of it
  * 3/3/2015 Fade melds even more so highlighted ones stand out
+ * 10/19/2015 Change 0.3f to THIRD_TRANSPARENT_ALPHA
  */
 class CurrentMeldDragListener  implements View.OnDragListener  {
     @Override
@@ -44,7 +45,7 @@ class CurrentMeldDragListener  implements View.OnDragListener  {
                 return true;
 
             case DragEvent.ACTION_DRAG_EXITED:
-                rl.startAnimation(Utilities.instantFade(0.3f, 0.3f));
+                rl.startAnimation(Utilities.instantFade(FiveKings.THIRD_TRANSPARENT_ALPHA, FiveKings.THIRD_TRANSPARENT_ALPHA));
                 return true;
 
             case DragEvent.ACTION_DROP:

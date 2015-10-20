@@ -344,10 +344,12 @@ FIXED?: Sometimes when you delete a player it doesn't disappear properly
 FIXED?: [New Game] through menu doesn't seem to let you add players
 FIXED?: Hiding Hand hint shows when you change orientation some time - because updateHandsAndCards always calls the human one
 FIXED: Current hand outline wasn't showing
-
+[Released to Google Player Beta]
 ====================
+
 v0.8.x CLEAN UP CODE
 v0.8.01 Clean up
+- Clean up TODO:A 's
 - Remove smells where possible :)
 - LOTS of cleaning up in FiveKings - follow flow
 - Player methods use fKActivity and a lot of convoluted logic
@@ -355,6 +357,9 @@ v0.8.01 Clean up
     - Clean up Game state flow and handling
     - push player Hand updates to individual players rather than mass updates of screen
     - more sub-classing rather than if (isHuman) type logic
+
+Add screenshots from Tablets
+Update screenshots from S5
 
 -----------------
 v0.8.04

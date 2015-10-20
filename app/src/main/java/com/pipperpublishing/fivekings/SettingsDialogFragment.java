@@ -53,6 +53,7 @@ public class SettingsDialogFragment extends DialogFragment {
                     }
                 })
                 .setPositiveButton(R.string.close, new DialogInterface.OnClickListener() {
+                    @Override
                     public void onClick(DialogInterface dialog, int whichButton) {
                         SettingsDialogFragment.this.getDialog().cancel();
                     }

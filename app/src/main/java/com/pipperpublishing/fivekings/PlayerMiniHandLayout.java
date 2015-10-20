@@ -41,7 +41,6 @@ import android.widget.TextView;
  10/10/2015     Store and update the player that this miniHand refers to (otherwise when we update a player, the miniHand is
                 left pointing to the old player)
  10/17/2015     Remove special two-touches for human-to-human; instead just auto-hide current player
- //TODO:A Allow for recreating this during game play, so look at currentPlayer and whether player is out to set border and animation
  */
 class PlayerMiniHandLayout extends RelativeLayout{
     //in API 17+ we could use View.generateViewId

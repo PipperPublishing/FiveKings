@@ -47,6 +47,8 @@ import android.view.animation.Animation;
  10/12/2015     Moved default player setup to Game() constructor
  10/16/2015     Removed discard from player step into endTurnCheckRound so no longer have to pass deck
  10/18/2015     checkEndRound now sets TURN_END which clicking on a new player will change to TURN_START
+ 10/20/2015     Moved clickedDrawOrDiscard to FiveKings with other event handlers
+                Moved isShowComputerCards and isAnimateDealing to FiveKings
  *
  */
 public class Game implements Parcelable{
@@ -94,12 +96,12 @@ public class Game implements Parcelable{
         Log.i(APP_TAG, "Round of " + roundOf.getString() + "'s:");
         roundStartTime = System.currentTimeMillis();
 
-        //shuffle the deck- possibly should also be part of DrawAndDiscardPiles
+        //shuffle the deck
         deck.shuffle();
         //creates the draw and discard piles and copies the deck to the drawPile (by adding the cards)
         deck.initDrawAndDiscardPile();
         //deal cards for each player - we just ignore who the "dealer" is, since the deck is guaranteed random
-        for (Player curPlayer : players) curPlayer.initAndDealNewHand(deck.drawPile, this.roundOf);
+        for (Player curPlayer : players) curPlayer.initAndDealNewHand(deck, this.roundOf);
         //turn up next card onto discard pile - note that the *top* card is actually the last element in the list
         deck.dealToDiscard();
 
@@ -122,59 +124,48 @@ public class Game implements Parcelable{
         return roundOf;
     }
 
-
-    // Handler when Draw or Discard pile clicked
-    void clickedDrawOrDiscard(final FiveKings fKActivity, final Game.PileDecision drawOrDiscardPile) {
-        setGameState(GameState.HUMAN_PICKED_CARD);
-        fKActivity.disableDrawDiscardClick();
-        fKActivity.setShowHint(R.string.meldAndDragDiscardHint, FiveKings.HandleHint.SET_AND_SHOW_HINT, false);
-        //turn on ability to accept drag to DiscardPile
-        fKActivity.enableDragToDiscardPile();
-        getCurrentPlayer().takeTurn(fKActivity, drawOrDiscardPile, deck, isFinalTurn());
-    }
-
-    Card peekDiscardPileCard() {
+    final Card peekDiscardPileCard() {
         //Possibly null (after just picking up)
-        return deck.discardPile.peekNext();
+        return deck.peekFromDiscardPile();
     }
 
     /*----------------------------------------------*/
     /* Helper methods so we don't get players list */
     /*----------------------------------------------*/
-    void logFinalScores() {
+    final void logFinalScores() {
         this.players.logFinalScores();
     }
 
-    void setHandDiscard(final Card discard) {
+    final void setHandDiscard(final Card discard) {
         players.getCurrentPlayer().setHandDiscard(discard);
     }
 
-    void addPlayer(final String playerName, final PlayerList.PlayerType playerType) {
+    final void addPlayer(final String playerName, final PlayerList.PlayerType playerType) {
         this.players.addPlayer(playerName, playerType);
     }
 
-    void updatePlayer(final String playerName, final boolean isHuman, final int iPlayer) {
+    final void updatePlayer(final String playerName, final boolean isHuman, final int iPlayer) {
         this.players.updatePlayer(playerName, isHuman, iPlayer);
     }
 
-    void deletePlayer(final int iPlayerToDelete, final Activity activity) {
+    final void deletePlayer(final int iPlayerToDelete, final Activity activity) {
         this.players.deletePlayer(iPlayerToDelete, activity);
     }
 
-    void relayoutPlayerMiniHands(final Activity a) {
+    final void relayoutPlayerMiniHands(final Activity a) {
         this.players.relayoutPlayerMiniHands(a);
     }
 
-    void removePlayerMiniHands(final Activity a) {
+    final void removePlayerMiniHands(final Activity a) {
         this.players.removePlayerMiniHands(a);
     }
 
-    void resetPlayerMiniHandsToRoundStart() {
+    final void resetPlayerMiniHandsToRoundStart() {
         players.resetPlayerMiniHandsRoundStart();
         players.updatePlayerMiniHands();
     }
 
-    void updatePlayerMiniHands() {
+    final void updatePlayerMiniHands() {
         this.players.updatePlayerMiniHands();
     }
 
@@ -249,21 +240,6 @@ public class Game implements Parcelable{
         return deck;
     }
 
-    boolean isShowComputerCards() {
-        return showComputerCards;
-    }
-
-    void setShowComputerCards(boolean showComputerCards) {
-        this.showComputerCards = showComputerCards;
-    }
-
-    boolean isAnimateDealing() {
-        return animateDealing;
-    }
-
-    void setAnimateDealing(boolean animateDealing) {
-        this.animateDealing = animateDealing;
-    }
 
     /* IMPLEMENTATION OF PARCELABLE */
 
@@ -288,10 +264,12 @@ public class Game implements Parcelable{
 
     public static final Parcelable.Creator<Game> CREATOR
             = new Parcelable.Creator<Game>() {
+            @Override
             public Game createFromParcel(Parcel in) {
                 return new Game(in);
             }
 
+            @Override
             public Game[] newArray(int size) {
                 return new Game[size];
             }

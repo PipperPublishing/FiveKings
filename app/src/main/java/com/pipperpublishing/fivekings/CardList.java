@@ -12,6 +12,7 @@ import java.util.ArrayList;
  * 2/25/2015    Deprecated myShuffle
  * 3/4/2015 Removed deprecated methods myShuffle and getHighestScoreCard
  * 3/21/2015    Moved  shuffle(), deal(), peekNext should be moved to the Deck/DrawPile/DiscardPile class via CardDealing interface
+ * 10/19/2015   Removed deprecated CardList(Card); cleaned up getString
  */
 class CardList extends ArrayList<Card> {
 
@@ -27,21 +28,17 @@ class CardList extends ArrayList<Card> {
         super(cards);
     }
 
-    @Deprecated
-    CardList(Card card) {
-        this();
-        this.add(card);
-    }
-
     String getString() {
-        if (this.isEmpty()) return "";
-        StringBuilder sCards = new StringBuilder(2 * this.size());
-        sCards.append("(");
-        for (Card card : this) {
-            sCards.append(card.getCardString());
-            sCards.append(" ");
+        StringBuilder sCards = new StringBuilder(2 * this.size() + 1);
+        if (this.isEmpty()) sCards.append("");
+        else {
+            sCards.append("(");
+            for (Card card : this) {
+                sCards.append(card.getCardString());
+                sCards.append(" ");
+            }
+            sCards.append(")");
         }
-        sCards.append(")");
         return sCards.toString();
     }
 

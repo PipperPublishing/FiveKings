@@ -49,6 +49,7 @@ import java.util.Iterator;
  * TODO:A Move roundScore to Hand (Down from Player)
  * 10/10/2015   turnState was not being copied in Copy Constructor which messes up player updates
  * 10/18/2015   Change per player updateHandsAndCards to returning a showCards flag
+ *  10/20/2015  Hide drawPile and discardPile - access through deck
  */
 abstract class Player implements HandComparator, Parcelable {
     private String name;
@@ -102,10 +103,10 @@ abstract class Player implements HandComparator, Parcelable {
         return true;
     }
 
-    boolean initAndDealNewHand(final Deck.DrawPile drawPile, final Rank roundOf) {
+    boolean initAndDealNewHand(final Deck deck, final Rank roundOf) {
         this.roundScore = 0;
         this.turnState = TurnState.NOT_MY_TURN;
-        this.hand = new Hand(drawPile, roundOf);
+        this.hand = new Hand(deck, roundOf);
         return true;
     }
 
@@ -241,7 +242,10 @@ abstract class Player implements HandComparator, Parcelable {
     /*-----------------------------------------------------*/
     /* GAME PLAYING TURNS - depends on what type of player */
     /*-----------------------------------------------------*/
-    abstract void prepareTurn(final FiveKings fKActivity);
+    void prepareTurn(final FiveKings fKActivity) {
+        turnState = TurnState.PLAY_TURN;
+        fKActivity.updateHandsAndCards(showCards(fKActivity.isShowComputerCards()), fKActivity.getmGame().getCurrentPlayer().isHuman());
+    }
 
     abstract void takeTurn(final FiveKings fKActivity, Game.PileDecision drawOrDiscardPile, final Deck deck, final boolean isFinalTurn);
 
@@ -297,10 +301,10 @@ abstract class Player implements HandComparator, Parcelable {
         }
 
         //deal and return hand
-        private Hand(final Deck.DrawPile drawPile, final Rank roundOf) {
+        private Hand(final Deck deck, final Rank roundOf) {
             this(roundOf);
-            if (drawPile != null) {
-                singles = new Meld(this.playerHandComparator, drawPile.deal(roundOf.getRankValue())); //only for human really
+            if (deck != null) {
+                singles = new Meld(this.playerHandComparator, deck.drawFromDrawPile(roundOf.getRankValue())); //only for human really
                 Collections.sort(singles,Card.cardComparatorRankFirstDesc);
                 this.clear();
                 this.addAll(singles);

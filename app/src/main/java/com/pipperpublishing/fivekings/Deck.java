@@ -19,10 +19,11 @@ import android.util.Log;
  * 3/13/2015    Impact of sub-classing Jokers
  *              Removed context
  * 3/19/2015    Made Deck the outer class of DrawPile and DiscardPile
+ * 10/20/2015   Made discardPile and drawPile private and replaced calls appropriately
  */
 class Deck extends DealingCardList  {
-    DiscardPile discardPile;
-    DrawPile drawPile;
+    private DiscardPile discardPile;
+    private DrawPile drawPile;
 
     //private because we use singleton pattern to do static initialization
     private Deck() {
@@ -56,10 +57,29 @@ class Deck extends DealingCardList  {
         discardPile.add(drawPile.deal());
     }
 
+    final Card drawFromDiscardPile() {
+        return discardPile.deal();
+    }
+    final Card drawFromDrawPile() {
+        return drawPile.deal();
+    }
+    final CardList drawFromDrawPile(final int numToDeal) {
+        return drawPile.deal(numToDeal);
+    }
+    final Card peekFromDiscardPile() {
+        return discardPile.peekNext();
+    }
+    final Card peekFromDrawPile() {
+        return drawPile.peekNext();
+    }
+    final void addToDiscardPile(final Card discard) {
+        discardPile.add(discard);
+    }
+
     /**
      * INNER CLASS DrawPile
      */
-    class DrawPile extends DealingCardList {
+    private class DrawPile extends DealingCardList {
         //this constructor is for copying the Deck to the DrawPile
         private DrawPile(){
             super();
@@ -100,7 +120,7 @@ class Deck extends DealingCardList  {
     }//end DrawPile
 
     /* INNER CLASS DiscardPile */
-    class DiscardPile extends DealingCardList {
+    private class DiscardPile extends DealingCardList {
         private DiscardPile() {
             super();
             this.clear();

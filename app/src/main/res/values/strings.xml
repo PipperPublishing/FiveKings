@@ -68,7 +68,7 @@
         You start with the round of 3\'s where you have 3 cards and 3\'s are wild (in addition to Jokers).\n
         You end with the round of Kings where you have 13 cards and Kings are wild.\n\n
         In each turn, draw from the Draw or Discard pile to your hand, meld your cards (by dragging them to the meld area on the screen), and discard a card to the Discard pile.
-        Melds are 3 or more of the same rank, or 3 or more in a sequence, including as many wild cards as you like.\n
+        Melds are 3 or more of the same rank, or 3 or more in a suit sequence, including as many wild cards as you like.\n
         A player is "out" when they have melded all their cards, giving them a score of 0 for the round.
         All other players get one more turn to improve their hands, or also go out. At the end of the round,
         your score for the round is the sum of the unmelded cards you have left. Cards count their face value

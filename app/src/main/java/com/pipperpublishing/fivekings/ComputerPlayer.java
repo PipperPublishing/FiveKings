@@ -18,6 +18,7 @@ import android.util.Log;
  *              in initAndDealNewHand
  * 10/16/2015   Moved endTurnCheckRound out of animation loop so that it happens immediately and next hand doesn't have to wait for animation finish
  *  * 10/18/2015   Change per player updateHandsAndCards to returning a showCards flag
+ *  10/20/2015  Hide drawPile and discardPile - access through deck
  */
 
 public class ComputerPlayer extends Player {
@@ -52,8 +53,8 @@ public class ComputerPlayer extends Player {
     }
 
     @Override
-    final boolean initAndDealNewHand(final Deck.DrawPile drawPile,final Rank roundOf) {
-        super.initAndDealNewHand(drawPile, roundOf);
+    final boolean initAndDealNewHand(final Deck deck,final Rank roundOf) {
+        super.initAndDealNewHand(deck, roundOf);
         initAfterUpdateToComputer();
         return true;
     }
@@ -83,13 +84,12 @@ public class ComputerPlayer extends Player {
     /* GAME PLAYING METHODS (moved from Game) */
     /*----------------------------------------*/
     @Override
-    //TODO:A move to a prepareComputerTurn
     //Must be some way to simplify showComputerCards and hideHands... into one player call
     void prepareTurn(final FiveKings fKActivity) {
-        turnState = TurnState.PLAY_TURN;
-        fKActivity.updateHandsAndCards(showCards(fKActivity.getmGame().isShowComputerCards()), false);
+        //base method sets PLAY_TURN and updates hands and cards
+        super.prepareTurn(fKActivity);
         //if showCards is false, no reason to force another click - just go ahead and play
-        if (!fKActivity.getmGame().isShowComputerCards()) {
+        if (!fKActivity.isShowComputerCards()) {
             this.getMiniHandLayout().getCardView().clearAnimation();
             takeTurn(fKActivity, null, fKActivity.getmGame().getDeck(),fKActivity.getmGame().isFinalTurn());
         }
@@ -120,15 +120,15 @@ public class ComputerPlayer extends Player {
 
             @Override
             protected Game.PileDecision doInBackground(Void... params) {
-                final Game.PileDecision pickFrom = tryDiscardOrDrawPile(isFinalTurn, deck.discardPile.peekNext(), deck.drawPile.peekNext());
+                final Game.PileDecision pickFrom = tryDiscardOrDrawPile(isFinalTurn, deck.peekFromDiscardPile(), deck.peekFromDrawPile());
                 //now actually deal the card
                 if (pickFrom == Game.PileDecision.DISCARD_PILE) {
-                    drawnCard = deck.discardPile.deal();
+                    drawnCard = deck.drawFromDiscardPile();
                     turnInfo.append(String.format(turnInfoFormat, ComputerPlayer.this.getName(), drawnCard.getCardString(),
                             "Discard", getHandDiscard().getCardString()));
                 } else { //DRAW_PILE
                     //if we decided to not use the Discard pile, then tryDiscardOrDrawPile has already found the right discard for the Draw pile
-                    drawnCard = deck.drawPile.deal();
+                    drawnCard = deck.drawFromDrawPile();
                     turnInfo.append(String.format(turnInfoFormat, ComputerPlayer.this.getName(), drawnCard.getCardString(),
                             "Draw", getHandDiscard().getCardString()));
                 }
@@ -155,7 +155,7 @@ public class ComputerPlayer extends Player {
                 //at this point the DiscardPile still shows the old card
                 //animate... also calls syncDisplay and checkEndRound() in the OnAnimationEnd listener
                 fKActivity.animateComputerPickUpAndDiscard(ComputerPlayer.this.getMiniHandLayout(), pickFrom);
-                fKActivity.endTurnCheckRound(fKActivity.getmGame().isShowComputerCards()); //Also sets TurnState to NOT_MY_TURN
+                fKActivity.endTurnCheckRound(fKActivity.isShowComputerCards()); //Also sets TurnState to NOT_MY_TURN
 
                 //turnState is set to NOT_MY_TURN in endTurn (in onAnimationEnd)
             }

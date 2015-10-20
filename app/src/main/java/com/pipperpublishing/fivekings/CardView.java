@@ -77,7 +77,7 @@ class CardView extends ImageView {
     }
 
     //TODO:B this is a hack because we are changing that card - specifically for DiscardPile
-    void setCard(final Context c, final Card card) {
+    final void setCard(final Context c, final Card card) {
         this.card = card;
 
         if (card == null) this.setImageDrawable(c.getResources().getDrawable(R.drawable.transparent_card));

@@ -127,10 +127,12 @@ class Card implements Parcelable{
 
     public static final Parcelable.Creator<Card> CREATOR
             = new Parcelable.Creator<Card>() {
+        @Override
         public Card createFromParcel(Parcel in) {
             return new Card(in);
         }
 
+        @Override
         public Card[] newArray(int size) {
             return new Card[size];
         }

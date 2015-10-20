@@ -9,6 +9,7 @@ import android.util.Log;
  * 10/12/2015   Pass drawnCard to animateHumanPickup to further separate logic from View
  *  * 10/18/2015   Change per player updateHandsAndCards to returning a showCards flag
  10/18/2015     Removed second click logic that would expose the hand if it was hidden
+ *  10/20/2015  Hide drawPile and discardPile - access through deck
  *
  */
 class HumanPlayer extends Player {
@@ -20,8 +21,8 @@ class HumanPlayer extends Player {
     }
 
     @Override
-    final boolean initAndDealNewHand(final Deck.DrawPile drawPile,final Rank roundOf) {
-        super.initAndDealNewHand(drawPile, roundOf);
+    final boolean initAndDealNewHand(final Deck deck,final Rank roundOf) {
+        super.initAndDealNewHand(deck, roundOf);
         this.hand.calculateValueAndScore(false);
         return true;
     }
@@ -75,11 +76,8 @@ class HumanPlayer extends Player {
     /*----------------------------------------*/
     @Override
     void prepareTurn(final FiveKings fKActivity) {
-        turnState = TurnState.PLAY_TURN;
-        //TODO:A Override a method which returns showComputerCards false or true depending on setting or human
-        //This could then be in the base class prepareTurn
-
-        fKActivity.updateHandsAndCards(showCards(fKActivity.getmGame().isShowComputerCards()), false);
+        //base method sets PLAY_TURN and updates hands and cards
+        super.prepareTurn(fKActivity);
         fKActivity.enableDrawDiscardClick(); //also animates piles and sets the hint
         this.getMiniHandLayout().getCardView().clearAnimation();
     }
@@ -103,7 +101,7 @@ class HumanPlayer extends Player {
 
             logTurn(isFinalTurn);
 
-            this.drawnCard = (drawOrDiscardPile == Game.PileDecision.DISCARD_PILE) ? deck.discardPile.deal() : deck.drawPile.deal();
+            this.drawnCard = (drawOrDiscardPile == Game.PileDecision.DISCARD_PILE) ? deck.drawFromDiscardPile() : deck.drawFromDrawPile();
             this.addAndEvaluate(isFinalTurn, this.drawnCard);
             turnInfo.append(String.format(turnInfoFormat, this.getName(), this.drawnCard.getCardString(),
                     (drawOrDiscardPile == Game.PileDecision.DISCARD_PILE) ? "Discard" : "Draw"));

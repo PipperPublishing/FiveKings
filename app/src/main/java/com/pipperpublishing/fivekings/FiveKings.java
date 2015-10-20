@@ -125,7 +125,6 @@ import java.util.List;
     9/21/2015   Separate routine for alpha animation of mini hands if you don't do dealing animation
                 Move set/cancel miniHand animation to Game and other calls
 
-                TODO:A Really all jiggling card animations should be pushed down to the View itself and restarted there
     9/30/2015   Second attempt to handle restart using GameState and TurnState
     10/1/2015   Animate piles when appropriate
     10/2/2015   Make hand animation, pile animation, and solid cards dependent on GameState and TurnState
@@ -153,6 +152,10 @@ import java.util.List;
     10/17/2015  Automatically hide hand if Human to Human
     10/18/2015  More granular control of updateHandsAndCards on restart
                 Change per player updateHandsAndCards to returning a showCards flag
+                Added playButton set on TURN_END (for example, if you change orientation during dealing)
+ 10/20/2015     Moved clickedDrawOrDiscard here from Game
+                Moved showComputerCards and animateDealing into FiveKings, use directly from preferences
+                Change parameters of updateHandsAndCards to showCards and allowDragging
 */
 
 public class FiveKings extends Activity {
@@ -278,11 +281,6 @@ public class FiveKings extends Activity {
 
         disableDrawDiscardClick();
 
-        //get current settings from SharedPreferences if they exist
-        SharedPreferences settings = getSharedPreferences(SETTINGS_NAME, 0);
-        mGame.setShowComputerCards(settings.getBoolean(SHOW_COMPUTER_HANDS_SETTING, false));
-        mGame.setAnimateDealing(settings.getBoolean(ANIMATE_DEALING_SETTING, true));
-
         //Note we cannot actually refresh the card display here because the Views have not been measured yet
         // and so getHeight returns 0 (which we use for dynamic scaling of card heights)
     }//end onCreate
@@ -336,12 +334,13 @@ public class FiveKings extends Activity {
                         break;
 
                     case TURN_END:
+                        mPlayButton.setText(resFormat(R.string.current_round, mGame.getRoundOf().getString()));
                         //animates whichever one was already moving if this is NOT_MY_TURN phase
                         mGame.animatePlayerMiniHand(null, shakeAnimation);
                         setShowHint(getString(R.string.clickMovingHandHint), HandleHint.SET_AND_SHOW_HINT, false);
                         mGame.setMiniHandsSolid();
-                        if ((mGame.getCurrentPlayer() == null) || mGame.currentAndNextAreHuman()) updateHandsAndCards(false, false);
-                        else  updateHandsAndCards(mGame.getCurrentPlayer().showCards(mGame.isFinalTurn()), false);
+                        if ((mGame.getCurrentPlayer() == null) || mGame.currentAndNextAreHuman()) updateHandsAndCards(false, mGame.getCurrentPlayer().isHuman());
+                        else  updateHandsAndCards(mGame.getCurrentPlayer().showCards(isShowComputerCards()), mGame.getCurrentPlayer().isHuman());
                         break;
 
                     case TURN_START:
@@ -352,7 +351,7 @@ public class FiveKings extends Activity {
                             enableDrawDiscardClick();
                         }
                         mGame.setMiniHandsSolid();
-                        updateHandsAndCards(mGame.getCurrentPlayer() == null ? false : mGame.getCurrentPlayer().showCards(mGame.isFinalTurn()), false);
+                        updateHandsAndCards(mGame.getCurrentPlayer() == null ? false : mGame.getCurrentPlayer().showCards(isShowComputerCards()), mGame.getCurrentPlayer().isHuman());
                         break;
 
                     case HUMAN_PICKED_CARD:
@@ -360,7 +359,7 @@ public class FiveKings extends Activity {
                         disableDrawDiscardClick();
                         enableDragToDiscardPile();
                         mGame.setMiniHandsSolid();
-                        updateHandsAndCards(mGame.getCurrentPlayer().showCards(mGame.isFinalTurn()), false);
+                        updateHandsAndCards(mGame.getCurrentPlayer().showCards(isShowComputerCards()), mGame.getCurrentPlayer().isHuman());
                         break;
 
                     default:
@@ -382,7 +381,7 @@ public class FiveKings extends Activity {
         switch (item.getItemId()) {
             case R.id.action_settings:
                 SharedPreferences settings = getSharedPreferences(SETTINGS_NAME, 0);
-                SettingsDialogFragment settingsDialogFragment = SettingsDialogFragment.newInstance(mGame.isShowComputerCards(),mGame.isAnimateDealing(), settings.getBoolean(SHOW_HELP, true));
+                SettingsDialogFragment settingsDialogFragment = SettingsDialogFragment.newInstance(isShowComputerCards(),isAnimateDealing(), settings.getBoolean(SHOW_HELP, true));
                 settingsDialogFragment.show(getFragmentManager(), null);
                 return true;
             case R.id.action_add_player:
@@ -405,12 +404,9 @@ public class FiveKings extends Activity {
         }
     }
 
-    //TODO:A Seems like we could eliminate one set of setting variables and get them directly from the Preferences
+    //Called from settingsDialogFragment
     public void setSettings(final boolean showComputerCards, final boolean animateDealing, boolean showHelp) {
-        //set locally...
-        mGame.setShowComputerCards(showComputerCards);
-        mGame.setAnimateDealing(animateDealing);
-        //...and also store in preferences
+        //store only in preferences
         SharedPreferences settings = getSharedPreferences(SETTINGS_NAME, 0);
         SharedPreferences.Editor editor = settings.edit();
         editor.putBoolean(SHOW_COMPUTER_HANDS_SETTING, showComputerCards);
@@ -418,7 +414,7 @@ public class FiveKings extends Activity {
         editor.putBoolean(SHOW_HELP, showHelp);
 
         // Commit the edits!
-        editor.commit();
+        editor.apply();
     }
 
     //Event handler for [Save] in add player dialog
@@ -477,6 +473,18 @@ public class FiveKings extends Activity {
         else setShowHint(null, HandleHint.SHOW_HINT, true); //force show the current hint
     }
 
+    //Event handler when Human clicks Draw or Discard Pile
+    void clickedDrawOrDiscard(final Game.PileDecision drawOrDiscardPile) {
+        mGame.setGameState(GameState.HUMAN_PICKED_CARD);
+        disableDrawDiscardClick();
+        setShowHint(R.string.meldAndDragDiscardHint, FiveKings.HandleHint.SET_AND_SHOW_HINT, false);
+        //turn on ability to accept drag to DiscardPile
+        enableDragToDiscardPile();
+        mGame.getCurrentPlayer().takeTurn(this, drawOrDiscardPile, mGame.getDeck(), mGame.isFinalTurn());
+    }
+
+
+
     private void startRound() {
         mCurrentCards.removeAllViews();
         mCurrentMelds.removeAllViews();
@@ -491,7 +499,7 @@ public class FiveKings extends Activity {
     }
     private void dealRound() {
         showHideDrawAndDiscardPiles(true);
-        if (mGame.isAnimateDealing()) {
+        if (isAnimateDealing()) {
             this.dealAnimatorSet = animateDealing(mGame.getRoundOf().getRankValue(), mGame.numPlayers());
         }
         else {
@@ -538,10 +546,10 @@ public class FiveKings extends Activity {
     void endTurnCheckRound(boolean showCards) {
         //remove discard from player's hand and add to discardPile
         //TODO:A UGLY!
-        mGame.getDeck().discardPile.add(mGame.getCurrentPlayer().discardFromHand(mGame.getCurrentPlayer().getHandDiscard()));
+        mGame.getDeck().addToDiscardPile(mGame.getCurrentPlayer().discardFromHand(mGame.getCurrentPlayer().getHandDiscard()));
         mGame.endCurrentPlayerTurn();
         // if isFinalTurn then we always show cards (because they put down their hand)
-        updateHandsAndCards(showCards, mGame.isFinalTurn());
+        updateHandsAndCards(showCards || mGame.isFinalTurn(), !mGame.isFinalTurn() && mGame.getCurrentPlayer().isHuman());
         // (isFinalTurn controls whether you can drag cards after final human turn, or whether computer cards show)
         if (mGame.isFinalTurn()) {
             // addToCumulativeScore() moved from animateRoundScore, because logging in checkEndRound continues before animation completes
@@ -601,7 +609,7 @@ public class FiveKings extends Activity {
         //create trialMeld (one card at a time for now)
 
         ((HumanPlayer) mGame.getCurrentPlayer()).makeNewMeld(foundCardView.getCard());
-        updateHandsAndCards(mGame.getCurrentPlayer().showCards(mGame.isFinalTurn()), false);
+        updateHandsAndCards(mGame.getCurrentPlayer().showCards(isShowComputerCards()), mGame.getCurrentPlayer().isHuman());
         return true;
     }
 
@@ -612,7 +620,7 @@ public class FiveKings extends Activity {
         //add to existing meld
 
         ((HumanPlayer)mGame.getCurrentPlayer()).addToMeld(meld, foundCardView.getCard());
-        updateHandsAndCards(mGame.getCurrentPlayer().showCards(mGame.isFinalTurn()), false);
+        updateHandsAndCards(mGame.getCurrentPlayer().showCards(isShowComputerCards()), mGame.getCurrentPlayer().isHuman());
         return true;
     }
 
@@ -811,7 +819,7 @@ public class FiveKings extends Activity {
         mDiscardPile.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                mGame.clickedDrawOrDiscard(FiveKings.this, Game.PileDecision.DISCARD_PILE);
+                clickedDrawOrDiscard(Game.PileDecision.DISCARD_PILE);
             }
         });
         mDiscardPile.setOnDragListener(new DiscardPileDragEventListener());
@@ -828,7 +836,7 @@ public class FiveKings extends Activity {
         mDrawPile.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                mGame.clickedDrawOrDiscard(FiveKings.this, Game.PileDecision.DRAW_PILE);
+                clickedDrawOrDiscard(Game.PileDecision.DRAW_PILE);
             }
         });
         drawAndDiscardPiles.addView(mDrawPile);
@@ -841,7 +849,6 @@ public class FiveKings extends Activity {
     }
 
     //shakes the Draw and Discard Piles to indicate that you should draw from them
-    //TODO:A The alpha fade applied to the DiscardPile on moving a card cancels the shake animation
     private void animatePiles() {
         Animation shakeCardAnimation = AnimationUtils.loadAnimation(this, R.anim.card_shake);
         this.mDrawPile.startAnimation(shakeCardAnimation);
@@ -912,7 +919,7 @@ public class FiveKings extends Activity {
 
             @Override
             public void onAnimationEnd(Animator animator) {
-                updateHandsAndCards(mGame.getCurrentPlayer().showCards(mGame.isFinalTurn()), false);
+                updateHandsAndCards(mGame.getCurrentPlayer().showCards(isShowComputerCards()), mGame.getCurrentPlayer().isHuman());
                 //remove extra cards created for the purpose of animation
                 drawAndDiscardPiles.removeView(pileCardView);
             }
@@ -1162,23 +1169,20 @@ public class FiveKings extends Activity {
     /*----------------------------------------------*/
     /* SHOW CONTENTS OF YOUR HAND                   */
     /*----------------------------------------------*/
-    void updateHandsAndCards(final boolean showCards, boolean afterFinalTurn) {
+    void updateHandsAndCards(final boolean isShowCardsOrFinalTurn, final boolean isAllowDragging) {
         //automatically shows all round scores if final round
         //TODO:A If updateHandsAndCards is called once per player, then shouldn't be updating all miniHands
         mGame.updatePlayerMiniHands();
 
-        //TODO:A updateHandsAndCards gets called from a player now, so should split this into two calls
         if (mGame.getCurrentPlayer() != null) {
             if (mGame.getCurrentPlayer() == mGame.getPlayerWentOut()) {
                 setShowHint(String.format(getString(R.string.wentOut), mGame.getPlayerWentOut().getName()), HandleHint.SHOW_HINT, true);
             }
             //showCards is true if being called from Human Player or by Computer Player with showComputerCards set
             //last parameter controls whether we allow dragging and show the border to drag to create new melds
-            if (showCards || afterFinalTurn) {
-                int iBase = showCards(mGame.getCurrentPlayer().getHandUnMelded(), mCurrentCards, 0, false,
-                        !afterFinalTurn && mGame.getCurrentPlayer().isHuman());
-                showCards(mGame.getCurrentPlayer().getHandMelded(), mCurrentMelds, iBase, true,
-                        !afterFinalTurn && mGame.getCurrentPlayer().isHuman());
+            if (isShowCardsOrFinalTurn) {
+                int iBase = showCards(mGame.getCurrentPlayer().getHandUnMelded(), mCurrentCards, 0, false, isAllowDragging);
+                showCards(mGame.getCurrentPlayer().getHandMelded(), mCurrentMelds, iBase, true, isAllowDragging);
             } else {
                 //now just clears the cards&melds area
                 showNothing(mGame.getRoundOf().getRankValue(), mCurrentCards, mCurrentMelds);
@@ -1235,6 +1239,7 @@ public class FiveKings extends Activity {
                 if (allowDragging) {//no dragging of computer cards or Human cards after final turn
                     cv.setOnDragListener(new CardViewDragEventListener());
                     cv.setOnTouchListener(new View.OnTouchListener() {
+                        @Override
                         public boolean onTouch(View v, MotionEvent event) {
                             if (event.getAction() != MotionEvent.ACTION_DOWN) return false;
                             // Create a new ClipData using the tag as a label, the plain text MIME type, and
@@ -1325,14 +1330,23 @@ public class FiveKings extends Activity {
         return mGame;
     }
 
-    int getDrawPileHeight() {
+    final int getDrawPileHeight() {
         return this.mDrawPile.getHeight();
     }
 
-    int getDrawPileWidth() {
+    final int getDrawPileWidth() {
         return this.mDrawPile.getWidth();
     }
 
+    final boolean isShowComputerCards() {
+        SharedPreferences settings = getSharedPreferences(SETTINGS_NAME, 0);
+        return settings.getBoolean(SHOW_COMPUTER_HANDS_SETTING, false);
+    }
+
+    final boolean isAnimateDealing() {
+        SharedPreferences settings = getSharedPreferences(SETTINGS_NAME, 0);
+        return settings.getBoolean(ANIMATE_DEALING_SETTING, true);
+    }
 
     /* SMALL UTILITY METHODS */
     private TextView clone(final TextView vFrom) {
