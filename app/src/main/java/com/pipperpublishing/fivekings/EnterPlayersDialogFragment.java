@@ -17,7 +17,6 @@ import android.widget.TextView;
  * 2/18/2015 Captures player names at start of game
  * 3/11/2015    CLoses the dialog after each Add
  *              Include a Delete option in the Edit dialog
- *              TODO:A: Need to pass numPlayers so you can't Delete below 2 players
  */
 public class EnterPlayersDialogFragment extends DialogFragment {
     private static final String playerArg = "PLAYER_NAME";

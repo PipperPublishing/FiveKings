@@ -15,8 +15,8 @@ android {
         applicationId "com.pipperpublishing.fivekings"
         minSdkVersion 14
         targetSdkVersion 21
-        versionCode 801
-        versionName "0.8.01Alpha-0808-102015"
+        versionCode 802
+        versionName "0.8.02Alpha-1513-102015"
     }
     applicationVariants.all { variant ->
         variant.outputs.each { output ->

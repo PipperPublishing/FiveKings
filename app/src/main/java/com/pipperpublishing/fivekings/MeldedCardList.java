@@ -35,7 +35,6 @@ import java.util.Collections;
  * 3/21/2015    In addDecomposition, don't add partials if it's FinalRound (add to singles)
 
  TODO:B Account for the overlap among partialMelds and partialSequences; is it ok to have ( 10C-10D and 10C-JC)
- * TODO:A Can have the melds score themselves based on what they are
 
  */
 class MeldedCardList extends CardList{
@@ -172,7 +171,7 @@ class MeldedCardList extends CardList{
                     if (combined.isEmpty()) combined.add(new CardList());
                     if (!combined.get(0).contains(c)) combined.get(0).add(c);
                 }*/
-            combined.add(cl);//TODO:A: Temporary hack to make sure we're pointing back to real melds
+            combined.add(cl);
         }
         return combined;
     }
@@ -403,7 +402,7 @@ class MeldedCardList extends CardList{
     /* STATIC METHODS associated with Meld (but Inner classes can't contain static methods */
 
     //Helper for meldUsingHeuristics
-    //TODO:A Would like to merge with other setCheckedAndValid - when we move these to right context
+    //TODO:B Would like to merge with other setCheckedAndValid - when we move these to right context
     static void setCheckedAndValid (final ArrayList<Meld> melds) {
         for (Meld meld : melds) {
             meld.setCheckedAndValid();

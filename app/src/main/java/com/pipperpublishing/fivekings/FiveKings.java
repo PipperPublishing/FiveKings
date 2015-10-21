@@ -420,23 +420,16 @@ public class FiveKings extends Activity {
     //Event handler for [Save] in add player dialog
     public void addEditPlayerClicked(final String playerName, final boolean isHuman, final boolean addingFlag, final int iPlayerUpdate) {
          //if we add a player, we need to remove and re-add the hand layouts
-        if (addingFlag) {
-            if ((mGame.getRoundOf() != null) && (mGame.getRoundOf() != Rank.getLowestRank())) {
-                Log.e(Game.APP_TAG, "Can't add players after Round of 3's");
-                return;
-            }
-            mGame.addPlayer(playerName, isHuman ? PlayerList.PlayerType.HUMAN : PlayerList.PlayerType.EXPERT_COMPUTER);
-            mGame.relayoutPlayerMiniHands(this);
-        } else {
-            mGame.updatePlayer(playerName, isHuman, iPlayerUpdate);
-            mGame.updatePlayerMiniHands();
-        }
+        if (addingFlag) mGame.addPlayer(playerName, isHuman ? PlayerList.PlayerType.HUMAN : PlayerList.PlayerType.EXPERT_COMPUTER, this);
+        else mGame.updatePlayer(playerName, isHuman, iPlayerUpdate);
     }
+
     public void deletePlayerClicked(final int iPlayerToDelete) {
         //pop up an alert to verify
         if ((mGame == null) || (mGame.getGameState() != GameState.NEW_GAME)) {
             setShowHint(getString(R.string.cantAddDelete), HandleHint.SHOW_HINT, true);
-            return;
+        }else if (mGame.numPlayers() <= 2) {
+            setShowHint(getString(R.string.mustHaveTwoPlayer), HandleHint.SHOW_HINT, true);
         }else {
             new AlertDialog.Builder(this)
                     .setIcon(android.R.drawable.ic_dialog_alert)

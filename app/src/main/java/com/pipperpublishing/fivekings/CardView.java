@@ -16,7 +16,7 @@ import android.widget.ImageView;
  * 10/16/2015   Call setCard from CardView constructor;
  */
 class CardView extends ImageView {
-    private Card card; //TODO:A would like to make this final again and maybe keep CardViews rather than cards
+    private Card card; //TODO:B would like to make this final again and maybe keep CardViews rather than cards
     private final int viewIndex; //index in layout
     private boolean acceptDrag; //melds accept drags, but in general not cards (except for DiscardPile)
 

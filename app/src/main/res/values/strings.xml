@@ -43,6 +43,7 @@
     <string name="areYouSureDelete">Are you sure you want to delete player "%s"?</string>
     <string name="yesDelete">Yes, delete</string>
     <string name="cantAddDelete">You must start a new game to add or delete players</string>
+    <string name="mustHaveTwoPlayer">You must keep at least two players; try editing the player instead</string>
     <string name="playerName">Name</string>
     <string name="add">Add</string>
     <string name="save">Save</string>

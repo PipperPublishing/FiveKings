@@ -46,7 +46,6 @@ import java.util.Iterator;
  * 8/30/2015    Implement Parcelable so we can save Game state
  * 9/3/2015     Save TurnState using string/valueOf
  * 9/30/2015    Added updateHandsAndCards (depends on Human or Computer)
- * TODO:A Move roundScore to Hand (Down from Player)
  * 10/10/2015   turnState was not being copied in Copy Constructor which messes up player updates
  * 10/18/2015   Change per player updateHandsAndCards to returning a showCards flag
  *  10/20/2015  Hide drawPile and discardPile - access through deck
@@ -215,7 +214,7 @@ abstract class Player implements HandComparator, Parcelable {
         return combined;
     }
 
-    //TODO:A: Not unrolling these right now (Human doesn't see this)
+    //TODO:B: Not unrolling these right now (Human doesn't see this)
     //because otherwise we don't know what to add back to
     //have to eliminate "combined"
     final ArrayList<CardList> getHandUnMelded() {
@@ -250,6 +249,10 @@ abstract class Player implements HandComparator, Parcelable {
     abstract void takeTurn(final FiveKings fKActivity, Game.PileDecision drawOrDiscardPile, final Deck deck, final boolean isFinalTurn);
 
     abstract void logTurn(final boolean isFinalTurn);
+
+    final void logRoundScore() {
+        Log.i(Game.APP_TAG, "Player " + getName() + ": " + getMeldedString(true) + getPartialAndSingles(true) + ". Cumulative score=" + getCumulativeScore());
+    }
 
     abstract boolean showCards(final boolean isShowComputerCards);
 
@@ -342,8 +345,8 @@ abstract class Player implements HandComparator, Parcelable {
             return true;
         }
 
-        //TODO:A: And update hand valuation (would need to pass isFinalScore or call twice)
         //Use iterators so we can remove current value
+        // When we add/delete a card, it could be showing in multiple partial melds so those need to be adjusted
         private boolean syncCardsAndMelds() {
             //check that all hand.cards are in melds or singles (add to singles if not)
             for (Card card : this) {
@@ -581,7 +584,7 @@ abstract class Player implements HandComparator, Parcelable {
         }//end meldBestUsingPermutations
 
         //Helper for HumanPlayer.checkMeldsAndEvaluate (throws away decomposition, but calculates valuation)
-        //TODO:A May be able to use a version of this in meldUsing Heuristics (as part of ComputerPlayer)
+        //TODO:B May be able to use a version of this in meldUsing Heuristics (as part of ComputerPlayer)
         final int checkMeldsAndEvaluate(final boolean isFinalTurn) {
             final MeldedCardList decomposedMelds = new MeldedCardList(this.roundOf, this.playerHandComparator);
             for (MeldedCardList.Meld meld : this.melds) {

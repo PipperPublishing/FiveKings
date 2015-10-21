@@ -20,7 +20,6 @@ import java.util.ArrayList;
  10/12/2015     Switch order of Standard Players so Human ends up on the right
                 Moved the addDefaultPlayers call to Game so this class can stay generic
  10/18/2015     deletePlayer was removing layout from wrong view
- TODO:A Maybe manage PlayerLayout as well?
  */
 class PlayerList extends ArrayList<Player> {
     static enum PlayerType {HUMAN, BASIC_COMPUTER, EXPERT_COMPUTER}
@@ -109,7 +108,6 @@ class PlayerList extends ArrayList<Player> {
         return this.currentPlayer;
     }
 
-    //TODO:A: Really should be pushed down further to the miniHand or the player, or brought up to FiveKings
     //(Shouldn't be starting animations from outside FiveKings or related code)
     void setAnimated(final Player setAnimated, final Animation bounceAnimation) {
         //clear existing animations
@@ -167,7 +165,7 @@ class PlayerList extends ArrayList<Player> {
         Log.i(Game.APP_TAG, "        Current scores:");
         for (Player player : this){
             //add to cumulative score is done in animateRoundScore()
-            Log.i(Game.APP_TAG, "Player " + player.getName() + ": " + player.getMeldedString(true) + player.getPartialAndSingles(true) + ". Cumulative score=" + player.getCumulativeScore());
+            player.logRoundScore();
         }
 
         if (this.dealer == null) throw new RuntimeException("logRoundScores: dealer is null" );
@@ -202,7 +200,7 @@ class PlayerList extends ArrayList<Player> {
         for (Player player : this) player.updatePlayerMiniHand(this.currentPlayer == player, true);
     }
 
-    void adjustMiniHandsAlpha() {
+    void setMiniHandsSolid() {
         for (Player player : this) player.getMiniHandLayout().setGreyedOut(false);
     }
 

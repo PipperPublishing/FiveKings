@@ -349,6 +349,16 @@ FIXED: Current hand outline wasn't showing
 
 v0.8.x CLEAN UP CODE
 v0.8.01 Clean up
+
+--------------------
+v0.8.02 Get fKActivity out of Player methods, or move them to FiveKings
+
+DONE Add screenshots from Tablets
+DONE Update screenshots from S5
+DONE Updated icon to use new lightning bolt King design
+
+DONE: Checks that you have at least 2 players when you try to delete; add apppropriate message
+
 - Clean up TODO:A 's
 - Remove smells where possible :)
 - LOTS of cleaning up in FiveKings - follow flow
@@ -358,8 +368,6 @@ v0.8.01 Clean up
     - push player Hand updates to individual players rather than mass updates of screen
     - more sub-classing rather than if (isHuman) type logic
 
-Add screenshots from Tablets
-Update screenshots from S5
 
 -----------------
 v0.8.04
@@ -378,6 +386,7 @@ Add in more than one sequence and longer sequences than 3
 =======================
 v0.9.01 Graphics
 
+- Redisplay red/yellow hand outlines on restart
 [Tim] Option to highlight the wildcard, warn on discarding it, or warn if you didn't meld (perhaps just on the opening rounds)
 - Bounce the picked up card once it's in the hand (or highlight it?)
 - New icon and screen shots (including tablet ones)

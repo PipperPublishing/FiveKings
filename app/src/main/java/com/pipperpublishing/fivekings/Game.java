@@ -68,14 +68,14 @@ public class Game implements Parcelable{
 
     private GameState gameState;
 
-    static enum PileDecision {DISCARD_PILE, DRAW_PILE}
+    enum PileDecision {DISCARD_PILE, DRAW_PILE}
 
 
     Game(final FiveKings fKActivity) {
         this.deck = Deck.getInstance(true);
         this.players = new PlayerList();
-        addPlayer(fKActivity.getString(R.string.defaultComputerPlayer), PlayerList.PlayerType.EXPERT_COMPUTER);
-        addPlayer(fKActivity.getString(R.string.defaultHumanPlayer), PlayerList.PlayerType.HUMAN);
+        this.players.addPlayer(fKActivity.getString(R.string.defaultComputerPlayer), PlayerList.PlayerType.EXPERT_COMPUTER);
+        this.players.addPlayer(fKActivity.getString(R.string.defaultHumanPlayer), PlayerList.PlayerType.HUMAN);
         this.gameState = GameState.NEW_GAME;
         roundStartTime = 0;
         roundStopTime = 0;
@@ -140,12 +140,18 @@ public class Game implements Parcelable{
         players.getCurrentPlayer().setHandDiscard(discard);
     }
 
-    final void addPlayer(final String playerName, final PlayerList.PlayerType playerType) {
-        this.players.addPlayer(playerName, playerType);
+    final void addPlayer(final String playerName, final PlayerList.PlayerType playerType, final FiveKings fKActivity) {
+        if ((getRoundOf() != null) && (getRoundOf() != Rank.getLowestRank())) {
+            Log.e(Game.APP_TAG, "Can't add players after Round of 3's");
+        } else {
+            this.players.addPlayer(playerName, playerType);
+            relayoutPlayerMiniHands(fKActivity);
+        }
     }
 
     final void updatePlayer(final String playerName, final boolean isHuman, final int iPlayer) {
         this.players.updatePlayer(playerName, isHuman, iPlayer);
+        updatePlayerMiniHands();
     }
 
     final void deletePlayer(final int iPlayerToDelete, final Activity activity) {
@@ -169,7 +175,7 @@ public class Game implements Parcelable{
         this.players.updatePlayerMiniHands();
     }
 
-    void setMiniHandsSolid() {this.players.adjustMiniHandsAlpha();}
+    void setMiniHandsSolid() {this.players.setMiniHandsSolid();}
 
     Player getPlayerByIndex(final int iPlayer) {
         return players.get(iPlayer);
