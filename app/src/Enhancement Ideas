@@ -346,31 +346,36 @@ FIXED?: Hiding Hand hint shows when you change orientation some time - because u
 FIXED: Current hand outline wasn't showing
 [Released to Google Player Beta]
 ====================
-
 v0.8.x CLEAN UP CODE
 v0.8.01 Clean up
 
 --------------------
-v0.8.02 Get fKActivity out of Player methods, or move them to FiveKings
+v0.8.02 Clean up
 
 DONE Add screenshots from Tablets
 DONE Update screenshots from S5
 DONE Updated icon to use new lightning bolt King design
 
 DONE: Checks that you have at least 2 players when you try to delete; add apppropriate message
+--------------------
+0.8.03 Get fKActivity out of Player methods, or move them to FiveKings
 
-- Clean up TODO:A 's
-- Remove smells where possible :)
-- LOTS of cleaning up in FiveKings - follow flow
 - Player methods use fKActivity and a lot of convoluted logic
     - Improve logic flow and understandability of FiveKings, Game, PlayerLayout etc
     - Clean up Game state flow and handling
     - push player Hand updates to individual players rather than mass updates of screen
     - more sub-classing rather than if (isHuman) type logic
 
-
 -----------------
 v0.8.04
+
+- Clean up TODO:A 's
+- Remove smells where possible :)
+- LOTS of cleaning up in FiveKings - follow flow
+
+------------------
+v0.8.10
+
 BUG:A Check if still true? Heuristics is throwing away wildcard when you have a partial meld of 4-4 and only full melds;
 BUG:A Permutations won't build a K onto T*Q
 

@@ -57,7 +57,7 @@
     <string name="add_player">Add</string>
     <string name="edit_player">Edit</string>
     <string name="delete_player">Delete</string>
-    <string name="edit_delete_hint">Long click on a player hand to edit or delete</string>
+    <string name="edit_delete_hint">Press and hold a player hand to edit or delete</string>
     <string name="show_computer_cards">Show Computer cards</string>
     <string name="animate_dealing">Animate dealing</string>
     <string name="show_intro">Show introduction and hints</string>

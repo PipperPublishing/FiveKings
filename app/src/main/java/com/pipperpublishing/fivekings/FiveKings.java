@@ -578,7 +578,7 @@ public class FiveKings extends Activity {
 
 
     /*---------------------------------------------------*/
-    /* Event Handlers for clicks/drags on cards or melds */
+    /* EVENT HANDLERS for clicks/drags on cards or melds */
     /*---------------------------------------------------*/
     boolean discardedCard(final int iCardView) {
         //turn off the ability of DiscardPile to accept drags
@@ -596,25 +596,28 @@ public class FiveKings extends Activity {
     //makeNewMeld is called if you drag onto the mCurrentMelds layout - we're creating a new meld
     //to add to a existing meld, drag to an existing meld
     //TODO:A Move this into the Player because we could be dragging when CurrentPlayer is not Human
+    //(Create subclass makeNewMeld and addToMeld in Human/ComputerPlayer)
     boolean makeNewMeld(final int iCardView) {
         CardView foundCardView= findViewByIndex(iCardView);
-        if (foundCardView == null) return false;
-        //create trialMeld (one card at a time for now)
-
-        ((HumanPlayer) mGame.getCurrentPlayer()).makeNewMeld(foundCardView.getCard());
-        updateHandsAndCards(mGame.getCurrentPlayer().showCards(isShowComputerCards()), mGame.getCurrentPlayer().isHuman());
-        return true;
+        Player currentPlayer = mGame.getCurrentPlayer();
+        if (foundCardView != null) {
+            //create trialMeld (one card at a time for now)
+            ((HumanPlayer) currentPlayer).makeNewMeld(foundCardView.getCard());
+            updateHandsAndCards(currentPlayer.showCards(isShowComputerCards()), currentPlayer.isHuman());
+        }
+        return (foundCardView != null);
     }
 
     //Don't test for valid meld; that is done with evaluateMelds
     boolean addToMeld(final CardList meld, final int iCardView) {
         CardView foundCardView= findViewByIndex(iCardView);
-        if (foundCardView == null) return false;
-        //add to existing meld
-
-        ((HumanPlayer)mGame.getCurrentPlayer()).addToMeld(meld, foundCardView.getCard());
-        updateHandsAndCards(mGame.getCurrentPlayer().showCards(isShowComputerCards()), mGame.getCurrentPlayer().isHuman());
-        return true;
+        Player currentPlayer = mGame.getCurrentPlayer();
+        if (foundCardView != null) {
+            //add to existing meld
+            ((HumanPlayer) currentPlayer).addToMeld(meld, foundCardView.getCard());
+            updateHandsAndCards(currentPlayer.showCards(isShowComputerCards()), currentPlayer.isHuman());
+        }
+        return (foundCardView != null);
     }
 
     CardView findViewByIndex(final int iCardView) {
@@ -622,13 +625,14 @@ public class FiveKings extends Activity {
         //find the view we coded with this index - have to loop thru nested layouts
         for (int iNestedLayout = 0; iNestedLayout < mCurrentCards.getChildCount(); iNestedLayout++) {
             View rl = mCurrentCards.getChildAt(iNestedLayout);
-            if ((rl == null) || !(rl instanceof RelativeLayout)) continue;
-            RelativeLayout nestedLayout = (RelativeLayout)rl;
-            for (int iView = 0; iView < nestedLayout.getChildCount(); iView++) {
-                CardView cv = (CardView) nestedLayout.getChildAt(iView);
-                if ((cv != null) && (cv.getViewIndex() == iCardView)) {
-                    foundCardView = cv;
-                    break;
+            if ((rl != null) && (rl instanceof RelativeLayout)) {
+                RelativeLayout nestedLayout = (RelativeLayout) rl;
+                for (int iView = 0; iView < nestedLayout.getChildCount(); iView++) {
+                    CardView cv = (CardView) nestedLayout.getChildAt(iView);
+                    if ((cv != null) && (cv.getViewIndex() == iCardView)) {
+                        foundCardView = cv;
+                        break;
+                    }
                 }
             }
             if (foundCardView != null) break;
@@ -637,15 +641,17 @@ public class FiveKings extends Activity {
             for (int iNestedLayout = 0; iNestedLayout < mCurrentMelds.getChildCount(); iNestedLayout++) {
                 View rl = mCurrentMelds.getChildAt(iNestedLayout);
                 //Allows for the fake "Drag here to form new meld" TextView
-                if ((rl == null) || !(rl instanceof RelativeLayout)) continue;
-                RelativeLayout nestedLayout = (RelativeLayout)rl;
-                for (int iView = 0; iView < nestedLayout.getChildCount(); iView++) {
-                    CardView cv = (CardView) nestedLayout.getChildAt(iView);
-                    if (cv.getViewIndex() == iCardView) {
-                        foundCardView = cv;
-                        break;
+                if ((rl != null) && (rl instanceof RelativeLayout)) {
+                    RelativeLayout nestedLayout = (RelativeLayout) rl;
+                    for (int iView = 0; iView < nestedLayout.getChildCount(); iView++) {
+                        CardView cv = (CardView) nestedLayout.getChildAt(iView);
+                        if (cv.getViewIndex() == iCardView) {
+                            foundCardView = cv;
+                            break;
+                        }
                     }
                 }
+                if (foundCardView != null) break;
             }
         }
         if (foundCardView == null) {
@@ -791,7 +797,7 @@ public class FiveKings extends Activity {
         mPlayButton.setText(resFormat(R.string.current_round, mGame.getRoundOf().getString()));
         mGame.updatePlayerMiniHands();
 
-        //if next player is also human, don't need to show hint, because dealer's hand isn't showing
+        //if next player is also human, don't need to show "hiding" hint, because dealer's hand isn't showing
         mGame.animatePlayerMiniHand(mGame.getNextPlayer(), shakeAnimation);
         setShowHint(getString(R.string.clickMovingHandHint),HandleHint.SET_AND_SHOW_HINT , false);
 
