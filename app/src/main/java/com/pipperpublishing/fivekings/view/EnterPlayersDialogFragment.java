@@ -1,4 +1,4 @@
-package com.pipperpublishing.fivekings;
+package com.pipperpublishing.fivekings.view;
 
 import android.app.AlertDialog;
 import android.app.Dialog;
@@ -11,6 +11,8 @@ import android.widget.Button;
 import android.widget.EditText;
 import android.widget.RadioButton;
 import android.widget.TextView;
+
+import com.pipperpublishing.fivekings.R;
 
 /**
  * Created by Jeffrey on 2/18/2015.

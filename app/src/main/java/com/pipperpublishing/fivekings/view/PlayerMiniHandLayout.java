@@ -1,4 +1,4 @@
-package com.pipperpublishing.fivekings;
+package com.pipperpublishing.fivekings.view;
 
 import android.content.Context;
 import android.graphics.Color;
@@ -7,9 +7,13 @@ import android.os.Parcel;
 import android.os.Parcelable;
 import android.view.View;
 import android.view.ViewGroup;
+import android.view.animation.Animation;
 import android.widget.LinearLayout;
 import android.widget.RelativeLayout;
 import android.widget.TextView;
+
+import com.pipperpublishing.fivekings.Player;
+import com.pipperpublishing.fivekings.R;
 
 /**
  * Created by Jeffrey on 3/8/2015.
@@ -42,7 +46,7 @@ import android.widget.TextView;
                 left pointing to the old player)
  10/17/2015     Remove special two-touches for human-to-human; instead just auto-hide current player
  */
-class PlayerMiniHandLayout extends RelativeLayout{
+public class PlayerMiniHandLayout extends RelativeLayout{
     //in API 17+ we could use View.generateViewId
     private static final int NAME_VIEW_ID=1001;
     private static final int CUMULATIVE_SCORE_VIEW_ID=1002;
@@ -65,7 +69,7 @@ class PlayerMiniHandLayout extends RelativeLayout{
     private boolean playedInFinalTurn;
 
     //Constructor - also lays out the Player layout
-    PlayerMiniHandLayout(final Context c, final Player initialPlayer, final int iPlayer, final int numPlayers) {
+    public PlayerMiniHandLayout(final Context c, final Player initialPlayer, final int iPlayer, final int numPlayers) {
         super(c);
         final FiveKings fKActivity = (FiveKings)c;
         final LinearLayout.LayoutParams handLp = new LinearLayout.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT);
@@ -121,7 +125,7 @@ class PlayerMiniHandLayout extends RelativeLayout{
                 //second time we click on the current player, check that we're ready to play (PLAY_TURN)
                 else if ((player == fKActivity.getmGame().getCurrentPlayer()) && (player.getTurnState() == Player.TurnState.PLAY_TURN)) {
                     cardView.clearAnimation();
-                    player.takeTurn(fKActivity, null, fKActivity.getmGame().getDeck(),fKActivity.getmGame().isFinalTurn());
+                    player.takeTurn(fKActivity, null, fKActivity.getmGame().isFinalTurn());
                 }
                 else fKActivity.setShowHint(null, FiveKings.HandleHint.SHOW_HINT , true);
             }
@@ -219,7 +223,7 @@ class PlayerMiniHandLayout extends RelativeLayout{
     }
 
     /* UTILITIES FOR UPDATING SCORES ETC. */
-    final void reset() {
+    final public void reset() {
         //set the border depending on the player state
         resetToPlain();
         setPlayedInFinalTurn(false);
@@ -227,11 +231,11 @@ class PlayerMiniHandLayout extends RelativeLayout{
     }
 
 
-    final void update(final boolean isCurrent, final boolean isOut, final int roundScore, final int cumulativeScore) {
+    final public void update(final boolean isCurrent, final boolean isOut, final int roundScore, final int cumulativeScore) {
         showOrHideCurrentBorder(isCurrent);
         //playedInFinalTurn flag is set when you play in final round, and controls green border and round Score display
         //without this check, hands would show green border after being dealt a melded hand
-        updateRoundScore(roundScore,isOut && playedInFinalTurn );
+        updateRoundScore(roundScore, isOut && playedInFinalTurn);
         // <0 means we're waiting for roundScore animation to update cumulativeScore
         if (cumulativeScore >= 0) updateCumulativeScore(cumulativeScore);
         invalidate();
@@ -268,43 +272,50 @@ class PlayerMiniHandLayout extends RelativeLayout{
         roundScoreView.setVisibility(this.playedInFinalTurn ? VISIBLE : INVISIBLE);
         return true;
     }
-    void setPlayedInFinalTurn(boolean set) {
+    public void setPlayedInFinalTurn(boolean set) {
         this.playedInFinalTurn = set;
     }
 
-    final void updateName(final String newName) {
+    final public void updateName(final String newName) {
         nameView.setText(newName);
     }
 
-    final void updatePlayer(final Player updatedPlayer) {
+    final public void updatePlayer(final Player updatedPlayer) {
         this.player = updatedPlayer;
     }
 
     //grey out Card because we're looking at it
-    final void setGreyedOut(final boolean set) {
+    final public void setGreyedOut(final boolean set) {
         if (set) this.cardView.setAlpha(FiveKings.ALMOST_TRANSPARENT_ALPHA);
         else this.cardView.setAlpha(1.0f);
     }
 
 
     //outline with white border, or solid if you're out
-    void showOrHideCurrentBorder(final boolean showCurrentBorder) {
+    private void showOrHideCurrentBorder(final boolean showCurrentBorder) {
         this.cardView.setBackgroundDrawable(showCurrentBorder ? getResources().getDrawable(R.drawable.nopad_white_border) : null);
     }
 
-    void resetToPlain() {
+    private void resetToPlain() {
         this.cardView.setBackgroundDrawable(null);
         this.roundScoreView.setTextColor(getResources().getColor(android.R.color.white));
         this.nameView.setTextColor(getResources().getColor(android.R.color.white));
     }
 
+    //animation of the mini Hand
+    public void startAnimateMiniHand(final Animation animation) {
+        cardView.startAnimation(animation);
+    }
+    public void stopAnimateMiniHand() {
+        cardView.clearAnimation();
+    }
 
     /* GETTERS and SETTERS */
     TextView getRoundScoreView() {
         return roundScoreView;
     }
 
-    CardView getCardView() {
+    public CardView getCardView() {
         return cardView;
     }
 

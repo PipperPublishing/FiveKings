@@ -1,8 +1,15 @@
-package com.pipperpublishing.fivekings;
+package com.pipperpublishing.fivekings.view;
 
 import android.content.Context;
+import android.graphics.Color;
+import android.graphics.PorterDuff;
 import android.util.AttributeSet;
+import android.view.animation.Animation;
 import android.widget.ImageView;
+
+import com.pipperpublishing.fivekings.Card;
+import com.pipperpublishing.fivekings.R;
+import com.pipperpublishing.fivekings.Rank;
 
 /**
  * Created by Jeffrey on 2/18/2015.
@@ -13,8 +20,12 @@ import android.widget.ImageView;
  * 4/9/2015     Add acceptDrag to accept/deny drag (for now just to DiscardPile)
  * 6/7/2015     Now that DiscardPile is wrap_content, we need to have an invisible card there when it is null
  * 6/9/2015     Add getHeight and getWidth
- * 10/16/2015   Call setCard from CardView constructor;
+ * 10/16/2015   Call setCardAndImage from CardView constructor;
+ * 11/5/2015    Highlight Jokers and wildcards if specified
+ * 11/6/2015    Use lighter yellow and add constants
+ * 11/9/2015    Add startAnimation, cleanAnimation to hide View access
  */
+//TODO:A Should be a way of not having special logic for Jokers (hiding it)
 class CardView extends ImageView {
     private Card card; //TODO:B would like to make this final again and maybe keep CardViews rather than cards
     private final int viewIndex; //index in layout
@@ -36,12 +47,15 @@ class CardView extends ImageView {
             {R.drawable.st3, R.drawable.st4, R.drawable.st5, R.drawable.st6, R.drawable.st7, R.drawable.st8, R.drawable.st9, R.drawable.st10, R.drawable.stj, R.drawable.stq, R.drawable.stk}
     };
 
-    CardView(final Context c, final Card card, final int viewIndex) {
+    static final int TINT_COLOR = Color.parseColor("#FFFF66"); //light yellow
+    static final PorterDuff.Mode PORTER_DUFF_MODE = PorterDuff.Mode.DARKEN;
+
+    CardView(final Context c, final Card card, final int viewIndex, final Rank highlightWildCard) {
         super(c);
         checkSetIntrinsic(c);
         this.viewIndex = viewIndex;
         this.acceptDrag = false;
-        setCard(c, card);
+        setCardAndImage(c, card, highlightWildCard);
     }
 
     //for card back and any other non-face-card which doesn't need viewIndex or card
@@ -65,7 +79,8 @@ class CardView extends ImageView {
 
     //Copy constructor
     CardView(final Context c, final CardView cv) {
-        this(c, cv.card, -1);
+        //TODO:A Only called from animateComputerPickup so not highlighting (last argument null) is ok
+        this(c, cv.card, -1, null);
     }
 
     final void checkSetIntrinsic(final Context c) {
@@ -76,17 +91,41 @@ class CardView extends ImageView {
         }
     }
 
-    //TODO:B this is a hack because we are changing that card - specifically for DiscardPile
-    final void setCard(final Context c, final Card card) {
+    //TODO:B this is a hack because we are changing that card - specifically for DiscardPile (but now used in constructor too)
+    final void setCardAndImage(final Context c, final Card card, Rank highlightWildCard) {
         this.card = card;
 
         if (card == null) this.setImageDrawable(c.getResources().getDrawable(R.drawable.transparent_card));
-        else if (card.isJoker()) setImageDrawable(c.getResources().getDrawable(R.drawable.joker1));
-        else setImageDrawable(c.getResources().getDrawable(sBitmapResource[card.getSuit().getOrdinal()][card.getRank().getOrdinal()]));
-
+        else if (card.isJoker()) {
+            setImageDrawable(c.getResources().getDrawable(R.drawable.joker1));
+            if (highlightWildCard != null) {
+                //mutate so this setting will not carry through to other rounds or to the Computer cards when shown
+                this.getDrawable().mutate();
+                this.getDrawable().setTint(TINT_COLOR);
+                this.getDrawable().setTintMode(PORTER_DUFF_MODE);
+            }
+        } else {
+            setImageDrawable(c.getResources().getDrawable(sBitmapResource[card.getSuit().getOrdinal()][card.getRank().getOrdinal()]));
+            if ((highlightWildCard != null) && card.isWildCard(highlightWildCard)) {
+                this.getDrawable().mutate();
+                this.getDrawable().setTint(TINT_COLOR);
+                this.getDrawable().setTintMode(PORTER_DUFF_MODE);
+            }
+        }
         this.setMinimumWidth(INTRINSIC_WIDTH);
     }
 
+    @Override
+    public void clearAnimation() {
+        super.clearAnimation();
+    }
+
+    @Override
+    public void startAnimation(Animation animation) {
+        super.startAnimation(animation);
+    }
+
+    /* Getters and Setters */
     Card getCard() {
         return card;
     }

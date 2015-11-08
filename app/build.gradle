@@ -15,8 +15,8 @@ android {
         applicationId "com.pipperpublishing.fivekings"
         minSdkVersion 14
         targetSdkVersion 21
-        versionCode 803
-        versionName "0.8.03Alpha-1400-102515"
+        versionCode 811
+        versionName "0.8.11Beta-" +"201511100751"
     }
     applicationVariants.all { variant ->
         variant.outputs.each { output ->
@@ -38,4 +38,10 @@ dependencies {
     compile fileTree(dir: 'libs', include: ['*.jar'])
     compile 'com.android.support:appcompat-v7:21.0.3'
     compile 'com.android.support:support-v4:21.0.3'
+}
+
+def getDate() {
+    def date = new Date()
+    def formattedDate = date.format('yyyyMMdd')
+    return formattedDate
 }

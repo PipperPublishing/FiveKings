@@ -6,6 +6,8 @@ import android.os.Parcelable;
 import android.util.Log;
 import android.view.animation.Animation;
 
+import com.pipperpublishing.fivekings.view.FiveKings;
+
 /**
  * Created by Jeffrey on 1/22/2015.
  *  * 2/2/2015 Test how long each v1 (using permutations) is taking and switch to heuristic approach once over the threshold
@@ -49,17 +51,16 @@ import android.view.animation.Animation;
  10/18/2015     checkEndRound now sets TURN_END which clicking on a new player will change to TURN_START
  10/20/2015     Moved clickedDrawOrDiscard to FiveKings with other event handlers
                 Moved isShowComputerCards and isAnimateDealing to FiveKings
+ 11/9/2015      Replace copied deck with references to singleton
  *
  */
 public class Game implements Parcelable{
-    static final String APP_TAG = BuildConfig.VERSION_NAME;
-    static final int MAX_PLAYERS = 10;
+    public static final int MAX_PLAYERS = 10;
     static final int MAX_CARDS = 14; //Round of Kings + picked up card
     // in the Menu Settings dialog
     private boolean showComputerCards = false;
     private boolean animateDealing = true;
 
-    private final Deck deck;
     //List of players sorted into correct relative position
     private final PlayerList players;
 
@@ -68,11 +69,10 @@ public class Game implements Parcelable{
 
     private GameState gameState;
 
-    enum PileDecision {DISCARD_PILE, DRAW_PILE}
+    public enum PileDecision {DISCARD_PILE, DRAW_PILE}
 
 
-    Game(final FiveKings fKActivity) {
-        this.deck = Deck.getInstance(true);
+    public Game(final FiveKings fKActivity) {
         this.players = new PlayerList();
         this.players.addPlayer(fKActivity.getString(R.string.defaultComputerPlayer), PlayerList.PlayerType.EXPERT_COMPUTER);
         this.players.addPlayer(fKActivity.getString(R.string.defaultHumanPlayer), PlayerList.PlayerType.HUMAN);
@@ -82,8 +82,7 @@ public class Game implements Parcelable{
     }
 
     //can call this to have another game with same players and deck
-    final boolean init() {
-        deck.shuffle();
+    final public boolean init() {
         this.players.initGame();
         this.roundOf = Rank.getLowestRank();
         this.gameState = GameState.ROUND_START;
@@ -91,30 +90,30 @@ public class Game implements Parcelable{
         return true;
     }
 
-    final void initRound() {
-        Log.i(APP_TAG, "------------");
-        Log.i(APP_TAG, "Round of " + roundOf.getString() + "'s:");
+    final public void initRound() {
+        Log.i(FiveKings.APP_TAG, "------------");
+        Log.i(FiveKings.APP_TAG, "Round of " + roundOf.getString() + "'s:");
         roundStartTime = System.currentTimeMillis();
 
-        //shuffle the deck
-        deck.shuffle();
-        //creates the draw and discard piles and copies the deck to the drawPile (by adding the cards)
-        deck.initDrawAndDiscardPile();
+        //shuffle the deck,
+        Deck.getInstance().shuffle();
+        // create draw and discard pile, and copies the deck to the drawPile (by adding the cards)
+        Deck.getInstance().initDrawAndDiscardPile();
         //deal cards for each player - we just ignore who the "dealer" is, since the deck is guaranteed random
-        for (Player curPlayer : players) curPlayer.initAndDealNewHand(deck, this.roundOf);
+        for (Player curPlayer : players) curPlayer.initAndDealNewHand(this.roundOf);
         //turn up next card onto discard pile - note that the *top* card is actually the last element in the list
-        deck.dealToDiscard();
+        Deck.getInstance().dealToDiscard();
 
         this.players.initRound();
 
     }//end initRound
 
-    final Rank checkEndRound() {
+    final public Rank checkEndRound() {
         //don't advance to next player - instead do that when player is clicked
         //we've come back around to the player who went out
         if (players.nextPlayerWentOut()) {
             roundStopTime = System.currentTimeMillis();
-            Log.d(Game.APP_TAG, String.format("Elapsed time = %.2f seconds", (roundStopTime - roundStartTime) / 1000.0));
+            Log.d(FiveKings.APP_TAG, String.format("Elapsed time = %.2f seconds", (roundStopTime - roundStartTime) / 1000.0));
 
             players.logRoundScores();
 
@@ -124,126 +123,122 @@ public class Game implements Parcelable{
         return roundOf;
     }
 
-    final Card peekDiscardPileCard() {
+    final public Card peekDiscardPileCard() {
         //Possibly null (after just picking up)
-        return deck.peekFromDiscardPile();
+        return Deck.getInstance().peekFromDiscardPile();
     }
 
     /*----------------------------------------------*/
     /* Helper methods so we don't get players list */
     /*----------------------------------------------*/
-    final void logFinalScores() {
+    final public void logFinalScores() {
         this.players.logFinalScores();
     }
 
-    final void setHandDiscard(final Card discard) {
+    final public void setHandDiscard(final Card discard) {
         players.getCurrentPlayer().setHandDiscard(discard);
     }
 
-    final void addPlayer(final String playerName, final PlayerList.PlayerType playerType, final FiveKings fKActivity) {
+    final public void addPlayer(final String playerName, final PlayerList.PlayerType playerType, final FiveKings fKActivity) {
         if ((getRoundOf() != null) && (getRoundOf() != Rank.getLowestRank())) {
-            Log.e(Game.APP_TAG, "Can't add players after Round of 3's");
+            Log.e(FiveKings.APP_TAG, "Can't add players after Round of 3's");
         } else {
             this.players.addPlayer(playerName, playerType);
             relayoutPlayerMiniHands(fKActivity);
         }
     }
 
-    final void updatePlayer(final String playerName, final boolean isHuman, final int iPlayer) {
+    final public void updatePlayer(final String playerName, final boolean isHuman, final int iPlayer) {
         this.players.updatePlayer(playerName, isHuman, iPlayer);
         updatePlayerMiniHands();
     }
 
-    final void deletePlayer(final int iPlayerToDelete, final Activity activity) {
+    final public void deletePlayer(final int iPlayerToDelete, final Activity activity) {
         this.players.deletePlayer(iPlayerToDelete, activity);
     }
 
-    final void relayoutPlayerMiniHands(final Activity a) {
+    final public void relayoutPlayerMiniHands(final Activity a) {
         this.players.relayoutPlayerMiniHands(a);
     }
 
-    final void removePlayerMiniHands(final Activity a) {
+    final public void removePlayerMiniHands(final Activity a) {
         this.players.removePlayerMiniHands(a);
     }
 
-    final void resetPlayerMiniHandsToRoundStart() {
+    final public void resetPlayerMiniHandsToRoundStart() {
         players.resetPlayerMiniHandsRoundStart();
         players.updatePlayerMiniHands();
     }
 
-    final void updatePlayerMiniHands() {
+    public void updatePlayerMiniHands() {
         this.players.updatePlayerMiniHands();
     }
 
-    void setMiniHandsSolid() {this.players.setMiniHandsSolid();}
+    public void setMiniHandsSolid() {this.players.setMiniHandsSolid();}
 
-    Player getPlayerByIndex(final int iPlayer) {
+    public Player getPlayerByIndex(final int iPlayer) {
         return players.get(iPlayer);
     }
 
-    Player getPlayerWentOut() {
+    public Player getPlayerWentOut() {
         return players.getPlayerWentOut();
     }
 
-    Player getCurrentPlayer() {
+    public Player getCurrentPlayer() {
         return players.getCurrentPlayer();
     }
 
-    Player getNextPlayer() {
+    public Player getNextPlayer() {
         return players.getNextPlayer();
     }
 
-    Player getWinner() {
+    public Player getWinner() {
         return players.getWinner();
     }
 
-    boolean isFinalTurn() {
+    public boolean isFinalTurn() {
         return players.getPlayerWentOut() != null;
     }
 
-    void rotatePlayer() {
+    public void rotatePlayer() {
         this.gameState = GameState.TURN_START;
         this.players.rotatePlayer();
     }
 
-    int numPlayers() {
+    public int numPlayers() {
         return this.players.size();
     }
 
-    void animatePlayerMiniHand(final Player setAnimatedPlayerHand, final Animation bounceAnimation) {
+    public void animatePlayerMiniHand(final Player setAnimatedPlayerHand, final Animation bounceAnimation) {
         //starts animation on the appropriate hand and passes back special hint if Human->Human
         this.players.setAnimated(setAnimatedPlayerHand, bounceAnimation);
     }
 
-    boolean currentAndNextAreHuman() {
+    public boolean currentAndNextAreHuman() {
         return players.getCurrentPlayer().isHuman() && players.getNextPlayer().isHuman();
     }
 
     /* Starting and ending turns */
-    void findBestHandStart() {
+    public void findBestHandStart() {
         getNextPlayer().findBestHandStart(isFinalTurn(), peekDiscardPileCard());
     }
 
-    Player endCurrentPlayerTurn() {
+    public Player endCurrentPlayerTurn() {
         return players.endCurrentPlayerTurn();
     }
 
 
     /* GETTERS and SETTERS */
-    Rank getRoundOf() {
+    public Rank getRoundOf() {
         return roundOf;
     }
 
-    GameState getGameState() {
+    public GameState getGameState() {
         return gameState;
     }
 
-    void setGameState(GameState gameState) {
+    public void setGameState(GameState gameState) {
         this.gameState = gameState;
-    }
-
-    Deck getDeck() {
-        return deck;
     }
 
 
@@ -255,24 +250,25 @@ public class Game implements Parcelable{
     }
 
     @Override
-    public void writeToParcel(Parcel out, int flags) {
-        out.writeByte((byte)(showComputerCards ? 1:0));
-        out.writeByte((byte)(animateDealing ? 1:0));
+    public void writeToParcel(Parcel parcel, int flags) {
+        parcel.writeByte((byte) (showComputerCards ? 1 : 0));
+        parcel.writeByte((byte) (animateDealing ? 1 : 0));
 
-        out.writeLong(roundStartTime);
-        out.writeLong(roundStopTime);
+        parcel.writeLong(roundStartTime);
+        parcel.writeLong(roundStopTime);
 
-        out.writeValue(deck);
-        out.writeValue(players);
-        out.writeValue(roundOf);
-        out.writeString(gameState.toString());
+        //Don't need to save Deck, but we do need the discard and drawpiles
+        parcel.writeValue(Deck.getInstance());
+        parcel.writeValue(players);
+        parcel.writeValue(roundOf);
+        parcel.writeString(gameState.toString());
     }
 
     public static final Parcelable.Creator<Game> CREATOR
             = new Parcelable.Creator<Game>() {
             @Override
-            public Game createFromParcel(Parcel in) {
-                return new Game(in);
+            public Game createFromParcel(Parcel parcel) {
+                return new Game(parcel);
             }
 
             @Override
@@ -282,16 +278,17 @@ public class Game implements Parcelable{
         };
 
     //recreate object from parcel
-    private Game(Parcel in) {
-        showComputerCards = in.readByte() != 0;
-        animateDealing = in.readByte() != 0;
+    private Game(Parcel parcel) {
+        showComputerCards = parcel.readByte() != 0;
+        animateDealing = parcel.readByte() != 0;
 
-        roundStartTime = in.readLong();
-        roundStopTime = in.readLong();
+        roundStartTime = parcel.readLong();
+        roundStopTime = parcel.readLong();
 
-        deck = (Deck) in.readValue(Deck.class.getClassLoader());
-        players = (PlayerList) in.readValue(PlayerList.class.getClassLoader());
-        roundOf = (Rank) in.readValue(Rank.class.getClassLoader());
-        gameState = GameState.valueOf(in.readString());
+        //we throw away the deck itself, but keep the discard and drawpiles
+        parcel.readValue(Deck.class.getClassLoader());
+        players = (PlayerList) parcel.readValue(PlayerList.class.getClassLoader());
+        roundOf = (Rank) parcel.readValue(Rank.class.getClassLoader());
+        gameState = GameState.valueOf(parcel.readString());
     }
 }

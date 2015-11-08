@@ -1,5 +1,8 @@
 package com.pipperpublishing.fivekings;
 
+import android.os.Parcel;
+import android.os.Parcelable;
+
 import java.util.ArrayList;
 
 /**
@@ -13,8 +16,10 @@ import java.util.ArrayList;
  * 3/4/2015 Removed deprecated methods myShuffle and getHighestScoreCard
  * 3/21/2015    Moved  shuffle(), deal(), peekNext should be moved to the Deck/DrawPile/DiscardPile class via CardDealing interface
  * 10/19/2015   Removed deprecated CardList(Card); cleaned up getString
+ * 11/9/2015    Implement Parcelable by creating custom writeToParcel and createFromParcel
+ *              Pass Card.classloader to read/write
  */
-class CardList extends ArrayList<Card> {
+public class CardList extends ArrayList<Card> implements Parcelable {
 
     protected CardList() {
         super();
@@ -42,5 +47,34 @@ class CardList extends ArrayList<Card> {
         return sCards.toString();
     }
 
+    /* PARCELING write and creation methods */
+
+    public CardList(Parcel parcel) {
+        parcel.readList(this, Card.class.getClassLoader());
+    }
+
+    public int describeContents() {
+        return 0;
+    }
+
+    @Override
+    public void writeToParcel(Parcel parcel, int flags) {
+        parcel.writeList(this);
+    }
+
+    // Method to recreate a CardList from a Parcel
+    public static Creator<CardList> CREATOR = new Creator<CardList>() {
+
+        @Override
+        public CardList createFromParcel(Parcel parcel) {
+            return new CardList(parcel);
+        }
+
+        @Override
+        public CardList[] newArray(int size) {
+            return new CardList[size];
+        }
+
+    };
 
 }

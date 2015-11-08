@@ -1,4 +1,4 @@
-package com.pipperpublishing.fivekings;
+package com.pipperpublishing.fivekings.view;
 
 import android.content.ClipData;
 import android.content.ClipDescription;

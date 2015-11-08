@@ -1,4 +1,4 @@
-package com.pipperpublishing.fivekings.util;
+package com.pipperpublishing.fivekings.view;
 
 import android.view.animation.AlphaAnimation;
 

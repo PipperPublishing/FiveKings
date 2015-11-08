@@ -9,7 +9,7 @@ import android.os.Parcelable;
  * 2/3/2015 Removed suit NONE (was here for Jokers)
  * 9/3/2015 Made Suit parcelable using http://stackoverflow.com/questions/2836256/passing-enum-or-object-through-an-intent-the-best-solution
  */
-enum Suit implements Parcelable{
+public enum Suit implements Parcelable{
     SPADES("S"),HEARTS("H"),DIAMONDS("D"),CLUBS("C"),STARS("*");
 
     private final String suitString;
@@ -21,7 +21,7 @@ enum Suit implements Parcelable{
     String getString() {
         return suitString;
     }
-    int getOrdinal() {
+    public int getOrdinal() {
         return this.ordinal();
     }
 

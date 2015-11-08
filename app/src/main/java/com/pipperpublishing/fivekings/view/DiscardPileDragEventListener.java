@@ -1,12 +1,10 @@
-package com.pipperpublishing.fivekings;
+package com.pipperpublishing.fivekings.view;
 
 import android.content.ClipData;
 import android.content.ClipDescription;
 import android.util.Log;
 import android.view.DragEvent;
 import android.view.View;
-
-import com.pipperpublishing.fivekings.util.Utilities;
 
 /**
  * Created by Jeffrey on 2/21/2015 using example from http://developer.android.com/guide/topics/ui/drag-drop.html

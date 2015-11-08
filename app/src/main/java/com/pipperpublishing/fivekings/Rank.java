@@ -10,7 +10,7 @@ import android.os.Parcelable;
  * 2/4/2015: Moved JOKER into Card and cleaned up accordingly
  * * 9/3/2015 Made Rank parcelable using http://stackoverflow.com/questions/2836256/passing-enum-or-object-through-an-intent-the-best-solution
  */
-enum Rank implements Parcelable{
+public enum Rank implements Parcelable{
     THREE(3,"3"),FOUR(4,"4"),FIVE(5,"5"),SIX(6,"6"),SEVEN(7,"7"),EIGHT(8,"8"),NINE(9,"9"),
     TEN(10,"10"),JACK(11,"J"),QUEEN(12,"Q"),KING(13,"K");
 
@@ -34,15 +34,15 @@ enum Rank implements Parcelable{
     }
 
     //GETTERS
-    int getRankValue() {
+    public int getRankValue() {
         return value;
     }
 
-    int getOrdinal() {
+    public int getOrdinal() {
         return this.ordinal();
     }
 
-    String getString() {
+    public String getString() {
         return string;
     }
 

@@ -1,5 +1,8 @@
 package com.pipperpublishing.fivekings;
 
+import android.os.Parcel;
+import android.os.Parcelable;
+
 /**
  * Created by Jeffrey on 3/12/2015.
  * 3/12/2015    For testing new algorithms on computer logic
@@ -82,5 +85,33 @@ class StrategyComputerPlayer extends ComputerPlayer {
         else testBetterThanBest =  (testHand.calculateValueAndScore(isFinalTurn) < bestHand.calculateValueAndScore(isFinalTurn));
         return testBetterThanBest;
     }
+
+    /* PARCELABLE read/write for StrategyComputerPlayer (use superclass implementation) */
+    protected StrategyComputerPlayer(Parcel parcel) {
+        super(parcel);
+    }
+
+    @Override
+    public int describeContents() {
+        return 0;
+    }
+
+    @Override
+    public void writeToParcel(Parcel parcel, int flags) {
+        super.writeToParcel(parcel, flags);
+    }
+
+    @SuppressWarnings("unused")
+    public static final Parcelable.Creator<StrategyComputerPlayer> CREATOR = new Parcelable.Creator<StrategyComputerPlayer>() {
+        @Override
+        public StrategyComputerPlayer createFromParcel(Parcel in) {
+            return new StrategyComputerPlayer(in);
+        }
+
+        @Override
+        public StrategyComputerPlayer[] newArray(int size) {
+            return new StrategyComputerPlayer[size];
+        }
+    };
 
 }

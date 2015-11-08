@@ -359,54 +359,74 @@ DONE Updated icon to use new lightning bolt King design
 DONE: Checks that you have at least 2 players when you try to delete; add apppropriate message
 --------------------
 0.8.03 Get fKActivity out of Player methods, or move them to FiveKings
+Other clean-up
+
+-----------------
+v0.8.10 Playability
+
+FIXED: Option to highlight the wildcard - Tutorial mode
+FIXED- Make "Drag here" brighter
+FIXED Timer during Permutations rounds (in Discards loop) and transition to Heuristics for other rounds
+[Released to Google Play Beta]
+
+----------------
+v0.8.11 Fix parceling
+BUG:
+TESTING: Fixed state management so you can navigate away and return to game at the same point
+BUG: 1. Set highlight, 2. Turn landscape, 3. Open Settings - crash
+
+
+CHANGES:
+- Moved View elements to separate view package
+- Separate option for highlighting wildcards
+[Ready to release
+
+------------------
+v0.8.12
+- Add ? pop-up for Meld
+- Hint Toasts should stay longer; some should be dialogs that you dismiss (distinguish between Hints and Info Toasts - different call)
+- Hint overlays like Google (arrows and text) (Draw, Discard, Meld area, Your cards)
+- Problem where cards get stuck at bottom of screen (may be on Q's or K's round with card to far right) - look at addToMeld and drag code
+-- When you drag card to a meld it seems to stay in the main cards
+BUG: SOmetimes Menu>New Game followed by Add Player doesn't show the added player
+----------------------
+v0.8.13
+- Add two more levels of Computer player (Easy, Hard, Expert)
+- Warn you if you don't meld in your final turn (or automatically meld your hand)
+- [Rob] Guided practice round
+- [Play for me] option (just uses Computer logic) - click on your hand again to play iy
+   - or just copies cards to the meld area and then melds them using meld.check
+   - or force show Computer hand for first two rounds to see how it plays
+=====================
+
+v0.9.01 Graphics
+
+- When Computer hand is displayed, it starts from center and if there are lots of pairs they go off the screen
+  (unlike Human hand which expands from center in each direction)
+- Redisplay red/yellow hand outlines on restart; also white outlines seem inconsistent
+- Bounce the picked up card once it's in the hand (or highlight it?)
+- Slide out hand animation
+- Animate open hands into view from mini-hands
+- 1. Expect the game to play the compute turn without clicking, while showing your (human) hand still
+- Show score table at end - possibly with round-by-round scores?
+    - Try exploding into middle of screen with fade-out
+    - other comments like Phase 10: pick up a discard and say "Thanks! I really needed that" or "Ouch!"
+- [Play] button and Scores on cards should scale to card size
+
+=======================
+v0.9.50 Cleanup
 
 - Player methods use fKActivity and a lot of convoluted logic
     - Improve logic flow and understandability of FiveKings, Game, PlayerLayout etc
     - Clean up Game state flow and handling
     - push player Hand updates to individual players rather than mass updates of screen
     - more sub-classing rather than if (isHuman) type logic
-
------------------
-v0.8.04
-
 - Clean up TODO:A 's
 - Remove smells where possible :)
-- LOTS of cleaning up in FiveKings - follow flow
-
-------------------
-v0.8.10
-
-BUG:A Check if still true? Heuristics is throwing away wildcard when you have a partial meld of 4-4 and only full melds;
-BUG:A Permutations won't build a K onto T*Q
-
-Heuristics:
-BUG:A Heuristics won't build a sequence X-Y-Jok-Z; not looking at this - use meld.check?
-Add in more than one sequence and longer sequences than 3
-- Loop over fullMeld and fullSequence alternatives (use perms?)
-
-    - Logic for pick up and discard on final turn is different. Goal is only to minimize score. So DrawVsDiscard comparator should only be comparing that potential.
-      After picking from  Discard pile, no change should be necessary. After picking from Draw pile minimize score.
-
-
-=======================
-v0.9.01 Graphics
-
-- Redisplay red/yellow hand outlines on restart
-[Tim] Option to highlight the wildcard, warn on discarding it, or warn if you didn't meld (perhaps just on the opening rounds)
-- Bounce the picked up card once it's in the hand (or highlight it?)
-- New icon and screen shots (including tablet ones)
-    - Slide out hand animation
-    - Animate open hands into view from mini-hands
-- 1. Expect the game to play the compute turn without clicking, while showing your (human) hand still
-- Show score table at end - possibly with round-by-round scores?
-    - Try exploding into middle of screen with fade-out
-    - other comments like Phase 10: pick up a discard and say "Thanks! I really needed that" or "Ouch!"
-- Hint overlays like Google (arrows and text)
-- [Play] button and Scores on cards should scale to card size
-BUG: Several times where cards got "stuck" on the bottom of the screen and didn't disappear
+- LOTS of cleaning up in FiveKings - follow f
 
 =====================
-v1.1.01 Improving Scoring and Valuation
+v1.1.01 Scoring and Valuation Bugs
 (deemphasize this because computer is good enough)
 
 BUGS
@@ -414,9 +434,18 @@ BUGS
     - I've seen a couple of times when the computer gave itself more points than it should have.  I think it happens if it
       is saving one card for a run, e.g. 10C,JC, but has two other of one of those cards (JS,JD).  It doesn't move the jack
       over to the pair to meld them.
-
 BUG: Meld.check on Heuristics is showing Joker-3-4
-- Option to use Easy Computer algorithm
+- Computer should have kept KS-KD-QS-6-4, but instead kept KS-KD-9-6-4 on round of 5's
+
+BUG:A Check if still true? Heuristics is throwing away wildcard when you have a partial meld of 4-4 and only full melds;
+BUG:A Permutations won't build a K onto T*Q
+
+Heuristics:
+BUG:A Heuristics won't build a sequence X-Y-Jok-Z; not looking at this - use meld.check?
+
+
+================
+v1.2 Improved Scoring and Valuation
 - Look at melding "potential" of single unmelded cards you keep (not just partial melds)
 - Don't discard what others want (wild cards, or cards they picked up)
 Permutations:
@@ -424,12 +453,21 @@ Permutations:
 - Eliminate looking at other perms that are equivalent score (e.g. (K* KS KH) = (KS K* KH)) - use a hash?
 - ??use sorted lists
 - implement Meld.needsCheck
-- track what is left in DrawPile (or cheat and remember it)
+- track what is left in DrawPile
 
 Use Meld.check somehow?
     - note the numCard breakpoint when we switched to permutations and don't look for sequences bigger than this
     - should allow us to build bigger sequences
+Improved Discard logic
+    - Logic for pick up and discard on final turn is different. Goal is only to minimize score. So DrawVsDiscard comparator should only be comparing that potential.
+      After picking from  Discard pile, no change should be necessary. After picking from Draw pile minimize score.
 
+Heuristics:
+Add in more than one sequence and longer sequences than 3
+- Loop over fullMeld and fullSequence alternatives (use perms?)
+
+
+================
 v1.x
 - Look at CardList implementation and consider LinkedHashSet or others which provide
     - check for non-duplicates

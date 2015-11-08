@@ -1,7 +1,11 @@
 package com.pipperpublishing.fivekings;
 
 import android.os.AsyncTask;
+import android.os.Parcel;
+import android.os.Parcelable;
 import android.util.Log;
+
+import com.pipperpublishing.fivekings.view.FiveKings;
 
 /**
  * Created by Jeffrey on 3/12/2015.
@@ -19,33 +23,43 @@ import android.util.Log;
  * 10/16/2015   Moved endTurnCheckRound out of animation loop so that it happens immediately and next hand doesn't have to wait for animation finish
  *  * 10/18/2015   Change per player updateHandsAndCards to returning a showCards flag
  *  10/20/2015  Hide drawPile and discardPile - access through deck
+ *  11/5/2015   Log overall turn time and individual thread time to see breakdown for cutover Permutations -> Heuristics
+ *              Add an extra sleep thread that sleeps for PERMUTATION_THRESHOLD milliseconds; if that runs to completion, then we need to terminate the other threads and switch to Heuristics
+ *              If the other threads finish first, then terminate the sleep thread.
+ *              (Can't use approach of waiting on join(time), because that is serial and we want to interrupt all threads
+ * 11/8/2015    Support parcelable. Move Thread declaration to be dynamic
  */
 
 public class ComputerPlayer extends Player {
     protected static final int PERMUTATION_THRESHOLD=750; //if longer than 0.75s for each player we switch to heuristic approach
-    private Thread[] t;
+    private static final String SLEEP_THREAD_NAME="Sleep Thread";
+    final private ThreadGroup threadGroup = new ThreadGroup("HandThreads");
+    private Thread[] t; //the hand calculation threads (for different discards)
     private ThreadedHand[] testHand;
     private int numThreads;
 
-    private MeldedCardList.MeldMethod method = MeldedCardList.MeldMethod.PERMUTATIONS;
+    private Meld.MeldMethod method = Meld.MeldMethod.PERMUTATIONS;
 
 
     ComputerPlayer(final String name) {
         super(name);
     }
 
+    //Copy constructor for converting from Human to Computer player
     ComputerPlayer(final Player player) {
         super(player);
 
         //Set the class variables that are additional to ComputerPlayer
-        this.method = MeldedCardList.MeldMethod.HEURISTICS;
+        //TODO:B use the current method instead of always using heuristics to do the initial meld
+
+        this.method = Meld.MeldMethod.HEURISTICS;
         initAfterUpdateToComputer();
     }
 
     @Override
     boolean initGame() {
         super.initGame();
-        this.method = MeldedCardList.MeldMethod.PERMUTATIONS;
+        this.method = Meld.MeldMethod.PERMUTATIONS;
         numThreads = 0;
         t = null;
         testHand = null;
@@ -53,31 +67,32 @@ public class ComputerPlayer extends Player {
     }
 
     @Override
-    final boolean initAndDealNewHand(final Deck deck,final Rank roundOf) {
-        super.initAndDealNewHand(deck, roundOf);
+    final boolean initAndDealNewHand(final Rank roundOf) {
+        super.initAndDealNewHand(roundOf);
         initAfterUpdateToComputer();
         return true;
     }
 
     final void initAfterUpdateToComputer() {
-        //TODO:B use the current method instead of always using heuristics to do the initial meld
         //If hand is null then we haven't dealt yet and these will get initialized at that point
         if (hand != null) {
-            hand.meldAndEvaluate(method, false);
-            this.numThreads = this.hand.getRoundOf().getRankValue() + 1;
-            t = new Thread[numThreads];
-            testHand = new ThreadedHand[numThreads];
+            try {
+                hand.meldAndEvaluate(method,this , false);
+            } catch (InterruptedException e) {
+                //ignore
+            }
+
         }
     }
 
     @Override
     //In Computer, there is no actual "discard"; it's handled by findBestHand
-    final Card discardFromHand(final Card cardToDiscard) {
+    final public Card discardFromHand(final Card cardToDiscard) {
         return cardToDiscard;
     }
 
     @Override
-    final boolean isHuman() {return false;}
+    final public boolean isHuman() {return false;}
 
 
     /*----------------------------------------*/
@@ -85,23 +100,23 @@ public class ComputerPlayer extends Player {
     /*----------------------------------------*/
     @Override
     //Must be some way to simplify showComputerCards and hideHands... into one player call
-    void prepareTurn(final FiveKings fKActivity) {
+    final public void prepareTurn(final FiveKings fKActivity) {
         //base method sets PLAY_TURN and updates hands and cards
         super.prepareTurn(fKActivity);
         //if showCards is false, no reason to force another click - just go ahead and play
         if (!fKActivity.isShowComputerCards()) {
-            this.getMiniHandLayout().getCardView().clearAnimation();
-            takeTurn(fKActivity, null, fKActivity.getmGame().getDeck(),fKActivity.getmGame().isFinalTurn());
+            this.getMiniHandLayout().stopAnimateMiniHand();
+            takeTurn(fKActivity, null, fKActivity.getmGame().isFinalTurn());
         }
     }
 
     @Override
-    boolean showCards(final boolean isShowComputerCards) {
+    public boolean showCards(final boolean isShowComputerCards) {
         return isShowComputerCards;
     }
 
     @Override
-    void takeTurn(final FiveKings fKActivity, final Game.PileDecision drawOrDiscardPile, final Deck deck, final boolean isFinalTurn) {
+    final public void takeTurn(final FiveKings fKActivity, final Game.PileDecision drawOrDiscardPile, final boolean isFinalTurn) {
 
         final StringBuilder turnInfo = new StringBuilder(100);
         turnInfo.setLength(0);
@@ -112,6 +127,7 @@ public class ComputerPlayer extends Player {
         //improve hand by picking up from Discard pile or from Draw pile - use pickFromDiscardPile to decide
         //Pick from drawPile unless you can meld/match from discardPile
 
+        // We calculate playerStartTime here because it's the wall clock time that the player sees (as opposed to the thread time which starts in findBestStart)
         final long playerStartTime = System.currentTimeMillis();
 
         //put this on a separate thread so we display a spinner while it works
@@ -120,23 +136,24 @@ public class ComputerPlayer extends Player {
 
             @Override
             protected Game.PileDecision doInBackground(Void... params) {
-                final Game.PileDecision pickFrom = tryDiscardOrDrawPile(isFinalTurn, deck.peekFromDiscardPile(), deck.peekFromDrawPile());
+                final Game.PileDecision pickFrom = tryDiscardOrDrawPile(isFinalTurn, Deck.getInstance().peekFromDiscardPile(), Deck.getInstance().peekFromDrawPile());
                 //now actually deal the card
                 if (pickFrom == Game.PileDecision.DISCARD_PILE) {
-                    drawnCard = deck.drawFromDiscardPile();
+                    drawnCard = Deck.getInstance().drawFromDiscardPile();
                     turnInfo.append(String.format(turnInfoFormat, ComputerPlayer.this.getName(), drawnCard.getCardString(),
                             "Discard", getHandDiscard().getCardString()));
                 } else { //DRAW_PILE
                     //if we decided to not use the Discard pile, then tryDiscardOrDrawPile has already found the right discard for the Draw pile
-                    drawnCard = deck.drawFromDrawPile();
+                    drawnCard = Deck.getInstance().drawFromDrawPile();
                     turnInfo.append(String.format(turnInfoFormat, ComputerPlayer.this.getName(), drawnCard.getCardString(),
                             "Draw", getHandDiscard().getCardString()));
                 }
                 final long playerStopTime = System.currentTimeMillis();
-                if (ComputerPlayer.this.method == MeldedCardList.MeldMethod.PERMUTATIONS)
-                    ComputerPlayer.this.method = ((playerStopTime - playerStartTime) < PERMUTATION_THRESHOLD) ? MeldedCardList.MeldMethod.PERMUTATIONS : MeldedCardList.MeldMethod.HEURISTICS;
+                Log.d(FiveKings.APP_TAG, String.format("Turn time was %.3f seconds", (playerStopTime-playerStartTime)/1000.0));
+                if (ComputerPlayer.this.method == Meld.MeldMethod.PERMUTATIONS)
+                    ComputerPlayer.this.method = ((playerStopTime - playerStartTime) < PERMUTATION_THRESHOLD) ? Meld.MeldMethod.PERMUTATIONS : Meld.MeldMethod.HEURISTICS;
 
-                Log.d(Game.APP_TAG, turnInfo.toString());
+                Log.d(FiveKings.APP_TAG, turnInfo.toString());
 
                 return pickFrom;
             }
@@ -167,28 +184,43 @@ public class ComputerPlayer extends Player {
     @Override
     void logTurn(final boolean isFinalTurn) {
         //Use final scoring (wild cards at full value) on last-licks turn (when a player has gone out)
-        if (this.method == MeldedCardList.MeldMethod.PERMUTATIONS)
-            Log.d(Game.APP_TAG, "Player " + this.getName() + ": Using Permutations");
-        else Log.d(Game.APP_TAG, "Player " + this.getName() + ": Using Heuristics");
+        if (this.method == Meld.MeldMethod.PERMUTATIONS)
+            Log.d(FiveKings.APP_TAG, "Player " + this.getName() + ": Using Permutations");
+        else Log.d(FiveKings.APP_TAG, "Player " + this.getName() + ": Using Heuristics");
         String sValuationOrScore = isFinalTurn ? "Score=" : "Valuation=";
-        Log.d(Game.APP_TAG, "before...... " + this.getMeldedString(true) + this.getPartialAndSingles(true) + " "
+        Log.d(FiveKings.APP_TAG, "before...... " + this.getMeldedString(true) + this.getPartialAndSingles(true) + " "
                 + sValuationOrScore + this.getHandValueOrScore(isFinalTurn));
     }
 
     protected Game.PileDecision tryDiscardOrDrawPile(final boolean isFinalTurn, final Card discardPileCard, final Card drawPileCard) {
-        Game.PileDecision decision;
+        Game.PileDecision decision = null;
+        boolean foundBestHand;
 
-        //findBestHandStart for Discard called on previous players completion (or on round start)
-        Hand bestHand = findBestHandFinish(discardPileCard);
-        //if the discard is not the drawn card then use Discard Pile
-        if ((bestHand.getDiscard() != discardPileCard) && keepDiscardDecision(bestHand, this.hand, discardPileCard, isFinalTurn)) {
-            decision = Game.PileDecision.DISCARD_PILE;
-            this.hand = bestHand;
-        } else {
-            decision = Game.PileDecision.DRAW_PILE;
-            findBestHandStart(isFinalTurn, drawPileCard);
-            this.hand = findBestHandFinish(drawPileCard);
-        }
+        // If Permutations finishes successfully, then this loop will run once; if it times out it will run again using Heuristics
+        do {
+            foundBestHand = true;
+            //try/catch for whether findBestHandFinish is interrupted because it takes too long - only for Permutations
+            try {
+                //findBestHandStart for Discard called on previous players completion (or on round start)
+                Hand bestHand = findBestHandFinish(discardPileCard);
+                //if the discard is not the drawn card then use Discard Pile
+                if ((bestHand.getDiscard() != discardPileCard) && keepDiscardDecision(bestHand, this.hand, discardPileCard, isFinalTurn)) {
+                    decision = Game.PileDecision.DISCARD_PILE;
+                    this.hand = bestHand;
+                } else {
+                    decision = Game.PileDecision.DRAW_PILE;
+                    findBestHandStart(isFinalTurn, drawPileCard);
+                    this.hand = findBestHandFinish(drawPileCard);
+                }
+            } catch (InterruptedException e) {
+                if (method == Meld.MeldMethod.HEURISTICS) throw new RuntimeException(FiveKings.APP_TAG + "tryDiscardOrDrawPile: interrupted in Heuristics loop");
+                //reset to using Heuristics and run findBestHandStart
+                Log.d(FiveKings.APP_TAG,"Permutations timed out; restarting with Heuristics");
+                foundBestHand = false;
+                method = Meld.MeldMethod.HEURISTICS;
+                findBestHandStart(isFinalTurn, discardPileCard);
+            }
+        }while (!foundBestHand);
         return decision; //just for logging and animation
     }
 
@@ -200,39 +232,60 @@ public class ComputerPlayer extends Player {
     //Computer has to use this version which loops through possible discards to find the best one
     @Override
     void findBestHandStart(final boolean isFinalTurn, final Card addedCard) {
-        Log.d(Game.APP_TAG,"findBestHandStart: addedCard = " + addedCard.getCardString());
+        Log.d(FiveKings.APP_TAG,"findBestHandStart: addedCard = " + addedCard.getCardString());
         //Loop over possible discards, so that now addAndEvaluate just looks at your hand without added
         //in fact, each loop the actual hand is different (including hand.cards) and will be saved if best
         CardList cardsWithAdded = new CardList(hand);
         cardsWithAdded.add(addedCard);
+
+        this.numThreads = cardsWithAdded.size(); //number of possible discards to examine
+        t = new Thread[numThreads];
+        testHand = new ThreadedHand[numThreads];
+
         int iThread = 0;
         for (Card disCard : cardsWithAdded) {
             CardList cards = new CardList(cardsWithAdded);
             cards.remove(disCard);
 
-            testHand[iThread] = new ThreadedHand(this.hand.roundOf, cards, disCard, this.method, isFinalTurn); //creates new hand with replaced cards
-            t[iThread] = new Thread(testHand[iThread]);
+            testHand[iThread] = new ThreadedHand(this.hand.getRoundOf(), cards, disCard, this.method, isFinalTurn); //creates new hand with replaced cards
+            t[iThread] = new Thread(threadGroup,testHand[iThread]);
             t[iThread].start(); //calls meldAndEvaluate
             iThread++;
         }
+
     }
 
-    private Hand findBestHandFinish(final Card addedCard) {
+    private Hand findBestHandFinish(final Card addedCard) throws  InterruptedException {
+        /* start sleeper timer once we start waiting; findBestStart is ok to run in the background between the previous player's discard
+        and when you click on the next computer player
+         */
+        final Thread sleepThread = new Thread(new SleepThread(PERMUTATION_THRESHOLD),SLEEP_THREAD_NAME);
+        sleepThread.start();
+
         Hand bestHand = this.hand;
         bestHand.setDiscard(addedCard); //default if we don't improve the score
-        //wait for all threads to complete
+        //wait for all threads to complete, but only for PERMUTATION_THRESHOLD time - the sleep timer will interrupt them all otherwise
         for (int iThread=0; iThread < this.numThreads; iThread++) {
+            if (t[iThread].isInterrupted()) throw (new InterruptedException());
             try {
                 t[iThread].join();
+
             } catch (InterruptedException e) {
-                e.printStackTrace();
+                Log.d(FiveKings.APP_TAG,"findBestHandFinish interrupted in join()...");
             }
+            Log.d(FiveKings.APP_TAG, String.format("Thread %d took from %d to %d = %.3fs", iThread, testHand[iThread].getThreadStart(),testHand[iThread].getThreadStop(),
+                    (testHand[iThread].getThreadStop() - testHand[iThread].getThreadStart()) / 1000.0));
         }
+        //Interrupt the sleep thread because we finished successfully
+        Log.d(FiveKings.APP_TAG, "Interrupting sleep thread");
+        sleepThread.interrupt();
+
+
         for (int iThread=0; iThread < this.numThreads; iThread++) {
             if (isFirstBetterThanSecond(testHand[iThread], bestHand, testHand[iThread].isFinalTurn)) {
                 bestHand = testHand[iThread];
                 if (bestHand.calculateValueAndScore(testHand[iThread].isFinalTurn) == 0) {
-                    Log.d(Game.APP_TAG, String.format("findBestHandFinish: Went out after %d/%d possible discards",
+                    Log.d(FiveKings.APP_TAG, String.format("findBestHandFinish: Went out after %d/%d possible discards",
                             iThread, this.numThreads));
                     break;
                 }
@@ -247,24 +300,96 @@ public class ComputerPlayer extends Player {
     //Threaded version of Hand for multi-threading and for spinner display
     //(computation has to be in the non-UI thread because the spinner has to run in the UI thread)
     private class ThreadedHand extends Hand implements Runnable {
-        final private MeldMethod method;
+        final private Meld.MeldMethod method;
         final private boolean isFinalTurn;
+        private long threadStart;
+        private long threadStop;
 
 
-        ThreadedHand (final Rank roundOf, final CardList cards, final Card discard,final MeldMethod method, final boolean isFinalTurn) {
+        ThreadedHand (final Rank roundOf, final CardList cards, final Card discard,final Meld.MeldMethod method, final boolean isFinalTurn) {
             super(roundOf, cards, discard);
             this.method = method;
             this.isFinalTurn = isFinalTurn;
+            this.threadStart = 0;
+            this.threadStop = 0;
+        }
+
+        @Override
+        public void run()  {
+            threadStart = System.currentTimeMillis();
+            try {
+                this.meldAndEvaluate(this.method, ComputerPlayer.this , this.isFinalTurn);
+            } catch (InterruptedException e) {
+                //just break out of this thread
+                Log.d(FiveKings.APP_TAG, String.format("Thread %s interrupted!",Thread.currentThread().getName()));
+            }
+            threadStop = System.currentTimeMillis();
+        }
+
+        long getThreadStart() {
+            return threadStart;
+        }
+
+        long getThreadStop() {
+            return threadStop;
+        }
+    }
+
+    /* INNER CLASS SleepThread */
+    //Just sleeps for the PERMUTATION_THRESHOLD and then interrupts the other threads
+    private class SleepThread implements Runnable {
+        final private long sleepTime;
+
+        SleepThread(final long sleepTime) {
+            this.sleepTime = sleepTime;
         }
 
         @Override
         public void run() {
-            this.meldAndEvaluate(this.method, this.isFinalTurn);
+            final long sleepStartTime = System.currentTimeMillis();
+            try {
+                Thread.sleep(sleepTime);
+            } catch (InterruptedException e) {
+                // if interrupted, this means the other threads finished their work before the sleep ended
+                Log.d(FiveKings.APP_TAG, String.format("Sleep interrupted after %.3fs", (System.currentTimeMillis() - sleepStartTime)/1000.0 ));
+                return;
+            }
+            Log.d(FiveKings.APP_TAG, String.format("Sleep finished after %.3fs; interrupting other threads", (System.currentTimeMillis() - sleepStartTime)/1000.0 ));
+            Thread.currentThread().getThreadGroup().interrupt();
         }
-
     }
 
+    /* PARCELABLE read/write for ComputerPlayer (use superclass implementation) */
+    protected ComputerPlayer(Parcel parcel) {
+        super(parcel);
+        //don't need thread member variables
+        method = Meld.MeldMethod.valueOf(parcel.readString());
+    }
 
+    @Override
+    public int describeContents() {
+        return 0;
+    }
+
+    @Override
+    public void writeToParcel(Parcel parcel, int flags) {
+        super.writeToParcel(parcel, flags);
+        //don't need thread member variables
+        parcel.writeString(method.toString());
+    }
+
+    @SuppressWarnings("unused")
+    public static final Parcelable.Creator<ComputerPlayer> CREATOR = new Parcelable.Creator<ComputerPlayer>() {
+        @Override
+        public ComputerPlayer createFromParcel(Parcel in) {
+            return new ComputerPlayer(in);
+        }
+
+        @Override
+        public ComputerPlayer[] newArray(int size) {
+            return new ComputerPlayer[size];
+        }
+    };
 
 }//end ComputerPlayer
 

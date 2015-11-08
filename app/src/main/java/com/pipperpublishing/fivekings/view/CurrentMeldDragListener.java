@@ -1,4 +1,4 @@
-package com.pipperpublishing.fivekings;
+package com.pipperpublishing.fivekings.view;
 
 import android.content.ClipData;
 import android.content.ClipDescription;
@@ -7,7 +7,7 @@ import android.view.DragEvent;
 import android.view.View;
 import android.widget.RelativeLayout;
 
-import com.pipperpublishing.fivekings.util.Utilities;
+import com.pipperpublishing.fivekings.CardList;
 
 /**
  * Created by Jeffrey on 2/27/2015.

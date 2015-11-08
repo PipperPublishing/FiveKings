@@ -18,7 +18,7 @@ import java.util.Comparator;
  * 3/13/2015    Subclassed Jokers
  * 8/30/2015    Make Card parcelable so deck etc can be parceled for savedInstanceState
  */
-class Card implements Parcelable{
+public class Card implements Parcelable{
     private static final int WILD_CARD_VALUE =20;
 
     //sorting for sequences (within the same suit)
@@ -75,7 +75,7 @@ class Card implements Parcelable{
 
     //true if a rank wildcard ; false if not (or null)
     //Jokers handled in subclass
-    boolean isWildCard(final Rank wildCardRank){
+    public boolean isWildCard(final Rank wildCardRank){
         return ((wildCardRank != null) && (rank == wildCardRank));
     }
 
@@ -95,16 +95,16 @@ class Card implements Parcelable{
     final int getRankDifference(final Rank rank) {return this.getRankValue() - rank.getRankValue();}
 
     /* GETTERS and SETTERS */
-    boolean isJoker() {
+    public boolean isJoker() {
         return false;
     }
 
     final String getCardString() {return this.cardString;}
 
-    final Rank getRank() {
+    final public Rank getRank() {
         return this.rank;
     }
-    final Suit getSuit() {
+    final public Suit getSuit() {
         return this.suit;
     }
 
@@ -125,8 +125,7 @@ class Card implements Parcelable{
         out.writeValue(rank);
     }
 
-    public static final Parcelable.Creator<Card> CREATOR
-            = new Parcelable.Creator<Card>() {
+    public static final Parcelable.Creator<Card> CREATOR = new Parcelable.Creator<Card>() {
         @Override
         public Card createFromParcel(Parcel in) {
             return new Card(in);

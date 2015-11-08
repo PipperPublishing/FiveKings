@@ -1,6 +1,10 @@
 package com.pipperpublishing.fivekings;
 
+import android.os.Parcel;
+import android.os.Parcelable;
 import android.util.Log;
+
+import com.pipperpublishing.fivekings.view.FiveKings;
 
 /**
  * Created by Jeffrey on 3/12/2015.
@@ -12,7 +16,7 @@ import android.util.Log;
  *  10/20/2015  Hide drawPile and discardPile - access through deck
  *
  */
-class HumanPlayer extends Player {
+public class HumanPlayer extends Player {
     HumanPlayer(final String name) {
         super(name);
     }
@@ -21,8 +25,8 @@ class HumanPlayer extends Player {
     }
 
     @Override
-    final boolean initAndDealNewHand(final Deck deck,final Rank roundOf) {
-        super.initAndDealNewHand(deck, roundOf);
+    final boolean initAndDealNewHand(final Rank roundOf) {
+        super.initAndDealNewHand(roundOf);
         this.hand.calculateValueAndScore(false);
         return true;
     }
@@ -38,7 +42,7 @@ class HumanPlayer extends Player {
         //sets the valuation of each meld (0 for a valid meld)
         //throws away the decomposition, because correct melding is the HumanPlayer's responsibility
         //This allows for later implementation of automatic melding
-        return hand.checkMeldsAndEvaluate(isFinalTurn);
+        return hand.checkMeldsAndEvaluate(this, isFinalTurn);
     }
 
     private boolean addCardToHand(final Card card) {
@@ -50,7 +54,7 @@ class HumanPlayer extends Player {
     }
 
     @Override
-    final Card discardFromHand(final Card cardToDiscard) {
+    final public Card discardFromHand(final Card cardToDiscard) {
         if (cardToDiscard != null) {
             hand.discardFrom(cardToDiscard); //calls syncCardsAndMelds
             checkHandSize();
@@ -59,38 +63,38 @@ class HumanPlayer extends Player {
     }
 
 
-    final boolean makeNewMeld(final Card card) {
+    final public boolean makeNewMeld(final Card card) {
         hand.makeNewMeld(card);
         return true;
     }
-    final void addToMeld(final CardList meld, Card card) {
-        ((MeldedCardList.Meld)meld).addTo(card);
+    final public void addToMeld(final CardList meld, Card card) {
+        hand.addToMeld(card, (Meld)meld);
     }
 
     @Override
-    final boolean isHuman() {return true;}
+    final public boolean isHuman() {return true;}
 
 
     /*----------------------------------------*/
     /* Game playing methods (moved from Game) */
     /*----------------------------------------*/
     @Override
-    void prepareTurn(final FiveKings fKActivity) {
+    public void prepareTurn(final FiveKings fKActivity) {
         //base method sets PLAY_TURN and updates hands and cards
         super.prepareTurn(fKActivity);
         fKActivity.enableDrawDiscardClick(); //also animates piles and sets the hint
-        this.getMiniHandLayout().getCardView().clearAnimation();
+        this.getMiniHandLayout().stopAnimateMiniHand();
     }
 
     @Override
     //Human cards are always shown, unless the next player is also human and this is the end of the turn
-    boolean showCards(final boolean isShowComputerCards) {
+    final public boolean showCards(final boolean isShowComputerCards) {
         return true;
     }
 
     @Override
     //TODO:A Bad smell from all those fKActivity calls
-    void takeTurn(final FiveKings fKActivity, final Game.PileDecision drawOrDiscardPile, final Deck deck, final boolean isFinalTurn) {
+    public void takeTurn(final FiveKings fKActivity, final Game.PileDecision drawOrDiscardPile, final boolean isFinalTurn) {
         /* If you click on the Human hand a second time then takeTurn is called
         If a card was picked, then show the animation; if not, then show a hint
         */
@@ -101,12 +105,12 @@ class HumanPlayer extends Player {
 
             logTurn(isFinalTurn);
 
-            this.drawnCard = (drawOrDiscardPile == Game.PileDecision.DISCARD_PILE) ? deck.drawFromDiscardPile() : deck.drawFromDrawPile();
+            this.drawnCard = (drawOrDiscardPile == Game.PileDecision.DISCARD_PILE) ? Deck.getInstance().drawFromDiscardPile() : Deck.getInstance().drawFromDrawPile();
             this.addAndEvaluate(isFinalTurn, this.drawnCard);
             turnInfo.append(String.format(turnInfoFormat, this.getName(), this.drawnCard.getCardString(),
                     (drawOrDiscardPile == Game.PileDecision.DISCARD_PILE) ? "Discard" : "Draw"));
 
-            Log.d(Game.APP_TAG, turnInfo.toString());
+            Log.d(FiveKings.APP_TAG, turnInfo.toString());
             //don't meld, because it was done as part of evaluation
 
             fKActivity.getmGame().setGameState(GameState.HUMAN_READY_TO_DISCARD);
@@ -119,10 +123,38 @@ class HumanPlayer extends Player {
     @Override
     void logTurn(final boolean isFinalTurn) {
         //Use final scoring (wild cards at full value) on last-licks turn (when a player has gone out)
-        Log.d(Game.APP_TAG, "Player " + this.getName());
+        Log.d(FiveKings.APP_TAG, "Player " + this.getName());
         String sValuationOrScore = (isFinalTurn) ? "Score=" : "Valuation=";
-        Log.d(Game.APP_TAG, "before...... " + this.getMeldedString(true) + this.getPartialAndSingles(true) + " "
+        Log.d(FiveKings.APP_TAG, "before...... " + this.getMeldedString(true) + this.getPartialAndSingles(true) + " "
                 + sValuationOrScore + this.getHandValueOrScore(isFinalTurn));
     }
+
+    /* PARCELABLE read/write (using superclass implementation) */
+    protected HumanPlayer(Parcel in) {
+        super(in);
+    }
+
+    @Override
+    public int describeContents() {
+        return 0;
+    }
+
+    @Override
+    public void writeToParcel(Parcel dest, int flags) {
+        super.writeToParcel(dest, flags);
+    }
+
+    @SuppressWarnings("unused")
+    public static final Parcelable.Creator<HumanPlayer> CREATOR = new Parcelable.Creator<HumanPlayer>() {
+        @Override
+        public HumanPlayer createFromParcel(Parcel in) {
+            return new HumanPlayer(in);
+        }
+
+        @Override
+        public HumanPlayer[] newArray(int size) {
+            return new HumanPlayer[size];
+        }
+    };
 
 }

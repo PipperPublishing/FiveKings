@@ -20,7 +20,14 @@
     <CheckBox
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="@string/show_intro"
+        android:text="@string/tutorial_mode"
         android:id="@+id/show_intro"
+        android:checked="true"/>
+
+    <CheckBox
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="@string/highlight_wildcards"
+        android:id="@+id/highlight_wildcards"
         android:checked="true"/>
 </LinearLayout>

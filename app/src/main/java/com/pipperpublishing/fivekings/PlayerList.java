@@ -1,9 +1,14 @@
 package com.pipperpublishing.fivekings;
 
 import android.app.Activity;
+import android.os.Parcel;
+import android.os.Parcelable;
 import android.util.Log;
 import android.view.animation.Animation;
 import android.widget.LinearLayout;
+
+import com.pipperpublishing.fivekings.view.FiveKings;
+import com.pipperpublishing.fivekings.view.PlayerMiniHandLayout;
 
 import java.util.ArrayList;
 
@@ -20,9 +25,10 @@ import java.util.ArrayList;
  10/12/2015     Switch order of Standard Players so Human ends up on the right
                 Moved the addDefaultPlayers call to Game so this class can stay generic
  10/18/2015     deletePlayer was removing layout from wrong view
+ 11/8/2015      Added parcelable support
  */
-class PlayerList extends ArrayList<Player> {
-    static enum PlayerType {HUMAN, BASIC_COMPUTER, EXPERT_COMPUTER}
+public class PlayerList extends ArrayList<Player> implements Parcelable {
+    public enum PlayerType {HUMAN, BASIC_COMPUTER, EXPERT_COMPUTER}
 
     private Player dealer;
     private Player currentPlayer;
@@ -111,12 +117,12 @@ class PlayerList extends ArrayList<Player> {
     //(Shouldn't be starting animations from outside FiveKings or related code)
     void setAnimated(final Player setAnimated, final Animation bounceAnimation) {
         //clear existing animations
-        for (Player player : this) player.getMiniHandLayout().getCardView().clearAnimation();
+        for (Player player : this) player.getMiniHandLayout().stopAnimateMiniHand();
         //if setAnimated == null, then use the saved animatedPlayerHand and reanimate
         animatedPlayerHand = setAnimated!=null ? setAnimated : animatedPlayerHand ;
         if ((animatedPlayerHand != null) && (animatedPlayerHand.getTurnState() == Player.TurnState.NOT_MY_TURN))
         {
-            animatedPlayerHand.miniHandLayout.getCardView().startAnimation(bounceAnimation);
+            animatedPlayerHand.miniHandLayout.startAnimateMiniHand(bounceAnimation);
         }
     }
 
@@ -161,8 +167,8 @@ class PlayerList extends ArrayList<Player> {
 
     void logRoundScores() {
         if (playerWentOut == null) throw new RuntimeException("Error - playerWentOut is null");
-        Log.i(Game.APP_TAG, "Player "+playerWentOut.getName()+" went out");
-        Log.i(Game.APP_TAG, "        Current scores:");
+        Log.i(FiveKings.APP_TAG, "Player "+playerWentOut.getName()+" went out");
+        Log.i(FiveKings.APP_TAG, "        Current scores:");
         for (Player player : this){
             //add to cumulative score is done in animateRoundScore()
             player.logRoundScore();
@@ -176,7 +182,7 @@ class PlayerList extends ArrayList<Player> {
 
     void logFinalScores() {
         for (Player player : this) {
-            Log.i(Game.APP_TAG, player.getName() + "'s final score is " + player.getCumulativeScore());
+            Log.i(FiveKings.APP_TAG, player.getName() + "'s final score is " + player.getCumulativeScore());
         }
     }
 
@@ -222,4 +228,51 @@ class PlayerList extends ArrayList<Player> {
             linearLayout.addView(this.get(iPlayer).addPlayerMiniHandLayout(a, iPlayer, this.size()));
         }
     }
+
+
+    /* PARCELABLE readers/writers */
+
+    protected PlayerList(Parcel parcel) {
+        //repopulate the actual player list
+        parcel.readList(this, Player.class.getClassLoader());
+        //and reference back into it
+        int index = parcel.readInt();
+        //index = -1 means player reference = null
+        dealer = index <0 ? null : this.get(index);
+        index = parcel.readInt();
+        currentPlayer = index <0 ? null : this.get(index);
+        index = parcel.readInt();
+        playerWentOut = index <0 ? null : this.get(index);
+        index = parcel.readInt();
+        animatedPlayerHand = index <0 ? null : this.get(index);
+    }
+
+    @Override
+    public int describeContents() {
+        return 0;
+    }
+
+    @Override
+    public void writeToParcel(Parcel parcel, int flags) {
+        parcel.writeList(this);   //the list of all players
+        //Have to use indexOf so that we are referencing the new players, not creating a new one
+        parcel.writeInt(this.indexOf(dealer));
+        parcel.writeInt(this.indexOf(currentPlayer));
+        parcel.writeInt(this.indexOf(playerWentOut));
+        parcel.writeInt(this.indexOf(animatedPlayerHand));
+    }
+
+    @SuppressWarnings("unused")
+    public static final Parcelable.Creator<PlayerList> CREATOR = new Parcelable.Creator<PlayerList>() {
+        @Override
+        public PlayerList createFromParcel(Parcel parcel) {
+            return new PlayerList(parcel);
+        }
+
+        @Override
+        public PlayerList[] newArray(int size) {
+            return new PlayerList[size];
+        }
+    };
+
 }

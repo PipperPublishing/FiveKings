@@ -60,19 +60,20 @@
     <string name="edit_delete_hint">Press and hold a player hand to edit or delete</string>
     <string name="show_computer_cards">Show Computer cards</string>
     <string name="animate_dealing">Animate dealing</string>
-    <string name="show_intro">Show introduction and hints</string>
+    <string name="tutorial_mode">Show introduction and hints</string>
+    <string name="highlight_wildcards">Highlight wildcards with yellow</string>
     <string name="about">Problems? Please email us at pipper.publishing@gmail.com</string>
     <string name="help_title">Help</string>
     <string name="help_message">\n
-        In this game you play 11 rounds against the computer and/or against other humans.\n
-        The winner is the player who has the lowest score at the end of the game.\n
-        You start with the round of 3\'s where you have 3 cards and 3\'s are wild (in addition to Jokers).\n
-        You end with the round of Kings where you have 13 cards and Kings are wild.\n\n
+        In this game you play 11 rounds against the computer and/or against other humans. The winner is the player who has the lowest score at the end of the game.\n\n
+        You start with the round of 3\'s where you have 3 cards and 3\'s are wild (in addition to Jokers). You end with the round of Kings where you have 13 cards and Kings are wild.\n
         In each turn, draw from the Draw or Discard pile to your hand, meld your cards (by dragging them to the meld area on the screen), and discard a card to the Discard pile.
-        Melds are 3 or more of the same rank, or 3 or more in a suit sequence, including as many wild cards as you like.\n
+        Melds are 3 or more of the same rank, or 3 or more in a suit sequence, including as many wild cards as you like.\n\n
         A player is "out" when they have melded all their cards, giving them a score of 0 for the round.
         All other players get one more turn to improve their hands, or also go out. At the end of the round,
         your score for the round is the sum of the unmelded cards you have left. Cards count their face value
-        except that unmelded wild cards count 20, and unmelded Jokers count 50!\n
+        except that unmelded wild cards count 20, and unmelded Jokers count 50 (so make sure to meld before you discard!)\n\n
+        For example, to "go out" in the round of 3\'s you have to have a meld of 3 cards; in the round of 4\'s a meld of 4 cards; in round of 5\'s a meld of 5 cards (this is the hardest).  \n
+        Starting in the round of 6\'s you can have 2 melds of 3 or a meld of 6, and it gets more flexible after that. When the Droid player goes out it will show you its hand and you can learn from what it does.
     </string>
 </resources>

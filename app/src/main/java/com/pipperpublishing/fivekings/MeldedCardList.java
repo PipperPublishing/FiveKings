@@ -5,8 +5,10 @@ package com.pipperpublishing.fivekings;
  * 3/16/2015    Separated MeldedCardList out from Player (there is a Hand  sub-class which is an inner class)
  */
 
+import android.os.Parcel;
+import android.os.Parcelable;
+
 import java.util.ArrayList;
-import java.util.Collections;
 
 /** MeldedCardList (was Hand) - general manipulation of melds, partial Melds etc.
  * Created by Jeffrey on 1/22/2015.
@@ -33,11 +35,16 @@ import java.util.Collections;
  * 3/20/2015    Rename MeldedCardList to reflect it's not a Hand
  * 3/20/2015    Add RANK/SEQUENCE type and FULL/PARTIAL completeness to Heuristics
  * 3/21/2015    In addDecomposition, don't add partials if it's FinalRound (add to singles)
+ * 11/8/2015    Implement parcelable
+ * 11/9/2015    Removed HandComparator as a member variable and pass dynamically
+ *              Add Parcelable support in Meld
+ *              melds, partialMelds, and singles need to reference the cards in the CardList (otherwise scoring and melding won't work)
 
+                Moved addToMeld here (used to be Meld.addTo)
  TODO:B Account for the overlap among partialMelds and partialSequences; is it ok to have ( 10C-10D and 10C-JC)
 
  */
-class MeldedCardList extends CardList{
+public class MeldedCardList extends CardList{
     protected final Rank roundOf; //how many cards you should have and what is wild
     //all your cards are in the base class
     // and the cards organized into melds, partial melds and remaining singles
@@ -45,29 +52,24 @@ class MeldedCardList extends CardList{
     protected ArrayList<Meld> partialMelds;
     protected Meld singles;
 
-    protected HandComparator playerHandComparator;
-
-
-    protected MeldedCardList(final Rank roundOf, final HandComparator playerHandComparator) {
+    protected MeldedCardList(final Rank roundOf) {
         super(roundOf.getRankValue());
         this.roundOf = roundOf;
         this.melds = new ArrayList<>();
         this.partialMelds = new ArrayList<>();
-        this.singles = new Meld(playerHandComparator, MeldComplete.SINGLES);
-
-        this.playerHandComparator = playerHandComparator;
+        this.singles = new Meld(Meld.MeldComplete.SINGLES);
     }
 
     //replace cards only
-    protected MeldedCardList(final Rank roundOf, final HandComparator playerHandComparator, CardList cards) {
-        this(roundOf, playerHandComparator);
+    protected MeldedCardList(final Rank roundOf, CardList cards) {
+        this(roundOf);
         if (cards != null) {
             this.clear();
             this.addAll(cards);
         }
     }
 
-    private void copyFrom(MeldedCardList fromMeldedCardList) {
+    void copyFrom(MeldedCardList fromMeldedCardList) {
         if (fromMeldedCardList != null) {
             this.clear();
             this.addAll(fromMeldedCardList);
@@ -75,7 +77,6 @@ class MeldedCardList extends CardList{
             this.partialMelds = fromMeldedCardList.partialMelds;
             this.singles = fromMeldedCardList.singles;
 
-            this.playerHandComparator = fromMeldedCardList.playerHandComparator;
         }
     }
 
@@ -92,14 +93,14 @@ class MeldedCardList extends CardList{
     int numPartialRankMelds() {
         int numPartialRankMelds = 0;
         for (Meld meld:this.partialMelds)
-            if (meld.getMeldType() == MeldType.RANK) numPartialRankMelds++;
+            if (meld.getMeldType() == Meld.MeldType.RANK) numPartialRankMelds++;
         return numPartialRankMelds;
     }
 
     int numFullRankMelds() {
         int numFullRankMelds = 0;
         for (Meld meld:this.melds)
-            if (meld.getMeldType() == MeldType.RANK) numFullRankMelds++;
+            if (meld.getMeldType() == Meld.MeldType.RANK) numFullRankMelds++;
         return numFullRankMelds;
 
     }
@@ -111,7 +112,7 @@ class MeldedCardList extends CardList{
 
     int numMeldedCards() {
         int numMelded=0;
-        for (MeldedCardList.Meld meld : this.melds) numMelded += meld.size();
+        for (Meld meld : this.melds) numMelded += meld.size();
         return numMelded;
     }
 
@@ -120,34 +121,46 @@ class MeldedCardList extends CardList{
         float intermediateValue = 0.0f;
         int finalScore =0;
         for (Card card : this) {
-            float cardValue = getCardScore(card, this.roundOf, false);
-            float cardScore = getCardScore(card, this.roundOf, true);
+            float cardValue = Meld.getCardScore(card, this.roundOf, false);
+            float cardScore = Meld.getCardScore(card, this.roundOf, true);
             //if Final, then singles contains everything in partialMelds at full value
             //otherwise reduce it by 1/2 if partially melded
-            if (contains(partialMelds,card) || singles.contains(card)) {
+            if (Meld.contains(partialMelds,card) || singles.contains(card)) {
                 finalScore += cardScore;
-                if (contains(partialMelds, card)) intermediateValue += 0.5 * cardValue;
+                if (Meld.contains(partialMelds, card)) intermediateValue += 0.5 * cardValue;
                 else intermediateValue += cardValue;
             }
         }
         //"Melds" can actually be attempts by human so need to be added (have previously been evaluated by Meld.decomposeAndCheck)
         if (melds != null) {
             for (Meld meld : melds) {
-                finalScore += meld.valuation;
-                intermediateValue += meld.valuation;
+                finalScore += meld.getValuation();
+                intermediateValue += meld.getValuation();
             }
         }
         return isFinalTurn ? finalScore : (int)intermediateValue;
     }
 
+    //add to a new meld just created, or to an existing meld and remove from other melds, partial melds, or singles
+    // allows for dragging and dropping back onto itself
+    protected void addToMeld (final Card card, final Meld meld) {
+        //remove from unMelded, singles, or other melds
+        for (CardList cl : this.melds) cl.remove(card);
+        for (CardList cl : this.partialMelds) cl.remove(card);
+        this.singles.remove(card);
+        if (!meld.contains(card)) meld.add(card); //may remove and then re-add
+        meld.setNeedToCheck(true);
+    }
+
+
     //Helper for Meld.decomposeAndCheck - meldType is already set in decomposeAndCheck
     void addDecomposition(boolean isFinalTurn, final Meld testMeld) {
         if (testMeld.size() >= 3) {
-            testMeld.setMeldComplete(MeldComplete.FULL);
+            testMeld.setMeldComplete(Meld.MeldComplete.FULL);
             this.melds.add((Meld) testMeld.clone());
         }
         else if (!isFinalTurn && (2 == testMeld.size())) {
-            testMeld.setMeldComplete(MeldComplete.PARTIAL);
+            testMeld.setMeldComplete(Meld.MeldComplete.PARTIAL);
             this.partialMelds.add((Meld) testMeld.clone());
         }
         else {
@@ -182,293 +195,100 @@ class MeldedCardList extends CardList{
         return roundOf;
     }
 
-    /* 3/17/2015    Removed numCards argument; just initialize capacity as MAX_CARDS
-            3/19/2015   Replace isSequenceMeld and isRankMeld with meldType (SEQUENCE, RANK, or null)
-         3/19/2015    decomposeAndCheck: Simplify isRankMeld logic. Categorize melds by isSequenceMeld etc flag
-         */
-    static enum MeldMethod {PERMUTATIONS, HEURISTICS}
-    static enum MeldComplete {FULL, PARTIAL, SINGLES}
-    //a meld of Q-*-* is EITHER type
-    static enum MeldType {RANK, SEQUENCE, EITHER}
 
-    /*------------------*/
-    /* INNER CLASS Meld */
-    /*------------------*/
-    protected class Meld extends CardList {
-
-        private int valuation; //0 if this is a valid meld
-        private boolean needToCheck; //a card has been added or removed so we need to recheck
-        private boolean isValidFullMeld =false;
-        private MeldComplete meldComplete;
-        private MeldType meldType=null;
-
-        private HandComparator playerHandComparator;
-
-
-        protected Meld(final HandComparator playerHandComparator, final CardList cl) {
-            this(playerHandComparator, MeldComplete.SINGLES);
-            this.addAll(cl);
+    /* PARCELABLE implementation for MeldedCardList read/write (override CardList implementation) */
+    protected MeldedCardList(Parcel parcel) {
+        super(parcel);
+        roundOf = (Rank) parcel.readValue(Rank.class.getClassLoader());
+        if (parcel.readByte() == 0x01) {
+            melds = new ArrayList<Meld>();
+            parcel.readList(melds, Meld.class.getClassLoader());
+            readListAsRefs(parcel, melds);
+        } else {
+            melds = null;
         }
-
-        Meld(final HandComparator playerHandComparator, MeldComplete meldComplete) {
-            super(Game.MAX_CARDS);
-            this.valuation = 0;
-            this.isValidFullMeld = false;
-            this.needToCheck = true;
-            this.meldComplete = meldComplete;
-            this.playerHandComparator = playerHandComparator;
+        if (parcel.readByte() == 0x01) {
+            partialMelds = new ArrayList<Meld>();
+            parcel.readList(partialMelds, Meld.class.getClassLoader());
+            readListAsRefs(parcel, partialMelds);
+        } else {
+            partialMelds = null;
         }
-
-/*      Find the best arrangement of this meld and break if we get zero
-        also sorts the meld rank first (which should help if it's a rank meld)
-        If it's not a single meld, will return the breakdown
-        it's the caller's responsibility to not call this with too long a "meld" (since permutation time goes up geometrically)
-        returns best arrangement and returns partial meld and singles components if it can't be fully melded*/
-        protected int decomposeAndCheck(final boolean isFinalTurn, final MeldedCardList bestMeldedCardList) {
-            int numCards = this.size();
-            Rank wildCardRank = MeldedCardList.this.roundOf;
-            Permuter indexes = new Permuter(numCards);
-            CardList wildCards = new CardList(numCards);
-            CardList nonWildCards = new CardList(numCards);
-            //although not explicitly used, this sorts into descending rank followed by wild cards which could speed up permutations?
-            sortAndSeparateWildCards(wildCardRank, this, nonWildCards, wildCards);
-
-            int bestValuation=-1;
-            int[] cardListIdx;
-            //Loop over all valid permutations - break as soon as we confirm a meld
-            for (cardListIdx = indexes.getNext(); cardListIdx != null; cardListIdx = indexes.getNext()) {
-                //if lastMelded was a non-wild card, then these are just that card's Rank and Suit
-                //if it was a wild card, then they are the "substitute" value(s) the wild card plays
-                Rank rankMeldRank = null;
-                Rank sequenceMeldLastRank = null;
-                Suit sequenceMeldSuit = null;
-                boolean isSequenceMeld = true;
-                boolean isRankMeld = true;
-                boolean isBrokenSequence = true;
-                Meld testMeld = new Meld(this.playerHandComparator, MeldComplete.SINGLES);
-                Card testCard = null;
-                MeldedCardList permHand = new MeldedCardList(wildCardRank,playerHandComparator, this);
-
-
-    /*           note *this* loop is over the cards in the permutation to see whether they can be melded
-                (and there is no longer a discard here)
-                We only look for melds in order (including ascending sequences) because at least one permutation will have that if it exists
-    */
-                Card lastMeldedCard = this.get(cardListIdx[0]);
-                testMeld.clear();
-                testMeld.add(lastMeldedCard);
-                for (int iCard = 1; iCard < numCards; iCard++) {
-                    /*
-                    * if this is a wildcard or lastMeldedCard is a wildcard
-                    * or cardsCopy[cardListIdx[iCard] melds in rank (any suit) or seq (same suit)
-                    * But have to deal with several tricky problems:
-                    * 1. After we get the first real match (not a wildcard) need to record that this is a sequence or rank-meld
-                    * 2. We have to give wild cards a "substitute" value that they are playing in the meld (and that might be sequence and/or rank meld or unknown)
-                    */
-                    lastMeldedCard = testMeld.get(testMeld.size() - 1);
-                    if (lastMeldedCard.isWildCard(wildCardRank)) {
-                        //leave rankMeldRank unchanged (either null or a known Rank)
-                        //leave sequenceMeldSuit unchanged and increment to the next rank (if possible)
-                        if (sequenceMeldLastRank != null)
-                            sequenceMeldLastRank = sequenceMeldLastRank.getNext();
-                    } else {
-                        rankMeldRank = lastMeldedCard.getRank();
-                        sequenceMeldSuit = lastMeldedCard.getSuit();
-                        sequenceMeldLastRank = lastMeldedCard.getRank();
-                    }
-
-                    testCard = this.get(cardListIdx[iCard]);
-                    //this convoluted logic is because BOTH isRankMeld and isSequenceMeld could be true in a permutation like Q-Wild-Wild
-                    boolean testIsMelding = false;
-                    if (isRankMeld) {
-                        //this card melds if (a) it's wild, (b) the previous card was wild, (c) it's the same rank
-                        if (testCard.isWildCard(wildCardRank) || (rankMeldRank == null)) testIsMelding = true;
-                        else if (testCard.isSameRank(rankMeldRank)) {
-                            testIsMelding = true;
-                            testMeld.meldType = MeldType.RANK;
-                            isSequenceMeld = false; //now we know it's a Rank meld and not a Sequence meld
-                        }
-                        else isRankMeld = false;
-                    }
-                    //order of tests is important here (to make sure the card can't be wild or null)
-                    if (isSequenceMeld) {
-                        if (sequenceMeldLastRank == null) testIsMelding = true;
-                            //can't be a sequenceMeld if the lastRank is a King (nothing greater)
-                        else if (sequenceMeldLastRank.isHighestRank()) isSequenceMeld = false;
-                        else if (testCard.isWildCard(wildCardRank)) testIsMelding = true;
-                            // can't be a sequenceMeld if this is a 3 and the previous card was wild
-                        else if (testCard.getRank().isLowestRank() && lastMeldedCard.isWildCard(wildCardRank))
-                            isSequenceMeld = false;
-                            //same Suit and next in sequence
-                        else if (testCard.isSameSuit(sequenceMeldSuit) && (1 == testCard.getRankDifference(sequenceMeldLastRank))) {
-                            testIsMelding = true;
-                            testMeld.meldType = MeldType.SEQUENCE;
-                            isRankMeld = false; //now we know it's a sequence meld
-                        } else isSequenceMeld = false;
-                    }
-                    if (isRankMeld && isSequenceMeld) testMeld.meldType = MeldType.EITHER;
-
-                    //Broken Sequence
-                    //don't use else-if, because above block sets isSequenceMeld false
-                    //testCard broke the sequence, but may still be a brokenSequence (e.g. 10C-QC)
-                    if ((1 == testMeld.size()) && !isSequenceMeld && !isRankMeld && isBrokenSequence && (sequenceMeldLastRank != null)) {
-                        if (testCard.isSameSuit(sequenceMeldSuit) && (2 == testCard.getRankDifference(sequenceMeldLastRank))) {
-                            testIsMelding = true;
-                            testMeld.meldType = MeldType.SEQUENCE;
-                        }
-                        isBrokenSequence = false; //don't want to add more cards
-                    }
-
-                    if (testIsMelding) testMeld.add(testCard);
-                    else {// testCard doesn't fit the testMeld - now check if testMeld has fewer than 3 cards then we can move it to unMelded
-                        permHand.addDecomposition(isFinalTurn, testMeld);
-                        testMeld.clear();
-                        testMeld.add(testCard);
-                        isRankMeld = true;
-                        isSequenceMeld = true;
-                        //Don't do pruning at this point any more to allow scoring algorithm to be more complicated
-                    }
-                }//for iCard=1..numCards (testing permutation)
-                //anything left over in testMeld needs to be added to unMelded or Melded appropriately
-                permHand.addDecomposition(isFinalTurn, testMeld);
-
-                //reset the bestPermutation if this is a lower score
-                //use the player's specific criteria (ComputerPlayer or SmarterComputerPlayer)
-                if ((bestValuation == -1) || playerHandComparator.isFirstBetterThanSecond(permHand, bestMeldedCardList, isFinalTurn)) {
-                    bestValuation = permHand.calculateValueAndScore(isFinalTurn);
-                    //use Hand.copyFrom because bestMeldedCardList is a (final) parameter
-                    bestMeldedCardList.copyFrom(permHand);
-                }
-                if (bestValuation == 0) break;
-            }//end for cardListIdx in all permutations of cards
-
-            //Reorder the meld according to the best permutation - if we got a meld
-            if (cardListIdx != null) {
-                CardList permedCards = new CardList(numCards);
-                for (int iCard = 0; iCard < numCards; iCard++) {
-                    permedCards.add(this.get(cardListIdx[iCard]));
-                }
-                //and now copy back into this
-                this.clear();
-                this.addAll(permedCards);
+        if (parcel.readByte() == 0x01) {
+            //should probably implement this properly in Meld (seems to work for above ArrayList<Meld>
+            singles = new Meld(Meld.MeldComplete.SINGLES);
+            parcel.readList(singles, Card.class.getClassLoader());
+            for (int cardIndex = 0; cardIndex < singles.size(); cardIndex++) {
+                int index = parcel.readInt();
+                singles.set(cardIndex, this.get(index)); //reference the card in the base list
             }
-
-            //this looks recursive - we set for both the this meld and for the ones we have broken it down into (if any)
-            //all the bestMeldedCardList melds are known to be valid
-            this.setCheckedAndValid(bestMeldedCardList, bestValuation);
-
-            return bestValuation;
-        }//end int decomposeAndCheck
-
-        private void setCheckedAndValid() {
-            this.isValidFullMeld = true;
-            this.needToCheck = false;
-            this.valuation = 0;
+        } else {
+            singles = null;
         }
-        private void setCheckedAndValid(final MeldedCardList decomposed, final int valuation) {
-            for (Meld meld : decomposed.melds) {
-                meld.setCheckedAndValid();
-                meld.meldComplete = MeldComplete.FULL;
+    }
+
+    @Override
+    public int describeContents() {
+        return 0;
+    }
+
+    @Override
+    public void writeToParcel(Parcel parcel, int flags) {
+        super.writeToParcel(parcel, flags);
+        parcel.writeValue(roundOf);
+        if (melds == null) {
+            parcel.writeByte((byte) (0x00));
+        } else {
+            parcel.writeByte((byte) (0x01));
+            parcel.writeList(melds);
+            writeListAsRefs(parcel, melds);
+        }
+        if (partialMelds == null) {
+            parcel.writeByte((byte) (0x00));
+        } else {
+            parcel.writeByte((byte) (0x01));
+            parcel.writeList(partialMelds);
+            writeListAsRefs(parcel, partialMelds);
+        }
+        if (singles == null) {
+            parcel.writeByte((byte) (0x00));
+        } else {
+            parcel.writeByte((byte) (0x01));
+            parcel.writeList(singles);
+            for (Card card : singles) {
+                parcel.writeInt(this.indexOf(card));
             }
-            this.isValidFullMeld = decomposed.partialMelds.isEmpty() && decomposed.singles.isEmpty();
-            this.needToCheck = false;
-            this.valuation = valuation;
         }
-
-        //add to a new meld just created, or to an existing meld and remove from other melds, partial melds, or singles
-        // allows for dragging and dropping back onto itself
-        protected void addTo(final Card card) {
-            //remove from unMelded, singles, or other melds
-            for (CardList cl : MeldedCardList.this.melds) cl.remove(card);
-            for (CardList cl : MeldedCardList.this.partialMelds) cl.remove(card);
-            MeldedCardList.this.singles.remove(card);
-            if (!this.contains(card)) this.add(card); //may remove and then re-add
-            this.needToCheck = true;
-        }
-
-        MeldType getMeldType() {
-            return meldType;
-        }
-
-        void setMeldComplete(final MeldComplete meldComplete) {
-            this.meldComplete = meldComplete;
-        }
-
-        void setMeldType(final MeldType meldType) {
-            this.meldType = meldType;
-        }
-    }//end class Meld
-
-    /* STATIC METHODS associated with Meld (but Inner classes can't contain static methods */
-
-    //Helper for meldUsingHeuristics
-    //TODO:B Would like to merge with other setCheckedAndValid - when we move these to right context
-    static void setCheckedAndValid (final ArrayList<Meld> melds) {
+    }
+    //we use the standard writeList so that the Meld member variables are correctly recorded
+    //then we also stored the list as references to the CardList
+    private void writeListAsRefs(Parcel parcel, ArrayList<Meld> melds) {
         for (Meld meld : melds) {
-            meld.setCheckedAndValid();
-            meld.meldComplete = MeldComplete.FULL;
-        }
-    }
-
-    //Helper for FiveKings
-    static boolean isValidMeld(final CardList cl) {
-        return (cl instanceof Meld) && ((Meld)cl).isValidFullMeld;
-    }
-
-    static String getString(final ArrayList<Meld> meldsOrUnMelds) {
-        StringBuilder meldedString = new StringBuilder();
-        if (null != meldsOrUnMelds) {
-            for (CardList melds : meldsOrUnMelds) {
-                meldedString.append(melds.getString());
+            for (Card card : meld ) {
+                parcel.writeInt(this.indexOf(card));
             }
         }
-        return meldedString.toString();
     }
-
-
-    static final int INTERMEDIATE_WILD_CARD_VALUE=1;
-    //by default, wildcards have value INTERMEDIATE_WILDCARD_VALUE so that there is incentive to meld them
-    //but not incentive to discard them
-    //In final scoring they have full value (20 for rank wildcards, and 50 for Jokers)
-    static int getCardScore(Card card, Rank wildCardRank, boolean isFinalTurn) {
-        final int cardScore;
-        //if final round, then rank wildCard=20, Joker=50, otherwise Rank value
-        if (isFinalTurn) cardScore = card.getCardValue(wildCardRank);
-            //if intermediate, then any wildcard=1 (including Jokers), otherwise Rank value
-        else cardScore = (card.isWildCard(wildCardRank) ? INTERMEDIATE_WILD_CARD_VALUE : card.getCardValue(wildCardRank));
-        return cardScore;
-    }
-
-    static void sortAndSeparateWildCards(final Rank wildCardRank,final CardList cards, final CardList nonWildCards, final CardList wildCards) {
-        //cards contains the list to be sorted
-        if ((nonWildCards == null) || (wildCards == null) || (cards.isEmpty())) return;
-        nonWildCards.clear();
-        nonWildCards.addAll(cards);
-        wildCards.clear();
-        for (Card card : cards) {
-            if (card.isWildCard(wildCardRank)) {
-                wildCards.add(card);
-                nonWildCards.remove(card);
+    private void readListAsRefs(Parcel parcel, ArrayList<Meld> melds) {
+        for (Meld meld : melds) {
+            for (int cardIndex = 0; cardIndex < meld.size(); cardIndex++) {
+                int index = parcel.readInt();
+                meld.set(cardIndex, this.get(index)); //reference the card in the base list
             }
         }
-        Collections.sort(nonWildCards, Card.cardComparatorRankFirstDesc);
-        cards.clear();
-        cards.addAll(nonWildCards);
-        cards.addAll(wildCards);
-    }
-
-    //delegate method to look for card in ArrayList<CardList> (otherwise we'd have to override ArrayList)
-    static boolean contains (final ArrayList<Meld> melds, Card card) {
-        if (null == melds) return false;
-        for (Meld meld : melds)
-            if (meld.contains(card)) return true;
-        return false;
-    }
-    static boolean contains (final ArrayList<Meld> containingMelds, CardList cardList) {
-        if (null == containingMelds) return false;
-        for (Card card:cardList) if (contains(containingMelds,card)) return true;
-        return false;
     }
 
 
-}//private class Hand
+    public static final Parcelable.Creator<MeldedCardList> CREATOR = new Parcelable.Creator<MeldedCardList>() {
+        @Override
+        public MeldedCardList createFromParcel(Parcel parcel) {
+            return new MeldedCardList(parcel);
+        }
+
+        @Override
+        public MeldedCardList[] newArray(int size) {
+            return new MeldedCardList[size];
+        }
+    };
+
+}//end MeldedCardList
