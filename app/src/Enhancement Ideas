@@ -371,26 +371,38 @@ FIXED Timer during Permutations rounds (in Discards loop) and transition to Heur
 
 ----------------
 v0.8.11 Fix parceling
-BUG:
+BUGS:
 TESTING: Fixed state management so you can navigate away and return to game at the same point
-BUG: 1. Set highlight, 2. Turn landscape, 3. Open Settings - crash
-
+FIXED: 1. Set highlight, 2. Turn landscape, 3. Open Settings - crash
 
 CHANGES:
 - Moved View elements to separate view package
 - Separate option for highlighting wildcards
-[Ready to release
+[Released to Alpha channel on Google Play]
+-------------------
+v0.8.12 Bugs
+BUGS:
+FIXED: WIth you + 2 Computer players, the Droid player goes out incorrectly (and doesn't show its cards) (was happening because of incorrect thread interruption)
+FIXED: Can't add players sometime after playing a few rounds, then pressing [New Game] because it hasn't reset roundOf()
+    -- also should reset the scores, and clear the discard, but leave the mini hands
+
+
+
+------------
+v0.8.13
+BUG:- Problem where cards get stuck at bottom of screen (may be on Q's or K's round with card to far right) - look at addToMeld and drag code
+-- When you drag card to a meld it seems to stay in the main cards
+BUG: Tim's problem where it didn't recognize his completed meld
+
 
 ------------------
-v0.8.12
+v0.8.20
+- Hint overlays like Google (arrows and text) (Draw, Discard, Meld area, Your cards)
+-- Sequence of 4 screens with "Got it" at the end
 - Add ? pop-up for Meld
 - Hint Toasts should stay longer; some should be dialogs that you dismiss (distinguish between Hints and Info Toasts - different call)
-- Hint overlays like Google (arrows and text) (Draw, Discard, Meld area, Your cards)
-- Problem where cards get stuck at bottom of screen (may be on Q's or K's round with card to far right) - look at addToMeld and drag code
--- When you drag card to a meld it seems to stay in the main cards
-BUG: SOmetimes Menu>New Game followed by Add Player doesn't show the added player
 ----------------------
-v0.8.13
+v0.8.30
 - Add two more levels of Computer player (Easy, Hard, Expert)
 - Warn you if you don't meld in your final turn (or automatically meld your hand)
 - [Rob] Guided practice round
@@ -436,12 +448,12 @@ BUGS
       over to the pair to meld them.
 BUG: Meld.check on Heuristics is showing Joker-3-4
 - Computer should have kept KS-KD-QS-6-4, but instead kept KS-KD-9-6-4 on round of 5's
+- In Q's round, computer preferred 6-Q-8 with 10-J unmelded over 8-Q-10-J with 6 unmelded (even though test #2 prefers the config with more melded cards)
+ -- Maybe because of this bug (only finds broken sequences of x-?-z)
+BUG:A Heuristics won't build a sequence X-Y-Jok-Z; not looking at this - use meld.check?
 
 BUG:A Check if still true? Heuristics is throwing away wildcard when you have a partial meld of 4-4 and only full melds;
 BUG:A Permutations won't build a K onto T*Q
-
-Heuristics:
-BUG:A Heuristics won't build a sequence X-Y-Jok-Z; not looking at this - use meld.check?
 
 
 ================

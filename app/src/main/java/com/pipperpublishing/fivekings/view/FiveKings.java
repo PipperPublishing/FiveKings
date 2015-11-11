@@ -179,6 +179,12 @@ import java.util.List;
                 This is at least true of melds, partialMelds, and singles which are copies of Hand cards
 
                 Replace stored deck with references to the singleton
+ 11/10/2015     Change "click" to "tap" and include round # in hint
+                Clear game play area if you select [Yes] in New Game option, or finish old game
+                Also Game.init() if you select [Yes]
+                This also resets roundOf so you can add players
+                clearAnimation before making piles invisible (seems to interfere otherwise)
+
 */
 
 public class FiveKings extends Activity {
@@ -367,7 +373,7 @@ public class FiveKings extends Activity {
                         mPlayButton.setText(resFormat(R.string.current_round, mGame.getRoundOf().getString()));
                         //animates whichever one was already moving if this is NOT_MY_TURN phase
                         mGame.animatePlayerMiniHand(null, shakeAnimation);
-                        setShowHint(getString(R.string.clickMovingHandHint), HandleHint.SET_AND_SHOW_HINT, false);
+                        setShowHint(getString(R.string.tapMovingHandHint), HandleHint.SET_AND_SHOW_HINT, false);
                         mGame.setMiniHandsSolid();
                         if ((mGame.getCurrentPlayer() == null) || mGame.currentAndNextAreHuman()) updateHandsAndCards(false, mGame.getCurrentPlayer().isHuman());
                         else  updateHandsAndCards(mGame.getCurrentPlayer().showCards(isShowComputerCards()), mGame.getCurrentPlayer().isHuman());
@@ -487,6 +493,7 @@ public class FiveKings extends Activity {
         if (explodeSet != null) explodeSet.cancel();
 
         if (GameState.NEW_GAME == mGame.getGameState()) {
+            clearPlayArea();
             startGame();
         }
         //starting a round
@@ -550,9 +557,8 @@ public class FiveKings extends Activity {
                         Toast.makeText(getApplicationContext(), R.string.toStartGameHint, Toast.LENGTH_LONG).show();
                         mPlayButton.setText(getText(R.string.startGame));
                         if (mGame != null) mGame.setGameState(GameState.NEW_GAME);
-                        showHideDrawAndDiscardPiles(false);
-                        mCurrentCards.removeAllViews();
-                        mCurrentMelds.removeAllViews();
+                        clearPlayArea();
+                        mGame.init();
                     }
                 })
                 .setNegativeButton("No", null)
@@ -560,10 +566,17 @@ public class FiveKings extends Activity {
         return false;
     }
 
+    private void clearPlayArea() {
+        //hide piles and remove cards and melds
+        showHideDrawAndDiscardPiles(false);
+        mCurrentCards.removeAllViews();
+        mCurrentMelds.removeAllViews();
+    }
+
     private boolean startGame() {
         //User pressed [Start Game] button
-        mGame.removePlayerMiniHands(FiveKings.this); // have to do this before we reset the players
-        mGame.init(); //resets gameState to ROUND_START
+        mGame.init();
+        mGame.setGameState(GameState.ROUND_START);
         this.mPlayButton.setText(resFormat(R.string.nextRound, mGame.getRoundOf().getString()));
         mGame.relayoutPlayerMiniHands(this);
         if (getSharedPreferences(SETTINGS_NAME, 0).getBoolean(TUTORIAL_MODE, true)) IntroBox.show(FiveKings.this);
@@ -572,7 +585,6 @@ public class FiveKings extends Activity {
 
     public void endTurnCheckRound(boolean showCards) {
         //remove discard from player's hand and add to discardPile
-        //TODO:A UGLY!
         Deck.getInstance().addToDiscardPile(mGame.getCurrentPlayer().discardFromHand(mGame.getCurrentPlayer().getHandDiscard()));
         mGame.endCurrentPlayerTurn();
         // if isFinalTurn then we always show cards (because they put down their hand)
@@ -591,7 +603,7 @@ public class FiveKings extends Activity {
             mGame.setGameState(GameState.ROUND_START);
             mPlayButton.setText(resFormat(R.string.nextRound, mGame.getRoundOf().getString()));
             setShowHint(resFormat(R.string.displayScores, null),HandleHint.SHOW_HINT , false);
-            setShowHint(R.string.nextRoundHint,HandleHint.SET_HINT, false);
+            setShowHint(resFormat(R.string.nextRoundHint,mGame.getRoundOf().getString()),HandleHint.SET_HINT, false);
         }
         else if (GameState.TURN_END == gameState) {
             //If next hand is Human, findBestHandStart does nothing; if Computer then it starts considering Discard Pile card
@@ -599,7 +611,7 @@ public class FiveKings extends Activity {
 
             //if next player is also human, then force show hint about hiding the hand and passing the game
             mGame.animatePlayerMiniHand(mGame.getNextPlayer(), shakeAnimation);
-            setShowHint((mGame.currentAndNextAreHuman() && !mGame.isFinalTurn()) ? getString(R.string.hidingYourHandHint) : getString(R.string.clickMovingHandHint),
+            setShowHint((mGame.currentAndNextAreHuman() && !mGame.isFinalTurn()) ? getString(R.string.hidingYourHandHint) : getString(R.string.tapMovingHandHint),
                     HandleHint.SET_AND_SHOW_HINT , (mGame.currentAndNextAreHuman() && !mGame.isFinalTurn()));
         }
         else if (GameState.GAME_END == gameState) {
@@ -833,7 +845,7 @@ public class FiveKings extends Activity {
 
         //if next player is also human, don't need to show "hiding" hint, because dealer's hand isn't showing
         mGame.animatePlayerMiniHand(mGame.getNextPlayer(), shakeAnimation);
-        setShowHint(getString(R.string.clickMovingHandHint),HandleHint.SET_AND_SHOW_HINT , false);
+        setShowHint(getString(R.string.tapMovingHandHint),HandleHint.SET_AND_SHOW_HINT , false);
 
     }
 
@@ -877,8 +889,16 @@ public class FiveKings extends Activity {
     }
 
     private void showHideDrawAndDiscardPiles(final boolean show) {
-        mDiscardPile.setVisibility(show ? View.VISIBLE : View.INVISIBLE);
-        mDrawPile.setVisibility(show ? View.VISIBLE : View.INVISIBLE);
+        if (show){
+            mDiscardPile.setVisibility(View.VISIBLE);
+            mDrawPile.setVisibility(View.VISIBLE);
+        } else {
+            mDiscardPile.clearAnimation();
+            mDiscardPile.setVisibility(View.INVISIBLE);
+            mDrawPile.clearAnimation();
+            mDrawPile.setVisibility(View.INVISIBLE);
+        }
+
     }
 
     //shakes the Draw and Discard Piles to indicate that you should draw from them

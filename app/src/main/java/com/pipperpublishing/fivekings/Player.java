@@ -72,6 +72,8 @@ abstract public class Player implements HandComparator, Parcelable {
 
     Player(final String name) {
         this.name = name;
+        //don't null miniHandLayout between games; this is not removed unless you add/delete players
+        this.miniHandLayout = null;
         initGame();
     }
 
@@ -95,7 +97,6 @@ abstract public class Player implements HandComparator, Parcelable {
         this.cumulativeScore = 0;
         this.roundScore = 0; //only zero this here because we display all scores at the start of a new game
         this.hand = null;
-        this.miniHandLayout = null;
         this.drawnCard = null;
         this.turnState = TurnState.NOT_MY_TURN;
         return true;

@@ -28,10 +28,11 @@ import com.pipperpublishing.fivekings.view.FiveKings;
  *              If the other threads finish first, then terminate the sleep thread.
  *              (Can't use approach of waiting on join(time), because that is serial and we want to interrupt all threads
  * 11/8/2015    Support parcelable. Move Thread declaration to be dynamic
+ * 11/10/2015   Interrupted thread was not cascading up and rerunning with Heuristics (add a wasInterrupted flag to find this)
  */
 
 public class ComputerPlayer extends Player {
-    protected static final int PERMUTATION_THRESHOLD=750; //if longer than 0.75s for each player we switch to heuristic approach
+    protected static final int PERMUTATION_THRESHOLD=500; //if longer than 0.5s for each player we switch to heuristic approach
     private static final String SLEEP_THREAD_NAME="Sleep Thread";
     final private ThreadGroup threadGroup = new ThreadGroup("HandThreads");
     private Thread[] t; //the hand calculation threads (for different discards)
@@ -149,11 +150,11 @@ public class ComputerPlayer extends Player {
                             "Draw", getHandDiscard().getCardString()));
                 }
                 final long playerStopTime = System.currentTimeMillis();
-                Log.d(FiveKings.APP_TAG, String.format("Turn time was %.3f seconds", (playerStopTime-playerStartTime)/1000.0));
+                Log.d(FiveKings.APP_TAG, String.format("Turn time was %.3f seconds", (playerStopTime - playerStartTime) / 1000.0));
                 if (ComputerPlayer.this.method == Meld.MeldMethod.PERMUTATIONS)
                     ComputerPlayer.this.method = ((playerStopTime - playerStartTime) < PERMUTATION_THRESHOLD) ? Meld.MeldMethod.PERMUTATIONS : Meld.MeldMethod.HEURISTICS;
 
-                Log.d(FiveKings.APP_TAG, turnInfo.toString());
+                Log.d(FiveKings.APP_TAG, turnInfo.toString() + String.format("(drew the %s)",drawnCard.getCardString()));
 
                 return pickFrom;
             }
@@ -266,14 +267,15 @@ public class ComputerPlayer extends Player {
         bestHand.setDiscard(addedCard); //default if we don't improve the score
         //wait for all threads to complete, but only for PERMUTATION_THRESHOLD time - the sleep timer will interrupt them all otherwise
         for (int iThread=0; iThread < this.numThreads; iThread++) {
-            if (t[iThread].isInterrupted()) throw (new InterruptedException());
+            if (testHand[iThread].wasThreadInterrupted()) throw (new InterruptedException());
             try {
                 t[iThread].join();
 
             } catch (InterruptedException e) {
-                Log.d(FiveKings.APP_TAG,"findBestHandFinish interrupted in join()...");
+                throw new InterruptedException(String.format("%s: findBestHandFinish interrupted in join()...",FiveKings.APP_TAG));
             }
-            Log.d(FiveKings.APP_TAG, String.format("Thread %d took from %d to %d = %.3fs", iThread, testHand[iThread].getThreadStart(),testHand[iThread].getThreadStop(),
+            Log.d(FiveKings.APP_TAG, String.format("Thread \"%s\" (%d) took from %d to %d = %.3fs", t[iThread].getName(),iThread,
+                    testHand[iThread].getThreadStart(),testHand[iThread].getThreadStop(),
                     (testHand[iThread].getThreadStop() - testHand[iThread].getThreadStart()) / 1000.0));
         }
         //Interrupt the sleep thread because we finished successfully
@@ -304,6 +306,7 @@ public class ComputerPlayer extends Player {
         final private boolean isFinalTurn;
         private long threadStart;
         private long threadStop;
+        private boolean wasThreadInterrupted;
 
 
         ThreadedHand (final Rank roundOf, final CardList cards, final Card discard,final Meld.MeldMethod method, final boolean isFinalTurn) {
@@ -312,16 +315,21 @@ public class ComputerPlayer extends Player {
             this.isFinalTurn = isFinalTurn;
             this.threadStart = 0;
             this.threadStop = 0;
+            this.wasThreadInterrupted = false;
         }
 
         @Override
         public void run()  {
             threadStart = System.currentTimeMillis();
+            wasThreadInterrupted = false;
             try {
                 this.meldAndEvaluate(this.method, ComputerPlayer.this , this.isFinalTurn);
             } catch (InterruptedException e) {
                 //just break out of this thread
-                Log.d(FiveKings.APP_TAG, String.format("Thread %s interrupted!",Thread.currentThread().getName()));
+                threadStop = System.currentTimeMillis();
+                Log.d(FiveKings.APP_TAG, String.format("Thread \"%s\" interrupted after %.3fs",Thread.currentThread().getName(),
+                        (threadStop - threadStart)/1000.0));
+                wasThreadInterrupted = true;
             }
             threadStop = System.currentTimeMillis();
         }
@@ -332,6 +340,10 @@ public class ComputerPlayer extends Player {
 
         long getThreadStop() {
             return threadStop;
+        }
+
+        boolean wasThreadInterrupted() {
+            return wasThreadInterrupted;
         }
     }
 
@@ -355,7 +367,7 @@ public class ComputerPlayer extends Player {
                 return;
             }
             Log.d(FiveKings.APP_TAG, String.format("Sleep finished after %.3fs; interrupting other threads", (System.currentTimeMillis() - sleepStartTime)/1000.0 ));
-            Thread.currentThread().getThreadGroup().interrupt();
+            threadGroup.interrupt(); //interrupt the other calculation threads
         }
     }
 

@@ -52,14 +52,14 @@ import com.pipperpublishing.fivekings.view.FiveKings;
  10/20/2015     Moved clickedDrawOrDiscard to FiveKings with other event handlers
                 Moved isShowComputerCards and isAnimateDealing to FiveKings
  11/9/2015      Replace copied deck with references to singleton
+ 11/10/2015     Delete removePlayerMiniHands (only do that as part of relayout)
+                Removed setting gameState in init() because we use init() in add/delete players space between games
+                Removed showComputerCards and animateDealing because they are not used in GameState
  *
  */
 public class Game implements Parcelable{
     public static final int MAX_PLAYERS = 10;
     static final int MAX_CARDS = 14; //Round of Kings + picked up card
-    // in the Menu Settings dialog
-    private boolean showComputerCards = false;
-    private boolean animateDealing = true;
 
     //List of players sorted into correct relative position
     private final PlayerList players;
@@ -85,8 +85,6 @@ public class Game implements Parcelable{
     final public boolean init() {
         this.players.initGame();
         this.roundOf = Rank.getLowestRank();
-        this.gameState = GameState.ROUND_START;
-
         return true;
     }
 
@@ -159,10 +157,6 @@ public class Game implements Parcelable{
 
     final public void relayoutPlayerMiniHands(final Activity a) {
         this.players.relayoutPlayerMiniHands(a);
-    }
-
-    final public void removePlayerMiniHands(final Activity a) {
-        this.players.removePlayerMiniHands(a);
     }
 
     final public void resetPlayerMiniHandsToRoundStart() {
@@ -251,9 +245,6 @@ public class Game implements Parcelable{
 
     @Override
     public void writeToParcel(Parcel parcel, int flags) {
-        parcel.writeByte((byte) (showComputerCards ? 1 : 0));
-        parcel.writeByte((byte) (animateDealing ? 1 : 0));
-
         parcel.writeLong(roundStartTime);
         parcel.writeLong(roundStopTime);
 
@@ -279,9 +270,6 @@ public class Game implements Parcelable{
 
     //recreate object from parcel
     private Game(Parcel parcel) {
-        showComputerCards = parcel.readByte() != 0;
-        animateDealing = parcel.readByte() != 0;
-
         roundStartTime = parcel.readLong();
         roundStopTime = parcel.readLong();
 
