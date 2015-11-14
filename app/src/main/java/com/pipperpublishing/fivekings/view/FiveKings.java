@@ -1,3 +1,8 @@
+
+/*
+ * Copyright Jeffrey Pugh (pipper.publishing@gmail.com) (c) 2015. All rights reserved.
+ */
+
 package com.pipperpublishing.fivekings.view;
 
 import android.animation.Animator;
@@ -36,6 +41,9 @@ import android.widget.TableRow;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import com.github.amlcurran.showcaseview.OnShowcaseEventListener;
+import com.github.amlcurran.showcaseview.ShowcaseView;
+import com.github.amlcurran.showcaseview.targets.ViewTarget;
 import com.pipperpublishing.fivekings.BuildConfig;
 import com.pipperpublishing.fivekings.Card;
 import com.pipperpublishing.fivekings.CardList;
@@ -169,7 +177,7 @@ import java.util.List;
                 Moved showComputerCards and animateDealing into FiveKings, use directly from preferences
                 Change parameters of updateHandsAndCards to showCards and allowDragging
  11/4/2015      Set Drag here for a new meld to White explicitly (looked grey)
- 11/6/2015      Set and pass highlightWildCardRank if TUTORIAL_MODE set (also save in savedInstanceState)
+ 11/6/2015      Set and pass highlightWildCardRank if NOVICE_MODE set (also save in savedInstanceState)
                 Don't highlight in animateComputerPickupAndDiscard
  11/8/2015      Highlight wildcards if separate highlightWildcards option set
  11/9/2015      Parcelable implementation: cascade properly through sub/super classes
@@ -184,17 +192,20 @@ import java.util.List;
                 Also Game.init() if you select [Yes]
                 This also resets roundOf so you can add players
                 clearAnimation before making piles invisible (seems to interfere otherwise)
-
+ 11/11/2015     Try using ShowcaseView to highlight portions of the UI
+                Remove showing Intro box when you start game
+ 11/13/2015     Don't show hints while you're showing Tutorial screens
 */
-
 public class FiveKings extends Activity {
     public static final String APP_TAG = BuildConfig.VERSION_NAME;
 
     static final String SETTINGS_NAME="SettingsFile";
     static final String SHOW_COMPUTER_HANDS_SETTING="showComputerHands";
     static final String ANIMATE_DEALING_SETTING="animateDealing";
-    static final String TUTORIAL_MODE ="showIntro";
+    static final String NOVICE_MODE ="showIntro";
     static final String HIGHLIGHT_WILDCARDS="highlightWildcards";
+
+    static int showingTutorial = 0;
 
     static final float CARD_OFFSET_RATIO = 0.2f;
     static final float CARD_SCALING = 0.6f; //in the meld area, the cards are 1.5 x CARD_SCALING + a margin for the border, to fit in the meld area
@@ -245,6 +256,7 @@ public class FiveKings extends Activity {
 
     private Animation shakeAnimation;
     private Rank highlightWildCardRank = null;
+    private ShowcaseView lastShowcaseView=null;
 
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
@@ -400,6 +412,37 @@ public class FiveKings extends Activity {
 
                     default:
                         mGame.setMiniHandsSolid();
+                }//end switch
+                //If we were in the Tutorial, restart there
+                switch (showingTutorial) {
+                    case 1:
+                        showIntro1();
+                        break;
+                    case 2:
+                        showIntro2();
+                        break;
+                    case 3:
+                        showIntro3();
+                        break;
+                    case 4:
+                        showIntro4();
+                        break;
+                    case 5:
+                        showIntro5();
+                        break;
+                    case 6:
+                        showIntro6();
+                        break;
+                    case 7:
+                        showIntro7();
+                        break;
+                    case 8:
+                        showIntro8();
+                        break;
+                    case 9:
+                        showIntro9();
+                        break;
+                    default:
                 }
 
 
@@ -418,7 +461,7 @@ public class FiveKings extends Activity {
             case R.id.action_settings:
                 SharedPreferences settings = getSharedPreferences(SETTINGS_NAME, 0);
                 SettingsDialogFragment settingsDialogFragment = SettingsDialogFragment.newInstance(isShowComputerCards(),isAnimateDealing(),
-                        settings.getBoolean(TUTORIAL_MODE, true),settings.getBoolean(HIGHLIGHT_WILDCARDS, true) );
+                        settings.getBoolean(NOVICE_MODE, true),settings.getBoolean(HIGHLIGHT_WILDCARDS, true) );
                 settingsDialogFragment.show(getFragmentManager(), null);
                 return true;
             case R.id.action_add_player:
@@ -441,6 +484,285 @@ public class FiveKings extends Activity {
         }
     }
 
+    private void cleanupShowcaseView(ShowcaseView sv) {
+        //release view memory to reduce OOM errors
+        /* don't have a reference to these Listeners
+        sv.getViewTreeObserver().removeOnPreDrawListener();
+        if(Build.VERSION.SDK_INT>15){
+            sv.getViewTreeObserver().removeOnGlobalLayoutListener();
+        }
+        else {
+            sv.getViewTreeObserver().removeGlobalOnLayoutListener(globalLayout);
+        }
+        */
+        //Builder and insertShowcase addView to this parent (the base view including status bar)
+        ((ViewGroup) findViewById(android.R.id.content)).removeView(sv);
+    }
+
+    private void showIntro1() {
+        showingTutorial = 1;
+        this.lastShowcaseView = new ShowcaseView.Builder(this)
+                .withNewStyleShowcase()
+                .setTarget(new ViewTarget(mPlayButton))
+                .setStyle(R.style.ShowcaseForFiveKingsNext)
+                .setContentTitle(R.string.intro1_title)
+                .setContentText(R.string.intro1_text)
+                .blockAllTouches()
+                .build();
+        this.lastShowcaseView.setOnShowcaseEventListener(new OnShowcaseEventListener() {
+            @Override
+            public void onShowcaseViewHide(ShowcaseView showcaseView) {
+
+            }
+
+            @Override
+            public void onShowcaseViewDidHide(ShowcaseView showcaseView) {
+                clearPlayArea();
+                startGame();
+                startRound();
+                dealRound();
+                showIntro2();
+            }
+
+            @Override
+            public void onShowcaseViewShow(ShowcaseView showcaseView) {
+
+            }
+        });
+    }
+
+    private void showIntro2() {
+        showingTutorial=2;
+        cleanupShowcaseView(this.lastShowcaseView);
+        this.lastShowcaseView = new ShowcaseView.Builder(this)
+                .setTarget(new ViewTarget(mGame.getNextPlayer().getMiniHandLayout()))
+                .setStyle(R.style.ShowcaseForFiveKingsNext)
+                .setContentTitle(R.string.intro2_title)
+                .setContentText(R.string.intro2_text)
+                .blockAllTouches()
+                .build();
+        this.lastShowcaseView
+                .setOnShowcaseEventListener(new OnShowcaseEventListener() {
+                    @Override
+                    public void onShowcaseViewHide(ShowcaseView showcaseView) {
+
+                    }
+
+                    @Override
+                    public void onShowcaseViewDidHide(ShowcaseView showcaseView) {
+                        mGame.rotatePlayer(); //also sets PREPARE_TURN
+                        mGame.getCurrentPlayer().prepareTurn(FiveKings.this);
+                        showIntro3();
+                    }
+
+                    @Override
+                    public void onShowcaseViewShow(ShowcaseView showcaseView) {
+
+                    }
+                });
+    }
+    private void showIntro3() {
+        showingTutorial=3;
+        cleanupShowcaseView(this.lastShowcaseView);
+        this.lastShowcaseView = new ShowcaseView.Builder(this)
+                .setTarget(new ViewTarget(mCurrentCards))
+                .setStyle(R.style.ShowcaseForFiveKingsNext)
+                .setContentTitle(R.string.intro3_title)
+                .setContentText(R.string.intro3_text)
+                .blockAllTouches()
+                .build();
+        this.lastShowcaseView
+                .setOnShowcaseEventListener(new OnShowcaseEventListener() {
+                    @Override
+                    public void onShowcaseViewHide(ShowcaseView showcaseView) {
+
+                    }
+
+                    @Override
+                    public void onShowcaseViewDidHide(ShowcaseView showcaseView) {
+                        showIntro4();
+                    }
+
+                    @Override
+                    public void onShowcaseViewShow(ShowcaseView showcaseView) {
+
+                    }
+                });
+    }
+    private void showIntro4() {
+        showingTutorial = 4;
+        cleanupShowcaseView(this.lastShowcaseView);
+        this.lastShowcaseView = new ShowcaseView.Builder(this)
+                .setTarget(new ViewTarget(mDiscardPile))
+                .setStyle(R.style.ShowcaseForFiveKingsNext)
+                .setContentTitle(R.string.intro4_title)
+                .setContentText(R.string.intro4_text)
+                .blockAllTouches()
+                .build();
+        this.lastShowcaseView
+                .setOnShowcaseEventListener(new OnShowcaseEventListener() {
+                    @Override
+                    public void onShowcaseViewHide(ShowcaseView showcaseView) {
+
+                    }
+
+                    @Override
+                    public void onShowcaseViewDidHide(ShowcaseView showcaseView) {
+                        showIntro5();
+                    }
+
+                    @Override
+                    public void onShowcaseViewShow(ShowcaseView showcaseView) {
+
+                    }
+                });
+    }
+    private void showIntro5() {
+        showingTutorial=5;
+        cleanupShowcaseView(this.lastShowcaseView);
+        this.lastShowcaseView = new  ShowcaseView.Builder(this)
+                .setTarget(new ViewTarget(mDrawPile))
+                .setStyle(R.style.ShowcaseForFiveKingsNext)
+                .setContentTitle(R.string.intro5_title)
+                .setContentText(R.string.intro5_text)
+                .blockAllTouches()
+                .build();
+        this.lastShowcaseView
+                .setOnShowcaseEventListener(new OnShowcaseEventListener() {
+                    @Override
+                    public void onShowcaseViewHide(ShowcaseView showcaseView) {
+
+                    }
+
+                    @Override
+                    public void onShowcaseViewDidHide(ShowcaseView showcaseView) {
+                        showIntro6();
+                    }
+
+                    @Override
+                    public void onShowcaseViewShow(ShowcaseView showcaseView) {
+
+                    }
+                });
+    }
+    private void showIntro6() {
+        showingTutorial=6;
+        cleanupShowcaseView(this.lastShowcaseView);
+        this.lastShowcaseView = new ShowcaseView.Builder(this)
+                .setTarget(new ViewTarget(mCurrentMelds))
+                .setStyle(R.style.ShowcaseForFiveKingsNext)
+                .setContentTitle(R.string.intro6_title)
+                .setContentText(R.string.intro6_text)
+                .blockAllTouches()
+                .build();
+        this.lastShowcaseView
+                .setOnShowcaseEventListener(new OnShowcaseEventListener() {
+                    @Override
+                    public void onShowcaseViewHide(ShowcaseView showcaseView) {
+
+                    }
+
+                    @Override
+                    public void onShowcaseViewDidHide(ShowcaseView showcaseView) {
+                        showIntro7();
+                    }
+
+                    @Override
+                    public void onShowcaseViewShow(ShowcaseView showcaseView) {
+
+                    }
+                });
+    }
+    private void showIntro7() {
+        showingTutorial=7;
+        cleanupShowcaseView(this.lastShowcaseView);
+        this.lastShowcaseView =
+                new ShowcaseView.Builder(this)
+                        .setTarget(new ViewTarget(mCurrentCards))
+                        .setStyle(R.style.ShowcaseForFiveKingsNext)
+                        .setContentTitle(R.string.intro7_title)
+                        .setContentText(R.string.intro7_text)
+                        .blockAllTouches()
+                        .build();
+        this.lastShowcaseView
+                .setOnShowcaseEventListener(new OnShowcaseEventListener() {
+                    @Override
+                    public void onShowcaseViewHide(ShowcaseView showcaseView) {
+
+                    }
+
+                    @Override
+                    public void onShowcaseViewDidHide(ShowcaseView showcaseView) {
+                        showIntro8();
+                    }
+
+                    @Override
+                    public void onShowcaseViewShow(ShowcaseView showcaseView) {
+
+                    }
+                });
+    }
+
+
+    private void showIntro8() {
+        showingTutorial=8;
+        cleanupShowcaseView(this.lastShowcaseView);
+        this.lastShowcaseView =
+        new ShowcaseView.Builder(this)
+                .setTarget(new ViewTarget(mDiscardPile))
+                .setStyle(R.style.ShowcaseForFiveKingsNext)
+                .setContentTitle(R.string.intro8_title)
+                .setContentText(R.string.intro8_text)
+                .blockAllTouches()
+                .build();
+        this.lastShowcaseView
+                .setOnShowcaseEventListener(new OnShowcaseEventListener() {
+                    @Override
+                    public void onShowcaseViewHide(ShowcaseView showcaseView) {
+
+                    }
+
+                    @Override
+                    public void onShowcaseViewDidHide(ShowcaseView showcaseView) {
+                        showIntro9();
+                    }
+
+                    @Override
+                    public void onShowcaseViewShow(ShowcaseView showcaseView) {
+
+                    }
+                });
+    }
+    private void showIntro9() {
+        showingTutorial=9;
+        cleanupShowcaseView(this.lastShowcaseView);
+        this.lastShowcaseView =
+        new ShowcaseView.Builder(this)
+                .setTarget(com.github.amlcurran.showcaseview.targets.Target.NONE)
+                .setStyle(R.style.ShowcaseForFiveKingsLast)
+                .setContentTitle(R.string.intro9_title)
+                .setContentText(R.string.intro9_text)
+                .blockAllTouches()
+                .build();
+        this.lastShowcaseView
+                .setOnShowcaseEventListener(new OnShowcaseEventListener() {
+                    @Override
+                    public void onShowcaseViewHide(ShowcaseView showcaseView) {
+
+                    }
+
+                    @Override
+                    public void onShowcaseViewDidHide(ShowcaseView showcaseView) {
+                        showingTutorial=0;
+                        cleanupShowcaseView(FiveKings.this.lastShowcaseView);
+                    }
+
+                    @Override
+                    public void onShowcaseViewShow(ShowcaseView showcaseView) {
+
+                    }
+                });
+    }
     //Called from settingsDialogFragment
     public void setSettings(final boolean showComputerCards, final boolean animateDealing, boolean tutorialMode, boolean highlightWildcards) {
         //store only in preferences
@@ -448,10 +770,10 @@ public class FiveKings extends Activity {
         SharedPreferences.Editor editor = settings.edit();
         editor.putBoolean(SHOW_COMPUTER_HANDS_SETTING, showComputerCards);
         editor.putBoolean(ANIMATE_DEALING_SETTING, animateDealing);
-        editor.putBoolean(TUTORIAL_MODE, tutorialMode);
+        editor.putBoolean(NOVICE_MODE, tutorialMode);
         editor.putBoolean(HIGHLIGHT_WILDCARDS, highlightWildcards);
 
-        // Commit the edits!
+        // Lazy Commit the edits!
         editor.apply();
     }
 
@@ -493,8 +815,12 @@ public class FiveKings extends Activity {
         if (explodeSet != null) explodeSet.cancel();
 
         if (GameState.NEW_GAME == mGame.getGameState()) {
-            clearPlayArea();
-            startGame();
+            if (getSharedPreferences(SETTINGS_NAME, 0).getBoolean(NOVICE_MODE, true)) {
+                showIntro1();
+            } else {
+                clearPlayArea();
+                startGame();
+            }
         }
         //starting a round
         else if (GameState.ROUND_START == mGame.getGameState()) {
@@ -579,7 +905,7 @@ public class FiveKings extends Activity {
         mGame.setGameState(GameState.ROUND_START);
         this.mPlayButton.setText(resFormat(R.string.nextRound, mGame.getRoundOf().getString()));
         mGame.relayoutPlayerMiniHands(this);
-        if (getSharedPreferences(SETTINGS_NAME, 0).getBoolean(TUTORIAL_MODE, true)) IntroBox.show(FiveKings.this);
+
         return true;
     }
 
@@ -1352,12 +1678,14 @@ public class FiveKings extends Activity {
             this.mHint = mText;
             if (setShowHint == HandleHint.SET_HINT) return;
         }
-
-        //Hints are shown if forceShow true, or until the 4th round unless you turn off showIntroduction
-        if (forceShow || (getSharedPreferences(SETTINGS_NAME, 0).getBoolean(TUTORIAL_MODE, true) &&
-                (mGame != null) && (mGame.getRoundOf() != null) && (mGame.getRoundOf().getOrdinal() <= HELP_ROUNDS.getOrdinal()))) {
-            mHintToast.setText(mText==null ? mHint : mText);
-            mHintToast.show();
+        //Skip showing any hints if we are in the tutorial screens
+        if (showingTutorial <= 0) {
+            //Hints are shown if forceShow true, or until the 4th round unless you turn off showIntroduction
+            if (forceShow || (getSharedPreferences(SETTINGS_NAME, 0).getBoolean(NOVICE_MODE, true) &&
+                    (mGame != null) && (mGame.getRoundOf() != null) && (mGame.getRoundOf().getOrdinal() <= HELP_ROUNDS.getOrdinal()))) {
+                mHintToast.setText(mText == null ? mHint : mText);
+                mHintToast.show();
+            }
         }
     }
     void setShowHint(final int resource, final HandleHint setShowHint, final boolean forceShow ) {

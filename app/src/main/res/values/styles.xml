@@ -1,5 +1,9 @@
 <?xml version="1.0" encoding="utf-8"?>
-<resources>
+<!--
+  ~ Copyright Jeffrey Pugh (pipper.publishing@gmail.com) (c) 2015. All rights reserved.
+  -->
+
+<resources xmlns:android="http://schemas.android.com/apk/res/android">
 
     <!-- Base application theme. -->
     <style name="AppTheme" parent="Theme.AppCompat.Light.DarkActionBar">
@@ -22,5 +26,25 @@
     </style>
 
     <style name="ButtonBarButton" />
+
+    <style name="ShowcaseForFiveKingsNext" parent="ShowcaseView">
+        <item name="sv_backgroundColor">#e51249d9</item>
+        <item name="sv_showcaseColor">#25467A</item>
+        <item name="sv_buttonText">@string/intro_button_text</item>
+        <item name="sv_titleTextAppearance">@style/TextAppearance.ShowcaseView.Title.Light</item>
+        <item name="sv_detailTextAppearance">@style/ShowcaseForFiveKingsDetail</item>
+    </style>
+    <style name="ShowcaseForFiveKingsLast" parent="ShowcaseView">
+        <item name="sv_backgroundColor">#e51249d9</item>
+        <item name="sv_showcaseColor">#25467A</item>
+        <item name="sv_buttonText">@string/intro_end_button_text</item>
+        <item name="sv_titleTextAppearance">@style/TextAppearance.ShowcaseView.Title.Light</item>
+        <item name="sv_detailTextAppearance">@style/ShowcaseForFiveKingsDetail</item>
+    </style>
+
+    <style name="ShowcaseForFiveKingsDetail">
+        <item name="android:textSize">13dp</item>
+        <item name="android:textColor">@android:color/white</item>
+    </style>
 
 </resources>

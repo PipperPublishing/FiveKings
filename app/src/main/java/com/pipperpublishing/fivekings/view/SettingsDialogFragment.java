@@ -1,3 +1,7 @@
+/*
+ * Copyright Jeffrey Pugh (pipper.publishing@gmail.com) (c) 2015. All rights reserved.
+ */
+
 package com.pipperpublishing.fivekings.view;
 
 import android.app.AlertDialog;
@@ -28,7 +32,7 @@ public class SettingsDialogFragment extends DialogFragment {
         Bundle args = new Bundle();
         args.putBoolean(FiveKings.SHOW_COMPUTER_HANDS_SETTING, oldShowComputerCards);
         args.putBoolean(FiveKings.ANIMATE_DEALING_SETTING, oldAnimateDealing);
-        args.putBoolean(FiveKings.TUTORIAL_MODE, oldShowHelp);
+        args.putBoolean(FiveKings.NOVICE_MODE, oldShowHelp);
         args.putBoolean(FiveKings.HIGHLIGHT_WILDCARDS, oldHighlightWildcards);
         ePDF.setArguments(args);
         return ePDF;
@@ -39,7 +43,7 @@ public class SettingsDialogFragment extends DialogFragment {
         //use getArguments because they were passed to the fragment
         final boolean oldShowComputerCards=getArguments().getBoolean(FiveKings.SHOW_COMPUTER_HANDS_SETTING, false);
         final boolean oldAnimateDealing = getArguments().getBoolean(FiveKings.ANIMATE_DEALING_SETTING, true);
-        final boolean oldShowHelp = getArguments().getBoolean(FiveKings.TUTORIAL_MODE, true);
+        final boolean oldShowHelp = getArguments().getBoolean(FiveKings.NOVICE_MODE, true);
         final boolean oldHighlightWildcards = getArguments().getBoolean(FiveKings.HIGHLIGHT_WILDCARDS, true);
         final AlertDialog.Builder builder = new AlertDialog.Builder(getActivity());
         // Get the layout inflater

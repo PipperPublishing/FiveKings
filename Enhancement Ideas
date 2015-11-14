@@ -386,23 +386,33 @@ FIXED: WIth you + 2 Computer players, the Droid player goes out incorrectly (and
 FIXED: Can't add players sometime after playing a few rounds, then pressing [New Game] because it hasn't reset roundOf()
     -- also should reset the scores, and clear the discard, but leave the mini hands
 
-
-
+[Released to Alpha channel on Google Play]
+[Promoted to Beta channel on 11/11/2015]
 ------------
-v0.8.13
+Branched
+v0.8.13 Bug fixes
 BUG:- Problem where cards get stuck at bottom of screen (may be on Q's or K's round with card to far right) - look at addToMeld and drag code
 -- When you drag card to a meld it seems to stay in the main cards
 BUG: Tim's problem where it didn't recognize his completed meld
-
+BUG: If you are showing Computer Cards, and tap on it to display them, then switch orientation/pause --> when you come back the piles will be animated
+    and you can play for the computer :)
+BUG: If you change orientation during [Start Game] you can sometimes catch the hand shaking (crashes if you tap it)
 
 ------------------
-v0.8.20
-- Hint overlays like Google (arrows and text) (Draw, Discard, Meld area, Your cards)
--- Sequence of 4 screens with "Got it" at the end
+v0.8.20 Better instructions for novice players
+DONE Hint overlays like Google (arrows and text) (Draw, Discard, Meld area, Your cards)
+DONE Sequence of 4 screens with "Got it" at the end
+DONE Add something about there being 5 suits
+DONE- Don't show hints while we're in the Tutorial
+DONE: ON orientation change, go back to where we were in tutorial
+---------------
+v0.8.21
+- Make discard area bigger (make drag listener for whole layout?)
 - Add ? pop-up for Meld
 - Hint Toasts should stay longer; some should be dialogs that you dismiss (distinguish between Hints and Info Toasts - different call)
+- ? should show simple instructions for the round
 ----------------------
-v0.8.30
+v0.8.22
 - Add two more levels of Computer player (Easy, Hard, Expert)
 - Warn you if you don't meld in your final turn (or automatically meld your hand)
 - [Rob] Guided practice round
@@ -424,10 +434,12 @@ v0.9.01 Graphics
     - Try exploding into middle of screen with fade-out
     - other comments like Phase 10: pick up a discard and say "Thanks! I really needed that" or "Ouch!"
 - [Play] button and Scores on cards should scale to card size
+- Hi-res cards have bloated the size of the APK by 4M - can we shrink it?
 
 =======================
 v0.9.50 Cleanup
 
+- Tidy up FiveKings (order of event handlers, follow flow)
 - Player methods use fKActivity and a lot of convoluted logic
     - Improve logic flow and understandability of FiveKings, Game, PlayerLayout etc
     - Clean up Game state flow and handling
@@ -435,7 +447,6 @@ v0.9.50 Cleanup
     - more sub-classing rather than if (isHuman) type logic
 - Clean up TODO:A 's
 - Remove smells where possible :)
-- LOTS of cleaning up in FiveKings - follow f
 
 =====================
 v1.1.01 Scoring and Valuation Bugs
@@ -447,13 +458,15 @@ BUGS
       is saving one card for a run, e.g. 10C,JC, but has two other of one of those cards (JS,JD).  It doesn't move the jack
       over to the pair to meld them.
 BUG: Meld.check on Heuristics is showing Joker-3-4
-- Computer should have kept KS-KD-QS-6-4, but instead kept KS-KD-9-6-4 on round of 5's
+- Droid should have kept KS-KD-QS-6-4, but instead kept KS-KD-9-6-4 on round of 5's
+- Droid should keep 10C-QC and QD to preserve two partial melds, but instead threw 10C
 - In Q's round, computer preferred 6-Q-8 with 10-J unmelded over 8-Q-10-J with 6 unmelded (even though test #2 prefers the config with more melded cards)
  -- Maybe because of this bug (only finds broken sequences of x-?-z)
 BUG:A Heuristics won't build a sequence X-Y-Jok-Z; not looking at this - use meld.check?
 
 BUG:A Check if still true? Heuristics is throwing away wildcard when you have a partial meld of 4-4 and only full melds;
 BUG:A Permutations won't build a K onto T*Q
+
 
 
 ================
