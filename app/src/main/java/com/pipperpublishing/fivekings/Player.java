@@ -54,6 +54,7 @@ import java.util.Comparator;
  * 10/10/2015   turnState was not being copied in Copy Constructor which messes up player updates
  * 10/18/2015   Change per player showHandsAndCards to returning a showCards flag
  *  10/20/2015  Hide drawPile and discardPile - access through deck
+ *  11/16/2015  Replaced isHuman with PlayerType check
  */
 abstract public class Player implements HandComparator, Parcelable {
     private String name;
@@ -237,7 +238,11 @@ abstract public class Player implements HandComparator, Parcelable {
         return drawnCard;
     }
 
-    abstract public boolean isHuman();
+    abstract protected PlayerList.PlayerType getPlayerType();
+
+    final public boolean isPlayerType(PlayerList.PlayerType playerType) {
+        return (playerType == getPlayerType());
+    }
 
     final boolean isOut() {
         return ((hand != null) && (hand.calculateValueAndScore(true) == 0));
@@ -248,7 +253,7 @@ abstract public class Player implements HandComparator, Parcelable {
     /*-----------------------------------------------------*/
     public void prepareTurn(final FiveKings fKActivity) {
         turnState = TurnState.PLAY_TURN;
-        fKActivity.showHandsAndCards(showCards(fKActivity.isShowComputerCards()), fKActivity.getmGame().getCurrentPlayer().isHuman());
+        fKActivity.showHandsAndCards(showCards(fKActivity.isShowComputerCards()), fKActivity.getmGame().getCurrentPlayer().isPlayerType(PlayerList.PlayerType.HUMAN));
     }
 
     abstract public void takeTurn(final FiveKings fKActivity, Game.PileDecision drawOrDiscardPile, final boolean isFinalTurn);

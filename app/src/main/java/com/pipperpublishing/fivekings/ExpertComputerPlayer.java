@@ -1,3 +1,7 @@
+/*
+ * Copyright Jeffrey Pugh (pipper.publishing@gmail.com) (c) 2015. All rights reserved.
+ */
+
 package com.pipperpublishing.fivekings;
 
 import android.os.Parcel;
@@ -15,13 +19,17 @@ import android.os.Parcelable;
  * 3/20/2015    Extend rank meld preference to keepDiscardDecision
  * 3/21/2015    Prefer full rank melds over sequences
  * 4/5/2015     Only override strategy portions - execution is same as ComputerPlayer
+ * 11/16/2015   Provide a Copy constructor for ExpertComputerPlayer for edit Player option
  */
-class StrategyComputerPlayer extends ComputerPlayer {
+class ExpertComputerPlayer extends HardComputerPlayer {
 
-    StrategyComputerPlayer(final String name) {
+    ExpertComputerPlayer(final String name) {
         super(name);
     }
 
+    ExpertComputerPlayer(final Player oldPlayer) {
+        super(oldPlayer);
+    }
 
     //most of these are the same test, but we don't use calculateHandValue if it was just because a single card improved things
     // and there's a good chance of drawing to add to a meld / complete a partial meld
@@ -86,8 +94,14 @@ class StrategyComputerPlayer extends ComputerPlayer {
         return testBetterThanBest;
     }
 
+    @Override
+    final protected PlayerList.PlayerType getPlayerType() {
+        //needed so we can display properly on screen
+        return PlayerList.PlayerType.EXPERT_COMPUTER;
+    }
+
     /* PARCELABLE read/write for StrategyComputerPlayer (use superclass implementation) */
-    protected StrategyComputerPlayer(Parcel parcel) {
+    protected ExpertComputerPlayer(Parcel parcel) {
         super(parcel);
     }
 
@@ -102,15 +116,15 @@ class StrategyComputerPlayer extends ComputerPlayer {
     }
 
     @SuppressWarnings("unused")
-    public static final Parcelable.Creator<StrategyComputerPlayer> CREATOR = new Parcelable.Creator<StrategyComputerPlayer>() {
+    public static final Parcelable.Creator<ExpertComputerPlayer> CREATOR = new Parcelable.Creator<ExpertComputerPlayer>() {
         @Override
-        public StrategyComputerPlayer createFromParcel(Parcel in) {
-            return new StrategyComputerPlayer(in);
+        public ExpertComputerPlayer createFromParcel(Parcel in) {
+            return new ExpertComputerPlayer(in);
         }
 
         @Override
-        public StrategyComputerPlayer[] newArray(int size) {
-            return new StrategyComputerPlayer[size];
+        public ExpertComputerPlayer[] newArray(int size) {
+            return new ExpertComputerPlayer[size];
         }
     };
 

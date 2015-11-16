@@ -1,3 +1,7 @@
+/*
+ * Copyright Jeffrey Pugh (pipper.publishing@gmail.com) (c) 2015. All rights reserved.
+ */
+
 package com.pipperpublishing.fivekings.view;
 
 import android.app.AlertDialog;
@@ -21,21 +25,26 @@ import com.pipperpublishing.fivekings.R;
  *              Include a Delete option in the Edit dialog
  */
 public class EnterPlayersDialogFragment extends DialogFragment {
-    private static final String playerArg = "PLAYER_NAME";
-    private static final String isHumanArg = "IS_HUMAN";
-    private static final String addingArg = "ADDING";
-    private static final String iPlayerArg = "I_PLAYER";
+    private static final String PLAYER_ARG = "PLAYER_NAME";
+    private static final String IS_HUMAN_ARG = "IS_HUMAN";
+    private static final String IS_HARD_COMPUTER_ARG = "IS_HARD_COMPUTER";
+    private static final String IS_EXPERT_COMPUTER_ARG = "IS_EXPERT_COMPUTER";
+    private static final String ADDING_ARG = "ADDING";
+    private static final String I_PLAYER_ARG = "I_PLAYER";
 
 
     //use newInstance to pass arguments to the Bundle which the dialog can access
     // apparently this is preferred to custom member fields and setters
-    static EnterPlayersDialogFragment newInstance(final String oldPlayerName, final boolean oldIsHuman, final boolean addingFlag, final int iPlayer) {
+    static EnterPlayersDialogFragment newInstance(final String oldPlayerName, final boolean oldIsHuman, boolean oldIsHardComputer, boolean oldIsExpertComputer, final boolean addingFlag, final int iPlayer) {
         EnterPlayersDialogFragment ePDF = new EnterPlayersDialogFragment();
         Bundle args = new Bundle();
-        args.putString(playerArg, oldPlayerName);
-        args.putBoolean(isHumanArg, oldIsHuman);
-        args.putBoolean(addingArg, addingFlag);
-        args.putInt(iPlayerArg, iPlayer);
+        args.putString(PLAYER_ARG, oldPlayerName);
+        args.putBoolean(IS_HUMAN_ARG, oldIsHuman);
+        args.putBoolean(IS_HARD_COMPUTER_ARG, oldIsHardComputer);
+        args.putBoolean(IS_EXPERT_COMPUTER_ARG, oldIsExpertComputer);
+        args.putBoolean(ADDING_ARG, addingFlag);
+        args.putInt(I_PLAYER_ARG, iPlayer);
+
         ePDF.setArguments(args);
         return ePDF;
     }
@@ -43,10 +52,12 @@ public class EnterPlayersDialogFragment extends DialogFragment {
     @Override
     public Dialog onCreateDialog(final Bundle args) {
         //use getArguments because they were passed to the fragment
-        final String playerName=getArguments().getString(playerArg, "");
-        final boolean isHuman=getArguments().getBoolean(isHumanArg, false);
-        final boolean addingFlag = getArguments().getBoolean(addingArg, false);
-        final int iPlayer = getArguments().getInt(iPlayerArg, -1);
+        final String playerName=getArguments().getString(PLAYER_ARG, "");
+        final boolean isHuman=getArguments().getBoolean(IS_HUMAN_ARG, false);
+        final boolean isHardComputer=getArguments().getBoolean(IS_HARD_COMPUTER_ARG, false);
+        final boolean isExpertComputer=getArguments().getBoolean(IS_EXPERT_COMPUTER_ARG, true);
+        final boolean addingFlag = getArguments().getBoolean(ADDING_ARG, false);
+        final int iPlayer = getArguments().getInt(I_PLAYER_ARG, -1);
         final AlertDialog.Builder builder = new AlertDialog.Builder(getActivity());
         // Get the layout inflater
         final LayoutInflater inflater = getActivity().getLayoutInflater();
@@ -68,14 +79,17 @@ public class EnterPlayersDialogFragment extends DialogFragment {
                         EnterPlayersDialogFragment.this.getDialog().cancel();
                     }
                 });
-        if (!addingFlag) builder.setNeutralButton(R.string.delete, new DialogInterface.OnClickListener() {
-            public void onClick(DialogInterface dialog, int whichButton) {
+        if (!addingFlag) {
+            builder.setNeutralButton(R.string.delete, new DialogInterface.OnClickListener() {
+                public void onClick(DialogInterface dialog, int whichButton) {
 
-            }
-        });
+                }
+            });
+        }
         ((TextView) tv.findViewById(R.id.player_name)).setText(playerName);
         ((RadioButton)tv.findViewById(R.id.is_human)).setChecked(isHuman);
-        ((RadioButton)tv.findViewById(R.id.is_computer)).setChecked(!isHuman);
+        ((RadioButton)tv.findViewById(R.id.is_hard_computer)).setChecked(isHardComputer);
+        ((RadioButton)tv.findViewById(R.id.is_expert_computer)).setChecked(isExpertComputer);
 
         return builder.create();
     }
@@ -86,8 +100,8 @@ public class EnterPlayersDialogFragment extends DialogFragment {
     {
         super.onStart();    //super.onStart() is where dialog.show() is actually called on the underlying dialog, so we have to do it after this point
 
-        final boolean addingFlag = getArguments().getBoolean(addingArg,true);
-        final int iPlayer = getArguments().getInt(iPlayerArg, -1);
+        final boolean isAddingFlag = getArguments().getBoolean(ADDING_ARG,true);
+        final int iPlayer = getArguments().getInt(I_PLAYER_ARG, -1);
         AlertDialog d = (AlertDialog)getDialog();
         if(d != null) {
             Button addEditButton = d.getButton(Dialog.BUTTON_NEGATIVE);
@@ -97,8 +111,10 @@ public class EnterPlayersDialogFragment extends DialogFragment {
                     //Retrieve the new/changed values
                     String playerName = ((EditText) EnterPlayersDialogFragment.this.getDialog().findViewById(R.id.player_name)).getText().toString();
                     boolean isHuman = ((RadioButton) EnterPlayersDialogFragment.this.getDialog().findViewById(R.id.is_human)).isChecked();
+                    boolean isHardComputer = ((RadioButton) EnterPlayersDialogFragment.this.getDialog().findViewById(R.id.is_hard_computer)).isChecked();
+                    boolean isExpertComputer = ((RadioButton) EnterPlayersDialogFragment.this.getDialog().findViewById(R.id.is_expert_computer)).isChecked();
                     //Register the FiveKings activity method as the callback
-                    ((FiveKings) getActivity()).addEditPlayerClicked(playerName, isHuman, addingFlag, iPlayer);
+                    ((FiveKings) getActivity()).addEditPlayerClicked(playerName, isHuman, isHardComputer, isExpertComputer, isAddingFlag, iPlayer);
                     dismiss(); //dismiss the dialog on add or edit
                 }
             });

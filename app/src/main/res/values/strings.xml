@@ -25,7 +25,7 @@
     <string name="nextRound">Play %s\'s round</string>
     <string name="skipDealing">Skip dealing</string>
     <string name="toDisableDealing">You can turn off the dealing animation in Settings</string>
-    <string name="toStartGameHint">Add/delete players and then tap the Start Game button</string>
+    <string name="toStartGameHint">Add or delete players and then tap the Start Game button</string>
     <string name="nextRoundHint">Tap the Play %s\'s round button</string>
     <string name="tapMovingHandHint">Tap the moving hand to play its cards</string>
     <string name="showingComputerCards">Showing %s\'s cards; tap the hand again to play</string>
@@ -39,7 +39,8 @@
     <string name="congratulationsName">Congratulations!</string>
     <string name="congratulationsDetails">%1$s won with the lowest score of %2$s. Winner cleans up!</string>
     <string name="isHuman">human</string>
-    <string name="isComputer">computer</string>
+    <string name="isHardDroid">Hard Droid</string>
+    <string name="isExpertDroid">Expert Droid</string>
     <string name="defaultHumanPlayer">You</string>
     <string name="defaultComputerPlayer">Droid</string>
     <string name="addPlayersTitle">Add player</string>

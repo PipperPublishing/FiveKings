@@ -150,8 +150,8 @@ public class Game implements Parcelable{
         }
     }
 
-    final public void updatePlayer(final String playerName, final boolean isHuman, final int iPlayer) {
-        this.players.updatePlayer(playerName, isHuman, iPlayer);
+    final public void updatePlayer(final String playerName, final PlayerList.PlayerType playerType, final int iPlayer) {
+        this.players.updatePlayer(playerName, playerType, iPlayer);
         updatePlayerMiniHands();
     }
 
@@ -203,7 +203,7 @@ public class Game implements Parcelable{
         this.players.rotatePlayer();
     }
 
-    public int numPlayers() {
+    public int getNumPlayers() {
         return this.players.size();
     }
 
@@ -216,7 +216,8 @@ public class Game implements Parcelable{
     }
 
     public boolean currentAndNextAreHuman() {
-        return players.getCurrentPlayer().isHuman() && players.getNextPlayer().isHuman();
+        return (players.getCurrentPlayer().isPlayerType(PlayerList.PlayerType.HUMAN))
+                && (players.getNextPlayer().isPlayerType(PlayerList.PlayerType.HUMAN));
     }
 
     /* Starting and ending turns */

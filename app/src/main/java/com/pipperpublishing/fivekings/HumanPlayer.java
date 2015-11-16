@@ -72,11 +72,14 @@ public class HumanPlayer extends Player {
         return true;
     }
     final public void addToMeld(final CardList meld, Card card) {
-        hand.addToMeld(card, (Meld)meld);
+        hand.addToMeld(card, (Meld) meld);
     }
 
     @Override
-    final public boolean isHuman() {return true;}
+    final public PlayerList.PlayerType getPlayerType() {
+        //needed so we can display properly on screen
+        return PlayerList.PlayerType.HUMAN;
+    }
 
 
     /*----------------------------------------*/

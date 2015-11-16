@@ -35,7 +35,7 @@ import com.pipperpublishing.fivekings.view.FiveKings;
  * 11/10/2015   Interrupted thread was not cascading up and rerunning with Heuristics (add a wasInterrupted flag to find this)
  */
 
-public class ComputerPlayer extends Player {
+public class HardComputerPlayer extends Player {
     protected static final int PERMUTATION_THRESHOLD=500; //if longer than 0.5s for each player we switch to heuristic approach
     private static final String SLEEP_THREAD_NAME="Sleep Thread";
     final private ThreadGroup threadGroup = new ThreadGroup("HandThreads");
@@ -46,18 +46,18 @@ public class ComputerPlayer extends Player {
     private Meld.MeldMethod method = Meld.MeldMethod.PERMUTATIONS;
 
 
-    ComputerPlayer(final String name) {
+    HardComputerPlayer(final String name) {
         super(name);
     }
 
     //Copy constructor for converting from Human to Computer player
-    ComputerPlayer(final Player player) {
+    HardComputerPlayer(final Player player) {
         super(player);
 
         //Set the class variables that are additional to ComputerPlayer
         //TODO:B use the current method instead of always using heuristics to do the initial meld
-
         this.method = Meld.MeldMethod.HEURISTICS;
+
         initAfterUpdateToComputer();
     }
 
@@ -97,8 +97,10 @@ public class ComputerPlayer extends Player {
     }
 
     @Override
-    final public boolean isHuman() {return false;}
-
+    protected PlayerList.PlayerType getPlayerType() {
+        //needed so we can display properly on screen
+        return PlayerList.PlayerType.HARD_COMPUTER;
+    }
 
     /*----------------------------------------*/
     /* GAME PLAYING METHODS (moved from Game) */
@@ -148,18 +150,18 @@ public class ComputerPlayer extends Player {
                 //now actually deal the card
                 if (pickFrom == Game.PileDecision.DISCARD_PILE) {
                     drawnCard = Deck.getInstance().drawFromDiscardPile();
-                    turnInfo.append(String.format(turnInfoFormat, ComputerPlayer.this.getName(), drawnCard.getCardString(),
+                    turnInfo.append(String.format(turnInfoFormat, HardComputerPlayer.this.getName(), drawnCard.getCardString(),
                             "Discard", getHandDiscard().getCardString()));
                 } else { //DRAW_PILE
                     //if we decided to not use the Discard pile, then tryDiscardOrDrawPile has already found the right discard for the Draw pile
                     drawnCard = Deck.getInstance().drawFromDrawPile();
-                    turnInfo.append(String.format(turnInfoFormat, ComputerPlayer.this.getName(), drawnCard.getCardString(),
+                    turnInfo.append(String.format(turnInfoFormat, HardComputerPlayer.this.getName(), drawnCard.getCardString(),
                             "Draw", getHandDiscard().getCardString()));
                 }
                 final long playerStopTime = System.currentTimeMillis();
                 Log.d(FiveKings.APP_TAG, String.format("Turn time was %.3f seconds", (playerStopTime - playerStartTime) / 1000.0));
-                if (ComputerPlayer.this.method == Meld.MeldMethod.PERMUTATIONS)
-                    ComputerPlayer.this.method = ((playerStopTime - playerStartTime) < PERMUTATION_THRESHOLD) ? Meld.MeldMethod.PERMUTATIONS : Meld.MeldMethod.HEURISTICS;
+                if (HardComputerPlayer.this.method == Meld.MeldMethod.PERMUTATIONS)
+                    HardComputerPlayer.this.method = ((playerStopTime - playerStartTime) < PERMUTATION_THRESHOLD) ? Meld.MeldMethod.PERMUTATIONS : Meld.MeldMethod.HEURISTICS;
 
                 Log.d(FiveKings.APP_TAG, turnInfo.toString() + String.format("(drew the %s)",drawnCard.getCardString()));
 
@@ -179,7 +181,7 @@ public class ComputerPlayer extends Player {
 
                 //at this point the DiscardPile still shows the old card
                 //animate... also calls syncDisplay and checkEndRound() in the OnAnimationEnd listener
-                fKActivity.animateComputerPickUpAndDiscard(ComputerPlayer.this.getMiniHandLayout(), pickFrom);
+                fKActivity.animateComputerPickUpAndDiscard(HardComputerPlayer.this.getMiniHandLayout(), pickFrom);
                 fKActivity.endTurnCheckRound(fKActivity.isShowComputerCards()); //Also sets TurnState to NOT_MY_TURN
 
                 //turnState is set to NOT_MY_TURN in endTurn (in onAnimationEnd)
@@ -330,7 +332,7 @@ public class ComputerPlayer extends Player {
             threadStart = System.currentTimeMillis();
             wasThreadInterrupted = false;
             try {
-                this.meldAndEvaluate(this.method, ComputerPlayer.this , this.isFinalTurn);
+                this.meldAndEvaluate(this.method, HardComputerPlayer.this , this.isFinalTurn);
             } catch (InterruptedException e) {
                 //just break out of this thread
                 threadStop = System.currentTimeMillis();
@@ -379,7 +381,7 @@ public class ComputerPlayer extends Player {
     }
 
     /* PARCELABLE read/write for ComputerPlayer (use superclass implementation) */
-    protected ComputerPlayer(Parcel parcel) {
+    protected HardComputerPlayer(Parcel parcel) {
         super(parcel);
         //don't need thread member variables
         method = Meld.MeldMethod.valueOf(parcel.readString());
@@ -398,15 +400,15 @@ public class ComputerPlayer extends Player {
     }
 
     @SuppressWarnings("unused")
-    public static final Parcelable.Creator<ComputerPlayer> CREATOR = new Parcelable.Creator<ComputerPlayer>() {
+    public static final Parcelable.Creator<HardComputerPlayer> CREATOR = new Parcelable.Creator<HardComputerPlayer>() {
         @Override
-        public ComputerPlayer createFromParcel(Parcel in) {
-            return new ComputerPlayer(in);
+        public HardComputerPlayer createFromParcel(Parcel in) {
+            return new HardComputerPlayer(in);
         }
 
         @Override
-        public ComputerPlayer[] newArray(int size) {
-            return new ComputerPlayer[size];
+        public HardComputerPlayer[] newArray(int size) {
+            return new HardComputerPlayer[size];
         }
     };
 

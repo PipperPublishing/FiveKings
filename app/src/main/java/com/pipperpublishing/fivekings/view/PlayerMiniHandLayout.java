@@ -112,7 +112,7 @@ public class PlayerMiniHandLayout extends RelativeLayout{
         this.setOnLongClickListener(new View.OnLongClickListener() {
             @Override
             public boolean onLongClick(View tv) {
-                ((FiveKings) c).showEditPlayer(PlayerMiniHandLayout.this.player.getName(), PlayerMiniHandLayout.this.player.isHuman(), iPlayer);
+                ((FiveKings) c).showEditPlayer(PlayerMiniHandLayout.this.player.getName(), PlayerMiniHandLayout.this.player, iPlayer);
                 return true;
             }
         });

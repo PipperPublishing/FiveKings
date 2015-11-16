@@ -32,7 +32,8 @@ import java.util.ArrayList;
  11/8/2015      Added parcelable support
  */
 public class PlayerList extends ArrayList<Player> implements Parcelable {
-    public enum PlayerType {HUMAN, BASIC_COMPUTER, EXPERT_COMPUTER}
+    //HARD_COMPUTER uses the evaluation approach but is still harder than just throwing cards
+    public enum PlayerType {HUMAN, HARD_COMPUTER, EXPERT_COMPUTER}
 
     private Player dealer;
     private Player currentPlayer;
@@ -60,16 +61,17 @@ public class PlayerList extends ArrayList<Player> implements Parcelable {
     }
 
     void addPlayer (final String name, final PlayerType playerType) {
+        //TODO:A Instead of using a switch could probably pass the class name and use reflection
         switch (playerType) {
             case HUMAN:
                 this.add(new HumanPlayer(name));
                 break;
-            case BASIC_COMPUTER:
-                this.add(new ComputerPlayer(name));
+            case HARD_COMPUTER:
+                this.add(new HardComputerPlayer(name));
                 break;
             case EXPERT_COMPUTER:
             default:
-                this.add(new StrategyComputerPlayer(name));
+                this.add(new ExpertComputerPlayer(name));
                 break;
         }
     }
@@ -94,13 +96,25 @@ public class PlayerList extends ArrayList<Player> implements Parcelable {
         relayoutPlayerMiniHands(activity);
     }
 
-    void updatePlayer(final String name, final boolean isHuman, final int iPlayer) {
+    void updatePlayer(final String name, final PlayerType newPlayerType, final int iPlayer) {
         final Player oldPlayer=this.get(iPlayer);
         final Player newPlayer;
-        if (isHuman != this.get(iPlayer).isHuman()) {
-            //if we're changing Human <-> Computer, then we need to create a new one as a copy
-            // this also updates the miniHand to the new player reference
-            newPlayer = isHuman ? new HumanPlayer(oldPlayer) : new ComputerPlayer(oldPlayer);
+
+        //if we're changing player type, then we need to create a new one as a copy
+        // the Copy Constructor also updates the miniHand to the new player reference
+        if (!this.get(iPlayer).isPlayerType(newPlayerType)) {
+            switch (newPlayerType) {
+                case HUMAN:
+                    newPlayer = new HumanPlayer(oldPlayer);
+                    break;
+                case HARD_COMPUTER:
+                    newPlayer = new HardComputerPlayer(oldPlayer);
+                    break;
+                case EXPERT_COMPUTER:
+                default:
+                    newPlayer = new ExpertComputerPlayer(oldPlayer);
+                    break;
+            }
             this.set(iPlayer, newPlayer);
             if (oldPlayer == currentPlayer) currentPlayer = newPlayer;
             if (oldPlayer == playerWentOut) playerWentOut = newPlayer;

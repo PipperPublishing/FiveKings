@@ -1,4 +1,8 @@
 <?xml version="1.0" encoding="utf-8"?>
+<!--
+  ~ Copyright Jeffrey Pugh (pipper.publishing@gmail.com) (c) 2015. All rights reserved.
+  -->
+
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
               android:layout_width="match_parent"
               android:layout_height="match_parent"
@@ -29,8 +33,16 @@
         <RadioButton
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="@string/isComputer"
-            android:id="@+id/is_computer"
+            android:text="@string/isHardDroid"
+            android:id="@+id/is_hard_computer"
+            android:textAppearance="?android:attr/textAppearanceSmall"
+            android:enabled="true"/>
+
+        <RadioButton
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="@string/isExpertDroid"
+            android:id="@+id/is_expert_computer"
             android:textAppearance="?android:attr/textAppearanceSmall"
             android:enabled="true"/>
     </RadioGroup>

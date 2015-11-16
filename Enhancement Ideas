@@ -390,14 +390,7 @@ FIXED: Can't add players sometime after playing a few rounds, then pressing [New
 [Promoted to Beta channel on 11/11/2015]
 ------------
 Branched
-v0.8.13 Bug fixes
-BUG:- Problem where cards get stuck at bottom of screen (may be on Q's or K's round with card to far right) - look at addToMeld and drag code
--- When you drag card to a meld it seems to stay in the main cards
-FIXED?: Tim's problem where it didn't recognize his completed meld
-BUG: If you are showing Computer Cards, and tap on it to display them, then switch orientation/pause --> when you come back the piles will be animated
-    and you can play for the computer :)
-BUG: If you change orientation during [Start Game] you can sometimes catch the hand shaking (crashes if you tap it)
-BUG: On Tim's device, FK is not resuming but rather re-starting
+
 ------------------
 v0.8.20 Better instructions for novice players
 DONE Hint overlays like Google (arrows and text) (Draw, Discard, Meld area, Your cards)
@@ -412,10 +405,27 @@ DONE: Make discard area bigger (make drag listener for whole layout?)
 DONE  Moved Toasts to the middle of the screen and made new hints long duration and reminders short duration
 DONE - Turn on Show Computer cards when Show introduction and hints is turned on (and play open-faced)
 DONE If Novice mode, then warn you if you don't meld in your final turn
+[Released to Alpha channel on Google Play]
+-------------
+TESTING: v0.8.22
+DONE Put Toasts in Middle (GRAVITY.CENTERED_VERTICAL) for important messages and bottom for reminders etc.
+DONE Let you select Hard and Expert Computer player difficulty.
+DONE    - Auto-generate computer player name based off template
+- Re-named to master
+
+-----------
+v0.8.23
+BUG:- Problem where cards get stuck at bottom of screen (may be on Q's or K's round with card to far right) - look at addToMeld and drag code
+-- When you drag card to a meld it seems to stay in the main cards
+FIXED?: Tim's problem where it didn't recognize his completed meld
+BUG: If you are showing Computer Cards, and tap on it to display them, then switch orientation/pause --> when you come back the piles will be animated
+    and you can play for the computer :)
+BUG: If you change orientation during [Start Game] you can sometimes catch the hand shaking (crashes if you tap it)
+BUG: On Tim's device, FK is not resuming but rather re-starting (but perhaps he is using Back to exit the game)
+
+
 ----------------------
 v0.8.30
-- Add two more levels of Computer player (Easy, Hard, Expert)
-    - Auto-generate the computer player name (and human player)
 - Help (?) should show multiple options:
     - context sensitive help
     - replay the Introduction
