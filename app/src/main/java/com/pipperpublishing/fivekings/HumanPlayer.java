@@ -1,3 +1,7 @@
+/*
+ * Copyright Jeffrey Pugh (pipper.publishing@gmail.com) (c) 2015. All rights reserved.
+ */
+
 package com.pipperpublishing.fivekings;
 
 import android.os.Parcel;
@@ -11,7 +15,7 @@ import com.pipperpublishing.fivekings.view.FiveKings;
  * 3/15/2015    Moved discardFromHand here - actually does discard
  * 3/31/2015    Pushed takeTurn and logTurn here so that we don't have Human vs. Computer checks in Game
  * 10/12/2015   Pass drawnCard to animateHumanPickup to further separate logic from View
- *  * 10/18/2015   Change per player updateHandsAndCards to returning a showCards flag
+ *  * 10/18/2015   Change per player showHandsAndCards to returning a showCards flag
  10/18/2015     Removed second click logic that would expose the hand if it was hidden
  *  10/20/2015  Hide drawPile and discardPile - access through deck
  *
@@ -83,7 +87,7 @@ public class HumanPlayer extends Player {
         //base method sets PLAY_TURN and updates hands and cards
         super.prepareTurn(fKActivity);
         fKActivity.enableDrawDiscardClick(); //also animates piles and sets the hint
-        this.getMiniHandLayout().stopAnimateMiniHand();
+        this.getMiniHandLayout().clearAnimatedMiniHand();
     }
 
     @Override

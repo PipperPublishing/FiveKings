@@ -1,3 +1,7 @@
+/*
+ * Copyright Jeffrey Pugh (pipper.publishing@gmail.com) (c) 2015. All rights reserved.
+ */
+
 package com.pipperpublishing.fivekings;
 
 import android.os.AsyncTask;
@@ -21,7 +25,7 @@ import com.pipperpublishing.fivekings.view.FiveKings;
  *              When converting from Human to Computer, you need to do the per-round initialization that happens
  *              in initAndDealNewHand
  * 10/16/2015   Moved endTurnCheckRound out of animation loop so that it happens immediately and next hand doesn't have to wait for animation finish
- *  * 10/18/2015   Change per player updateHandsAndCards to returning a showCards flag
+ *  * 10/18/2015   Change per player showHandsAndCards to returning a showCards flag
  *  10/20/2015  Hide drawPile and discardPile - access through deck
  *  11/5/2015   Log overall turn time and individual thread time to see breakdown for cutover Permutations -> Heuristics
  *              Add an extra sleep thread that sleeps for PERMUTATION_THRESHOLD milliseconds; if that runs to completion, then we need to terminate the other threads and switch to Heuristics
@@ -102,11 +106,14 @@ public class ComputerPlayer extends Player {
     @Override
     //Must be some way to simplify showComputerCards and hideHands... into one player call
     final public void prepareTurn(final FiveKings fKActivity) {
-        //base method sets PLAY_TURN and updates hands and cards
+        //base method sets PLAY_TURN and shows hands and cards
         super.prepareTurn(fKActivity);
-        //if showCards is false, no reason to force another click - just go ahead and play
-        if (!fKActivity.isShowComputerCards()) {
-            this.getMiniHandLayout().stopAnimateMiniHand();
+        if (fKActivity.isShowComputerCards()) {
+            //showing Computer cards, so you have to tap again to play
+            fKActivity.setShowHint(fKActivity.resFormat(R.string.showingComputerCards, this.getName()), FiveKings.HandleHint.SHOW_HINT, true);
+        }else {
+            //if showCards is false, no reason to force another click - just go ahead and play
+            this.getMiniHandLayout().clearAnimatedMiniHand();
             takeTurn(fKActivity, null, fKActivity.getmGame().isFinalTurn());
         }
     }

@@ -393,11 +393,11 @@ Branched
 v0.8.13 Bug fixes
 BUG:- Problem where cards get stuck at bottom of screen (may be on Q's or K's round with card to far right) - look at addToMeld and drag code
 -- When you drag card to a meld it seems to stay in the main cards
-BUG: Tim's problem where it didn't recognize his completed meld
+FIXED?: Tim's problem where it didn't recognize his completed meld
 BUG: If you are showing Computer Cards, and tap on it to display them, then switch orientation/pause --> when you come back the piles will be animated
     and you can play for the computer :)
 BUG: If you change orientation during [Start Game] you can sometimes catch the hand shaking (crashes if you tap it)
-
+BUG: On Tim's device, FK is not resuming but rather re-starting
 ------------------
 v0.8.20 Better instructions for novice players
 DONE Hint overlays like Google (arrows and text) (Draw, Discard, Meld area, Your cards)
@@ -405,24 +405,24 @@ DONE Sequence of 4 screens with "Got it" at the end
 DONE Add something about there being 5 suits
 DONE- Don't show hints while we're in the Tutorial
 DONE: ON orientation change, go back to where we were in tutorial
+[Release to Alpha channel on Google Play]
 ---------------
 v0.8.21
-- Make discard area bigger (make drag listener for whole layout?)
-- Add ? pop-up for Meld
-- Hint Toasts should stay longer; some should be dialogs that you dismiss (distinguish between Hints and Info Toasts - different call)
-- ? should show simple instructions for the round
+DONE: Make discard area bigger (make drag listener for whole layout?)
+DONE  Moved Toasts to the middle of the screen and made new hints long duration and reminders short duration
+DONE - Turn on Show Computer cards when Show introduction and hints is turned on (and play open-faced)
+DONE If Novice mode, then warn you if you don't meld in your final turn
 ----------------------
-v0.8.22
+v0.8.30
 - Add two more levels of Computer player (Easy, Hard, Expert)
-- Warn you if you don't meld in your final turn (or automatically meld your hand)
-- [Rob] Guided practice round
-- [Play for me] option (just uses Computer logic) - click on your hand again to play iy
-   - or just copies cards to the meld area and then melds them using meld.check
-   - or force show Computer hand for first two rounds to see how it plays
+    - Auto-generate the computer player name (and human player)
+- Help (?) should show multiple options:
+    - context sensitive help
+    - replay the Introduction
+    - show the Rules sheet
 =====================
 
 v0.9.01 Graphics
-
 - When Computer hand is displayed, it starts from center and if there are lots of pairs they go off the screen
   (unlike Human hand which expands from center in each direction)
 - Redisplay red/yellow hand outlines on restart; also white outlines seem inconsistent
@@ -447,9 +447,19 @@ v0.9.50 Cleanup
     - more sub-classing rather than if (isHuman) type logic
 - Clean up TODO:A 's
 - Remove smells where possible :)
+- Look at CardList implementation and consider LinkedHashSet or others which provide
+    - check for non-duplicates
+    - automatic ordering
+- investigate using Callback instead of Listener (does it make it easier to find card?)
 
 =====================
-v1.1.01 Scoring and Valuation Bugs
+v1.0.1 Feedback from players
+- [Rob] Guided practice round
+- [Play for me] option (just uses Computer logic) - click on your hand again to play iy
+   - or just copies cards to the meld area and then melds them using meld.check
+
+================
+v1.2.01 Scoring and Valuation bugs
 (deemphasize this because computer is good enough)
 
 BUGS
@@ -468,9 +478,8 @@ BUG:A Check if still true? Heuristics is throwing away wildcard when you have a 
 BUG:A Permutations won't build a K onto T*Q
 
 
-
-================
-v1.2 Improved Scoring and Valuation
+-----------------
+v1.2.50 Improved Scoring and Valuation
 - Look at melding "potential" of single unmelded cards you keep (not just partial melds)
 - Don't discard what others want (wild cards, or cards they picked up)
 Permutations:
@@ -494,10 +503,6 @@ Add in more than one sequence and longer sequences than 3
 
 ================
 v1.x
-- Look at CardList implementation and consider LinkedHashSet or others which provide
-    - check for non-duplicates
-    - automatic ordering
-- investigate using Callback instead of Listener (does it make it easier to find card?)
 
 
 

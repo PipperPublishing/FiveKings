@@ -1,3 +1,7 @@
+/*
+ * Copyright Jeffrey Pugh (pipper.publishing@gmail.com) (c) 2015. All rights reserved.
+ */
+
 package com.pipperpublishing.fivekings;
 
 import android.content.Context;
@@ -46,9 +50,9 @@ import java.util.Comparator;
  * 6/18/2015    Sort Hand immediately after dealing
  * 8/30/2015    Implement Parcelable so we can save Game state
  * 9/3/2015     Save TurnState using string/valueOf
- * 9/30/2015    Added updateHandsAndCards (depends on Human or Computer)
+ * 9/30/2015    Added showHandsAndCards (depends on Human or Computer)
  * 10/10/2015   turnState was not being copied in Copy Constructor which messes up player updates
- * 10/18/2015   Change per player updateHandsAndCards to returning a showCards flag
+ * 10/18/2015   Change per player showHandsAndCards to returning a showCards flag
  *  10/20/2015  Hide drawPile and discardPile - access through deck
  */
 abstract public class Player implements HandComparator, Parcelable {
@@ -244,7 +248,7 @@ abstract public class Player implements HandComparator, Parcelable {
     /*-----------------------------------------------------*/
     public void prepareTurn(final FiveKings fKActivity) {
         turnState = TurnState.PLAY_TURN;
-        fKActivity.updateHandsAndCards(showCards(fKActivity.isShowComputerCards()), fKActivity.getmGame().getCurrentPlayer().isHuman());
+        fKActivity.showHandsAndCards(showCards(fKActivity.isShowComputerCards()), fKActivity.getmGame().getCurrentPlayer().isHuman());
     }
 
     abstract public void takeTurn(final FiveKings fKActivity, Game.PileDecision drawOrDiscardPile, final boolean isFinalTurn);

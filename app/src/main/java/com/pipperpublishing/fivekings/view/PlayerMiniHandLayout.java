@@ -1,3 +1,7 @@
+/*
+ * Copyright Jeffrey Pugh (pipper.publishing@gmail.com) (c) 2015. All rights reserved.
+ */
+
 package com.pipperpublishing.fivekings.view;
 
 import android.content.Context;
@@ -306,7 +310,7 @@ public class PlayerMiniHandLayout extends RelativeLayout{
     public void startAnimateMiniHand(final Animation animation) {
         cardView.startAnimation(animation);
     }
-    public void stopAnimateMiniHand() {
+    public void clearAnimatedMiniHand() {
         cardView.clearAnimation();
     }
 

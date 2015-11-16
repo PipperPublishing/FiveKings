@@ -1,3 +1,7 @@
+/*
+ * Copyright Jeffrey Pugh (pipper.publishing@gmail.com) (c) 2015. All rights reserved.
+ */
+
 package com.pipperpublishing.fivekings;
 
 import android.app.Activity;
@@ -116,14 +120,17 @@ public class PlayerList extends ArrayList<Player> implements Parcelable {
 
     //(Shouldn't be starting animations from outside FiveKings or related code)
     void setAnimated(final Player setAnimated, final Animation bounceAnimation) {
-        //clear existing animations
-        for (Player player : this) player.getMiniHandLayout().stopAnimateMiniHand();
+        clearAllAnimated();
         //if setAnimated == null, then use the saved animatedPlayerHand and reanimate
         animatedPlayerHand = setAnimated!=null ? setAnimated : animatedPlayerHand ;
         if ((animatedPlayerHand != null) && (animatedPlayerHand.getTurnState() == Player.TurnState.NOT_MY_TURN))
         {
             animatedPlayerHand.miniHandLayout.startAnimateMiniHand(bounceAnimation);
         }
+    }
+    void clearAllAnimated() {
+        //clear existing animations
+        for (Player player : this) player.getMiniHandLayout().clearAnimatedMiniHand();
     }
 
 

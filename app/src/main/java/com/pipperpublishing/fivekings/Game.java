@@ -1,3 +1,7 @@
+/*
+ * Copyright Jeffrey Pugh (pipper.publishing@gmail.com) (c) 2015. All rights reserved.
+ */
+
 package com.pipperpublishing.fivekings;
 
 import android.app.Activity;
@@ -206,6 +210,9 @@ public class Game implements Parcelable{
     public void animatePlayerMiniHand(final Player setAnimatedPlayerHand, final Animation bounceAnimation) {
         //starts animation on the appropriate hand and passes back special hint if Human->Human
         this.players.setAnimated(setAnimatedPlayerHand, bounceAnimation);
+    }
+    public void clearAllAnimatedMiniHands(){
+        this.players.clearAllAnimated();
     }
 
     public boolean currentAndNextAreHuman() {

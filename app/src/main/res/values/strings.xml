@@ -28,6 +28,7 @@
     <string name="toStartGameHint">Add/delete players and then tap the Start Game button</string>
     <string name="nextRoundHint">Tap the Play %s\'s round button</string>
     <string name="tapMovingHandHint">Tap the moving hand to play its cards</string>
+    <string name="showingComputerCards">Showing %s\'s cards; tap the hand again to play</string>
     <string name="hidingYourHandHint">Hiding your hand; pass the game to the next player</string>
     <string name="pickFromDrawOrDiscardHint">Pick from the Draw or Discard pile</string>
     <string name="dragYourCards">Drag here for a new meld</string>
@@ -67,6 +68,7 @@
     <string name="tutorial_mode">Show introduction and hints</string>
     <string name="highlight_wildcards">Highlight wildcards with yellow</string>
     <string name="about">Problems? Please email us at pipper.publishing@gmail.com</string>
+    <string name="did_you_remember">%s went out; it\'s your final turn - did you remember to meld?</string>
     <string name="help_title">Help</string>
     <string name="help_message">\n
         In this game you play 11 rounds against the computer and/or against other humans. The winner is the player who has the lowest score at the end of the game.\n\n
@@ -109,11 +111,12 @@
         The round score will show after you discard. Cards count their face value except that unmelded wild cards count 20, and unmelded Jokers count 50!
     </string>
     <string name="intro9_title">Tips</string>
-    <string name="intro9_text">1. The Draw and Discard pile \"shake\" when you should draw from one of them.\n
+    <string name="intro9_text">1. The Draw and Discard pile shake when you should draw from one of them.\n
     2. Make sure to meld (3 or more cards) before you discard! In the rounds of 3,4, and 5 you make only one meld, but in the King\'s round you could have 3 melds of 3 cards plus a meld of 4 cards.\n
         3. Jokers are wild, and so are 3\'s in the 3\'s round, 4\'s in the 4\'s round and so on. Wild cards are highlighted by default.\n
         4. Watch which of your discards the Droid player picks up to see what melds it is working on.\n
     5. After another player goes out, you get one more turn. If you can\'t meld a wild card, make sure you discard it!\n\n
+        To help you get started, in the first two rounds I\'ll show the Droid cards and some special hints.\n
         To not show this tutorial next time, go to Settings>Show introduction and hints
     </string>
     <string name="intro_button_text">Next</string>
