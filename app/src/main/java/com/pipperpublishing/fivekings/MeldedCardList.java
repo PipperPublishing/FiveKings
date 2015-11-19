@@ -1,3 +1,7 @@
+/*
+ * Copyright Jeffrey Pugh (pipper.publishing@gmail.com) (c) 2015. All rights reserved.
+ */
+
 package com.pipperpublishing.fivekings;
 
 /**
@@ -7,6 +11,9 @@ package com.pipperpublishing.fivekings;
 
 import android.os.Parcel;
 import android.os.Parcelable;
+import android.util.Log;
+
+import com.pipperpublishing.fivekings.view.FiveKings;
 
 import java.util.ArrayList;
 
@@ -144,11 +151,20 @@ public class MeldedCardList extends CardList{
     //add to a new meld just created, or to an existing meld and remove from other melds, partial melds, or singles
     // allows for dragging and dropping back onto itself
     protected void addToMeld (final Card card, final Meld meld) {
+        Log.d(FiveKings.APP_TAG,"addToMeld: Adding card "+card.getCardString() );
         //remove from unMelded, singles, or other melds
-        for (CardList cl : this.melds) cl.remove(card);
-        for (CardList cl : this.partialMelds) cl.remove(card);
+        for (CardList cl : this.melds) {
+            Log.d(FiveKings.APP_TAG,"Melds: "+cl.getString());
+            cl.remove(card);
+        }
+        for (CardList cl : this.partialMelds) {
+            Log.d(FiveKings.APP_TAG,"PartialMelds: "+cl.getString());
+            cl.remove(card);
+        }
+        Log.d(FiveKings.APP_TAG, "Singles: " + singles.getString());
         this.singles.remove(card);
         if (!meld.contains(card)) meld.add(card); //may remove and then re-add
+        Log.d(FiveKings.APP_TAG,"Added card to meld: "+meld.getString());
         meld.setNeedToCheck(true);
     }
 

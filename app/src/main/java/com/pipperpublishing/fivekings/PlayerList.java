@@ -14,6 +14,7 @@ import android.widget.LinearLayout;
 import com.pipperpublishing.fivekings.view.FiveKings;
 import com.pipperpublishing.fivekings.view.PlayerMiniHandLayout;
 
+import java.lang.reflect.Constructor;
 import java.util.ArrayList;
 
 /**
@@ -30,10 +31,9 @@ import java.util.ArrayList;
                 Moved the addDefaultPlayers call to Game so this class can stay generic
  10/18/2015     deletePlayer was removing layout from wrong view
  11/8/2015      Added parcelable support
+ 11/19/2015     Switched from using PlayerType to referencing the native class and using reflection
  */
 public class PlayerList extends ArrayList<Player> implements Parcelable {
-    //HARD_COMPUTER uses the evaluation approach but is still harder than just throwing cards
-    public enum PlayerType {HUMAN, HARD_COMPUTER, EXPERT_COMPUTER}
 
     private Player dealer;
     private Player currentPlayer;
@@ -60,20 +60,23 @@ public class PlayerList extends ArrayList<Player> implements Parcelable {
         this.dealer = getNextPlayer(currentPlayer);   //set this here so that if we delete the dealer we can advance the dealer
     }
 
-    void addPlayer (final String name, final PlayerType playerType) {
-        //TODO:A Instead of using a switch could probably pass the class name and use reflection
-        switch (playerType) {
-            case HUMAN:
-                this.add(new HumanPlayer(name));
-                break;
-            case HARD_COMPUTER:
-                this.add(new HardComputerPlayer(name));
-                break;
-            case EXPERT_COMPUTER:
-            default:
-                this.add(new ExpertComputerPlayer(name));
-                break;
+    void addPlayer (final String newPlayerName, final Class<? extends Player> newPlayerClass) {
+        final Player newPlayer;
+        Constructor constructor;
+        try {
+            constructor = newPlayerClass.asSubclass(newPlayerClass).getConstructor(String.class);
+        } catch (NoSuchMethodException e) {
+            Log.d(FiveKings.APP_TAG,String.format("addPlayer: Unknown Player class %s without Constructor", newPlayerClass.toString()), e);
+            return;
         }
+        try {
+            newPlayer = (Player) constructor.newInstance(newPlayerName);
+        } catch (Exception e) {
+            Log.d(FiveKings.APP_TAG,String.format("addPlayer: Constructor for class %s failed", newPlayerClass.toString()), e);
+            return;
+        }
+        //record the new player in the player list
+        this.add(newPlayer);
     }
 
     Player getPlayer(final int iPlayer) {
@@ -96,25 +99,28 @@ public class PlayerList extends ArrayList<Player> implements Parcelable {
         relayoutPlayerMiniHands(activity);
     }
 
-    void updatePlayer(final String name, final PlayerType newPlayerType, final int iPlayer) {
+    void updatePlayer(final String newPlayerName, final Class<? extends Player> newPlayerClass , final int iPlayer) {
         final Player oldPlayer=this.get(iPlayer);
         final Player newPlayer;
 
         //if we're changing player type, then we need to create a new one as a copy
         // the Copy Constructor also updates the miniHand to the new player reference
-        if (!this.get(iPlayer).isPlayerType(newPlayerType)) {
-            switch (newPlayerType) {
-                case HUMAN:
-                    newPlayer = new HumanPlayer(oldPlayer);
-                    break;
-                case HARD_COMPUTER:
-                    newPlayer = new HardComputerPlayer(oldPlayer);
-                    break;
-                case EXPERT_COMPUTER:
-                default:
-                    newPlayer = new ExpertComputerPlayer(oldPlayer);
-                    break;
+        if (oldPlayer.getClass() != newPlayerClass) {
+            //get the Copy constructor
+            Constructor copyConstructor;
+            try {
+                copyConstructor = newPlayerClass.getConstructor(Player.class);
+            } catch (NoSuchMethodException e) {
+                Log.d(FiveKings.APP_TAG,String.format("updatePlayer: Unknown Player class %s without Copy Constructor", newPlayerClass.toString()), e);
+                return;
             }
+            try {
+                newPlayer = (Player) copyConstructor.newInstance(oldPlayer);
+            } catch (Exception e) {
+                Log.d(FiveKings.APP_TAG,String.format("updatePlayer: Copy constructor for class %s failed", newPlayerClass.toString()), e);
+                return;
+            }
+            //record the new player in the player list
             this.set(iPlayer, newPlayer);
             if (oldPlayer == currentPlayer) currentPlayer = newPlayer;
             if (oldPlayer == playerWentOut) playerWentOut = newPlayer;
@@ -122,7 +128,7 @@ public class PlayerList extends ArrayList<Player> implements Parcelable {
         }
         else newPlayer=oldPlayer;
         //and now update the name (which is the only other thing that can be changed in the dialog)
-        newPlayer.updateName(name);
+        newPlayer.updateName(newPlayerName);
     }
 
     Player rotatePlayer() {

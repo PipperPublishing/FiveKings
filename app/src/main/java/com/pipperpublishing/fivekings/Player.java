@@ -55,6 +55,7 @@ import java.util.Comparator;
  * 10/18/2015   Change per player showHandsAndCards to returning a showCards flag
  *  10/20/2015  Hide drawPile and discardPile - access through deck
  *  11/16/2015  Replaced isHuman with PlayerType check
+ * 11/19/2015   Constructors must be public to support reflection (used in add/update player)
  */
 abstract public class Player implements HandComparator, Parcelable {
     private String name;
@@ -75,7 +76,7 @@ abstract public class Player implements HandComparator, Parcelable {
         }
     };
 
-    Player(final String name) {
+    public Player(final String name) {
         this.name = name;
         //don't null miniHandLayout between games; this is not removed unless you add/delete players
         this.miniHandLayout = null;
@@ -83,7 +84,7 @@ abstract public class Player implements HandComparator, Parcelable {
     }
 
     //Copy constructor
-    Player(final Player player) {
+    public Player(final Player player) {
         this.name = player.name;
         this.roundScore = player.roundScore;
         this.cumulativeScore = player.cumulativeScore;
@@ -238,12 +239,6 @@ abstract public class Player implements HandComparator, Parcelable {
         return drawnCard;
     }
 
-    abstract protected PlayerList.PlayerType getPlayerType();
-
-    final public boolean isPlayerType(PlayerList.PlayerType playerType) {
-        return (playerType == getPlayerType());
-    }
-
     final boolean isOut() {
         return ((hand != null) && (hand.calculateValueAndScore(true) == 0));
     }
@@ -253,7 +248,7 @@ abstract public class Player implements HandComparator, Parcelable {
     /*-----------------------------------------------------*/
     public void prepareTurn(final FiveKings fKActivity) {
         turnState = TurnState.PLAY_TURN;
-        fKActivity.showHandsAndCards(showCards(fKActivity.isShowComputerCards()), fKActivity.getmGame().getCurrentPlayer().isPlayerType(PlayerList.PlayerType.HUMAN));
+        fKActivity.showHandsAndCards(showCards(fKActivity.isShowComputerCards()), fKActivity.getmGame().getCurrentPlayer() instanceof HumanPlayer);
     }
 
     abstract public void takeTurn(final FiveKings fKActivity, Game.PileDecision drawOrDiscardPile, final boolean isFinalTurn);
@@ -289,11 +284,11 @@ abstract public class Player implements HandComparator, Parcelable {
         return playerWentOut;
     }
 
+
     @Override
     public boolean isFirstBetterThanSecond(final MeldedCardList testHand, final MeldedCardList bestHand, final boolean isFinalTurn) {
         return testHand.calculateValueAndScore(isFinalTurn) <= bestHand.calculateValueAndScore(isFinalTurn);
     }
-
     final public TurnState getTurnState() {
         return turnState;
     }

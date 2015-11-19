@@ -1,3 +1,7 @@
+/*
+ * Copyright Jeffrey Pugh (pipper.publishing@gmail.com) (c) 2015. All rights reserved.
+ */
+
 package com.pipperpublishing.fivekings;
 
 import android.os.Parcel;
@@ -159,7 +163,7 @@ public class Meld extends CardList {
             permHand.addDecomposition(isFinalTurn, testMeld);
 
             //reset the bestPermutation if this is a lower score
-            //use the player's specific criteria (ComputerPlayer or SmarterComputerPlayer)
+            //use the player's specific criteria (EasyComputerPlayer, HardComputerPlayer, or ExpertComputerPlayer)
             if ((bestValuation == -1) || playerHandComparator.isFirstBetterThanSecond(permHand, bestMeldedCardList, isFinalTurn)) {
                 bestValuation = permHand.calculateValueAndScore(isFinalTurn);
                 //use Hand.copyFrom because bestMeldedCardList is a (final) parameter
@@ -285,7 +289,7 @@ public class Meld extends CardList {
         return (cl instanceof Meld) && ((Meld)cl).isValidFullMeld;
     }
 
-    static String getString(final ArrayList<Meld> meldsOrUnMelds) {
+    static public String getString(final ArrayList<Meld> meldsOrUnMelds) {
         StringBuilder meldedString = new StringBuilder();
         if (null != meldsOrUnMelds) {
             for (CardList melds : meldsOrUnMelds) {

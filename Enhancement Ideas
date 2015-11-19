@@ -407,25 +407,43 @@ DONE - Turn on Show Computer cards when Show introduction and hints is turned on
 DONE If Novice mode, then warn you if you don't meld in your final turn
 [Released to Alpha channel on Google Play]
 -------------
-TESTING: v0.8.22
+v0.8.22
 DONE Put Toasts in Middle (GRAVITY.CENTERED_VERTICAL) for important messages and bottom for reminders etc.
 DONE Let you select Hard and Expert Computer player difficulty.
 DONE    - Auto-generate computer player name based off template
 - Re-named to master
-
+[Released to Beta 11/17/2015]
 -----------
 v0.8.23
-BUG:- Problem where cards get stuck at bottom of screen (may be on Q's or K's round with card to far right) - look at addToMeld and drag code
--- When you drag card to a meld it seems to stay in the main cards
-FIXED?: Tim's problem where it didn't recognize his completed meld
-BUG: If you are showing Computer Cards, and tap on it to display them, then switch orientation/pause --> when you come back the piles will be animated
+FIXED: SetTint not available in API 19 (Droid RAZR)
+FIXED: On fresh install, Show Computer cards is set
+FIXED: Can interrupt dealing and get ghost hands
+FIXED: [Tim] Press [New Game] at the beginning and it will crash (see crash reports)
+    - Now restarts (including the Tutorial) unless you changed the setting
+DONE: - Tutorial: Should say "go to settings and uncheck Show introduction and hints" instead of just "Settings>Show introduction and hints "
+FIXED: If you add Droid2 as Hard Computer, and then go to Delete, the dialog does not show anything checked for Hard or Expert
+DONE: Need to also add space in dialog for Easy Computer
+TESTING: If you change orientation during [Start Game] you can sometimes catch the hand shaking (crashes if you tap it)
+    - Now checks GameState when you tap mini-hands
+TESTING: what happens when you finish game and use [New Game]
+TESTING:- Problem where cards get stuck at bottom of screen (may be on Q's or K's round with card to far right) - look at addToMeld and drag code
+    -- When you drag card to a meld it seems to stay in the main cards
+TESTING: If you are showing Computer Cards, and tap on it to display them, then switch orientation/pause --> when you come back the piles will be animated
     and you can play for the computer :)
-BUG: If you change orientation during [Start Game] you can sometimes catch the hand shaking (crashes if you tap it)
+    - pickFromDrawOrDiscard, addToMeld etc. should be Player-class members
+FIXED: [Rob]If you click on "you"  pile while first deal is still going the Droid pile wiggles even though it's "you"  turn
+
+[Published to Google Player Alpha]
+------------------------
+v0.8.24
+Unable to reproduce:
+FIXED?: Tim's problem where it didn't recognize his completed meld
 BUG: On Tim's device, FK is not resuming but rather re-starting (but perhaps he is using Back to exit the game)
 
 
+
 ----------------------
-v0.8.30
+>>>> v0.8.30
 - Help (?) should show multiple options:
     - context sensitive help
     - replay the Introduction
@@ -433,9 +451,12 @@ v0.8.30
 =====================
 
 v0.9.01 Graphics
+[Tim] Tutorial
+- If you're in Tutorial, then Droid player should be added as Easy or Hard
+    - Previous button so you can go back an re-read an item
+- "Your cards" and "Your melds" background text either when screen is blank or all the time
 - When Computer hand is displayed, it starts from center and if there are lots of pairs they go off the screen
   (unlike Human hand which expands from center in each direction)
-- Redisplay red/yellow hand outlines on restart; also white outlines seem inconsistent
 - Bounce the picked up card once it's in the hand (or highlight it?)
 - Slide out hand animation
 - Animate open hands into view from mini-hands
@@ -446,9 +467,16 @@ v0.9.01 Graphics
 - [Play] button and Scores on cards should scale to card size
 - Hi-res cards have bloated the size of the APK by 4M - can we shrink it?
 
+BUG: - Redisplay red/yellow hand outlines on restart; also white outlines seem inconsistent
+BUG: Droid player on second step of open-faced turn will stop shaking if you turn the screen
+BUG: [Tim]With the new, larger and labeled discard pile, if one draws down the only card on the discard pile, you sometimes get the computer's animated draw as the outline and label of the discard pile...
+    - Possible solution: fast-forward or cancel the animation
+DONE    - More white space on first screen of tutorial
+
 =======================
 v0.9.50 Cleanup
 
+- Way too many uses of instanceOf and references to the class
 - Tidy up FiveKings (order of event handlers, follow flow)
 - Player methods use fKActivity and a lot of convoluted logic
     - Improve logic flow and understandability of FiveKings, Game, PlayerLayout etc
@@ -464,10 +492,11 @@ v0.9.50 Cleanup
 
 =====================
 v1.0.1 Feedback from players
+
 - [Rob] Guided practice round
 - [Play for me] option (just uses Computer logic) - click on your hand again to play iy
    - or just copies cards to the meld area and then melds them using meld.check
-
+- Memory use and leaks?
 ================
 v1.2.01 Scoring and Valuation bugs
 (deemphasize this because computer is good enough)

@@ -20,14 +20,16 @@ import android.os.Parcelable;
  * 3/21/2015    Prefer full rank melds over sequences
  * 4/5/2015     Only override strategy portions - execution is same as ComputerPlayer
  * 11/16/2015   Provide a Copy constructor for ExpertComputerPlayer for edit Player option
+ * 11/19/2015   Removed PlayerType (now using Class directly)
+ *  * 11/19/2015   Constructors must be public to support reflection (used in add/update player)
  */
-class ExpertComputerPlayer extends HardComputerPlayer {
+public class ExpertComputerPlayer extends EasyComputerPlayer {
 
-    ExpertComputerPlayer(final String name) {
+    public ExpertComputerPlayer(final String name) {
         super(name);
     }
 
-    ExpertComputerPlayer(final Player oldPlayer) {
+    public ExpertComputerPlayer(final Player oldPlayer) {
         super(oldPlayer);
     }
 
@@ -94,11 +96,6 @@ class ExpertComputerPlayer extends HardComputerPlayer {
         return testBetterThanBest;
     }
 
-    @Override
-    final protected PlayerList.PlayerType getPlayerType() {
-        //needed so we can display properly on screen
-        return PlayerList.PlayerType.EXPERT_COMPUTER;
-    }
 
     /* PARCELABLE read/write for StrategyComputerPlayer (use superclass implementation) */
     protected ExpertComputerPlayer(Parcel parcel) {

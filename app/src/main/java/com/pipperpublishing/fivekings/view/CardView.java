@@ -1,3 +1,7 @@
+/*
+ * Copyright Jeffrey Pugh (pipper.publishing@gmail.com) (c) 2015. All rights reserved.
+ */
+
 package com.pipperpublishing.fivekings.view;
 
 import android.content.Context;
@@ -24,6 +28,7 @@ import com.pipperpublishing.fivekings.Rank;
  * 11/5/2015    Highlight Jokers and wildcards if specified
  * 11/6/2015    Use lighter yellow and add constants
  * 11/9/2015    Add startAnimation, cleanAnimation to hide View access
+ * 11/17/2015   Change setTint to setColorFilter to support API19 and earlier
  */
 //TODO:A Should be a way of not having special logic for Jokers (hiding it)
 class CardView extends ImageView {
@@ -101,16 +106,13 @@ class CardView extends ImageView {
             if (highlightWildCard != null) {
                 //mutate so this setting will not carry through to other rounds or to the Computer cards when shown
                 this.getDrawable().mutate();
-                this.getDrawable().setTint(TINT_COLOR);
-                this.getDrawable().setTintMode(PORTER_DUFF_MODE);
+                this.getDrawable().setColorFilter(TINT_COLOR, PORTER_DUFF_MODE);
             }
         } else {
             setImageDrawable(c.getResources().getDrawable(sBitmapResource[card.getSuit().getOrdinal()][card.getRank().getOrdinal()]));
             if ((highlightWildCard != null) && card.isWildCard(highlightWildCard)) {
                 this.getDrawable().mutate();
-                this.getDrawable().setTint(TINT_COLOR);
-                this.getDrawable().setTintMode(PORTER_DUFF_MODE);
-            }
+                this.getDrawable().setColorFilter(TINT_COLOR, PORTER_DUFF_MODE);            }
         }
         this.setMinimumWidth(INTRINSIC_WIDTH);
     }

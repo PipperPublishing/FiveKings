@@ -38,7 +38,8 @@
     <string name="areYouSure">Are you sure you want to end this game and start another?</string>
     <string name="congratulationsName">Congratulations!</string>
     <string name="congratulationsDetails">%1$s won with the lowest score of %2$s. Winner cleans up!</string>
-    <string name="isHuman">human</string>
+    <string name="isHuman">Human</string>
+    <string name="isEasyDroid">Easy Droid</string>
     <string name="isHardDroid">Hard Droid</string>
     <string name="isExpertDroid">Expert Droid</string>
     <string name="defaultHumanPlayer">You</string>
@@ -84,9 +85,9 @@
         Starting in the round of 6\'s you can have 2 melds of 3 or a meld of 6, and it gets more flexible after that. When the Droid player goes out it will show you its hand and you can learn from what it does.
     </string>
     <string name="intro1_title">Welcome to Five Kings!</string>
-    <string name="intro1_text">Five Kings is a card melding game. You play 11 rounds against the computer and/or against other humans. The winner is the player who has the lowest score at the end of the game.\n
-        To play the first round, you tap the \"Start Game\" button, and then tap it again to play the 3\'s round.\n
-        In the 3\'s round you are dealt 3 cards. To \"go out\" you have to make a meld of 3 cards. Melds are 3 or more cards of the same rank (for example, 3 Kings) or 3 of the same suit in a sequence (like 5-6-7 of spades).\n
+    <string name="intro1_text">Five Kings is a card melding game. You play 11 rounds against the computer and/or against other humans. The winner is the player who has the lowest score at the end of the game.\n\n
+        To play the first round, you tap the \"Start Game\" button, and then tap it again to play the 3\'s round where you are dealt 3 cards. To \"go out\" you have to make a meld of 3 cards.\n\n
+        Melds are 3 or more cards of the same rank (for example, 3 Kings) or 3 of the same suit in a sequence (like 5-6-7 of spades).\n\n
         I\'ll start the 3\'s Round for you now."
     </string>
     <string name="intro2_title">The Players</string>
@@ -118,7 +119,7 @@
         4. Watch which of your discards the Droid player picks up to see what melds it is working on.\n
     5. After another player goes out, you get one more turn. If you can\'t meld a wild card, make sure you discard it!\n\n
         To help you get started, in the first two rounds I\'ll show the Droid cards and some special hints.\n
-        To not show this tutorial next time, go to Settings>Show introduction and hints
+        To not show this tutorial next time, go to Settings and uncheck Show introduction and hints
     </string>
     <string name="intro_button_text">Next</string>
     <string name="intro_end_button_text">Let\'s Play!</string>

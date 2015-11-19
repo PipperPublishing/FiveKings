@@ -18,13 +18,14 @@ import com.pipperpublishing.fivekings.view.FiveKings;
  *  * 10/18/2015   Change per player showHandsAndCards to returning a showCards flag
  10/18/2015     Removed second click logic that would expose the hand if it was hidden
  *  10/20/2015  Hide drawPile and discardPile - access through deck
+ * * 11/19/2015   Constructors must be public to support reflection (used in add/update player)
  *
  */
 public class HumanPlayer extends Player {
-    HumanPlayer(final String name) {
+    public HumanPlayer(final String name) {
         super(name);
     }
-    HumanPlayer(final Player player) {
+    public HumanPlayer(final Player player) {
         super(player);
     }
 
@@ -74,13 +75,6 @@ public class HumanPlayer extends Player {
     final public void addToMeld(final CardList meld, Card card) {
         hand.addToMeld(card, (Meld) meld);
     }
-
-    @Override
-    final public PlayerList.PlayerType getPlayerType() {
-        //needed so we can display properly on screen
-        return PlayerList.PlayerType.HUMAN;
-    }
-
 
     /*----------------------------------------*/
     /* Game playing methods (moved from Game) */

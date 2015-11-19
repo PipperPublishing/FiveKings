@@ -16,6 +16,7 @@ import android.widget.LinearLayout;
 import android.widget.RelativeLayout;
 import android.widget.TextView;
 
+import com.pipperpublishing.fivekings.GameState;
 import com.pipperpublishing.fivekings.Player;
 import com.pipperpublishing.fivekings.R;
 
@@ -49,6 +50,7 @@ import com.pipperpublishing.fivekings.R;
  10/10/2015     Store and update the player that this miniHand refers to (otherwise when we update a player, the miniHand is
                 left pointing to the old player)
  10/17/2015     Remove special two-touches for human-to-human; instead just auto-hide current player
+ 11/18/2015     Check for TURN_STATRT/TURN_END for tap to work on a mini-hand
  */
 public class PlayerMiniHandLayout extends RelativeLayout{
     //in API 17+ we could use View.generateViewId
@@ -121,15 +123,19 @@ public class PlayerMiniHandLayout extends RelativeLayout{
             @Override
             public void onClick(View tv) {
                 //if this is the next player, and the current player has finished its turn, move to this player
-                if ((PlayerMiniHandLayout.this.player == fKActivity.getmGame().getNextPlayer()) && (fKActivity.getmGame().getCurrentPlayer().getTurnState() == Player.TurnState.NOT_MY_TURN)) {
-                    fKActivity.getmGame().rotatePlayer(); //also sets PREPARE_TURN
-                    if (player.getTurnState() == Player.TurnState.PREPARE_TURN) player.prepareTurn(fKActivity);
-                    //prepareTurn calls takeTurn if it's computer player and we're not showing cards
-                }
-                //second time we click on the current player, check that we're ready to play (PLAY_TURN)
-                else if ((player == fKActivity.getmGame().getCurrentPlayer()) && (player.getTurnState() == Player.TurnState.PLAY_TURN)) {
-                    cardView.clearAnimation();
-                    player.takeTurn(fKActivity, null, fKActivity.getmGame().isFinalTurn());
+                if ((fKActivity.getmGame().getGameState() == GameState.TURN_START) || (fKActivity.getmGame().getGameState() == GameState.TURN_END)) {
+                    if ((PlayerMiniHandLayout.this.player == fKActivity.getmGame().getNextPlayer()) && (fKActivity.getmGame().getCurrentPlayer().getTurnState() == Player.TurnState.NOT_MY_TURN)) {
+                        fKActivity.getmGame().rotatePlayer(); //also sets PREPARE_TURN
+                        if (player.getTurnState() == Player.TurnState.PREPARE_TURN)
+                            player.prepareTurn(fKActivity);
+                        //prepareTurn calls takeTurn if it's computer player and we're not showing cards
+                    }
+                    //second time we click on the current player, check that we're ready to play (PLAY_TURN)
+                    else if ((player == fKActivity.getmGame().getCurrentPlayer()) && (player.getTurnState() == Player.TurnState.PLAY_TURN)) {
+                        cardView.clearAnimation();
+                        player.takeTurn(fKActivity, null, fKActivity.getmGame().isFinalTurn());
+                    }
+                    else fKActivity.setShowHint(null, FiveKings.HandleHint.SHOW_HINT , true);
                 }
                 else fKActivity.setShowHint(null, FiveKings.HandleHint.SHOW_HINT , true);
             }

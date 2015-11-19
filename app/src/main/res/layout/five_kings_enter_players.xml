@@ -3,7 +3,7 @@
   ~ Copyright Jeffrey Pugh (pipper.publishing@gmail.com) (c) 2015. All rights reserved.
   -->
 
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
               android:layout_width="match_parent"
               android:layout_height="match_parent"
               android:orientation="vertical">
@@ -16,19 +16,37 @@
         android:ems="10"
         android:id="@+id/player_name"
         android:textAppearance="?android:attr/textAppearanceMedium"
-        android:textStyle="italic"/>
+        android:textStyle="italic"
+        android:layout_alignParentLeft="true"
+        android:layout_alignParentTop="true"
+        />
+
+    <RadioButton
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="@string/isHuman"
+        android:id="@+id/is_human"
+        android:textAppearance="?android:attr/textAppearanceSmall"
+        android:layout_alignParentLeft="false"
+        android:layout_alignParentTop="false"
+        android:layout_below="@+id/player_name"/>
 
     <RadioGroup
-        android:layout_width="fill_parent"
-        android:layout_height="fill_parent"
-        android:orientation="horizontal">
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:layout_alignParentLeft="false"
+        android:layout_alignParentTop="false"
+        android:layout_toRightOf="@+id/is_human"
+        android:layout_below="@+id/player_name">
 
         <RadioButton
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="@string/isHuman"
-            android:id="@+id/is_human"
-            android:textAppearance="?android:attr/textAppearanceSmall"/>
+            android:text="@string/isEasyDroid"
+            android:id="@+id/is_easy_computer"
+            android:textAppearance="?android:attr/textAppearanceSmall"
+            android:enabled="true"/>
 
         <RadioButton
             android:layout_width="wrap_content"
@@ -46,4 +64,5 @@
             android:textAppearance="?android:attr/textAppearanceSmall"
             android:enabled="true"/>
     </RadioGroup>
-</LinearLayout>
+
+</RelativeLayout>

@@ -16,6 +16,11 @@ import android.widget.EditText;
 import android.widget.RadioButton;
 import android.widget.TextView;
 
+import com.pipperpublishing.fivekings.EasyComputerPlayer;
+import com.pipperpublishing.fivekings.ExpertComputerPlayer;
+import com.pipperpublishing.fivekings.HardComputerPlayer;
+import com.pipperpublishing.fivekings.HumanPlayer;
+import com.pipperpublishing.fivekings.Player;
 import com.pipperpublishing.fivekings.R;
 
 /**
@@ -23,10 +28,12 @@ import com.pipperpublishing.fivekings.R;
  * 2/18/2015 Captures player names at start of game
  * 3/11/2015    CLoses the dialog after each Add
  *              Include a Delete option in the Edit dialog
+ * 11/19/2015   Now that we have 4 different types of player, convert to passing the actual class type
  */
 public class EnterPlayersDialogFragment extends DialogFragment {
     private static final String PLAYER_ARG = "PLAYER_NAME";
     private static final String IS_HUMAN_ARG = "IS_HUMAN";
+    private static final String IS_EASY_COMPUTER_ARG = "IS_EASY_COMPUTER";
     private static final String IS_HARD_COMPUTER_ARG = "IS_HARD_COMPUTER";
     private static final String IS_EXPERT_COMPUTER_ARG = "IS_EXPERT_COMPUTER";
     private static final String ADDING_ARG = "ADDING";
@@ -35,13 +42,14 @@ public class EnterPlayersDialogFragment extends DialogFragment {
 
     //use newInstance to pass arguments to the Bundle which the dialog can access
     // apparently this is preferred to custom member fields and setters
-    static EnterPlayersDialogFragment newInstance(final String oldPlayerName, final boolean oldIsHuman, boolean oldIsHardComputer, boolean oldIsExpertComputer, final boolean addingFlag, final int iPlayer) {
+    static EnterPlayersDialogFragment newInstance(final String oldPlayerName, final Class<? extends Player> playerClass , final boolean addingFlag, final int iPlayer) {
         EnterPlayersDialogFragment ePDF = new EnterPlayersDialogFragment();
         Bundle args = new Bundle();
         args.putString(PLAYER_ARG, oldPlayerName);
-        args.putBoolean(IS_HUMAN_ARG, oldIsHuman);
-        args.putBoolean(IS_HARD_COMPUTER_ARG, oldIsHardComputer);
-        args.putBoolean(IS_EXPERT_COMPUTER_ARG, oldIsExpertComputer);
+        args.putBoolean(IS_HUMAN_ARG, playerClass == HumanPlayer.class);
+        args.putBoolean(IS_EASY_COMPUTER_ARG, playerClass == EasyComputerPlayer.class);
+        args.putBoolean(IS_HARD_COMPUTER_ARG, playerClass == HardComputerPlayer.class);
+        args.putBoolean(IS_EXPERT_COMPUTER_ARG, playerClass == ExpertComputerPlayer.class );
         args.putBoolean(ADDING_ARG, addingFlag);
         args.putInt(I_PLAYER_ARG, iPlayer);
 
@@ -54,6 +62,7 @@ public class EnterPlayersDialogFragment extends DialogFragment {
         //use getArguments because they were passed to the fragment
         final String playerName=getArguments().getString(PLAYER_ARG, "");
         final boolean isHuman=getArguments().getBoolean(IS_HUMAN_ARG, false);
+        final boolean isEasyComputer=getArguments().getBoolean(IS_EASY_COMPUTER_ARG, false);
         final boolean isHardComputer=getArguments().getBoolean(IS_HARD_COMPUTER_ARG, false);
         final boolean isExpertComputer=getArguments().getBoolean(IS_EXPERT_COMPUTER_ARG, true);
         final boolean addingFlag = getArguments().getBoolean(ADDING_ARG, false);
@@ -86,8 +95,10 @@ public class EnterPlayersDialogFragment extends DialogFragment {
                 }
             });
         }
+        //TODO:A Better solution would be drop down or spin selector
         ((TextView) tv.findViewById(R.id.player_name)).setText(playerName);
         ((RadioButton)tv.findViewById(R.id.is_human)).setChecked(isHuman);
+        ((RadioButton)tv.findViewById(R.id.is_easy_computer)).setChecked(isEasyComputer);
         ((RadioButton)tv.findViewById(R.id.is_hard_computer)).setChecked(isHardComputer);
         ((RadioButton)tv.findViewById(R.id.is_expert_computer)).setChecked(isExpertComputer);
 
@@ -111,10 +122,17 @@ public class EnterPlayersDialogFragment extends DialogFragment {
                     //Retrieve the new/changed values
                     String playerName = ((EditText) EnterPlayersDialogFragment.this.getDialog().findViewById(R.id.player_name)).getText().toString();
                     boolean isHuman = ((RadioButton) EnterPlayersDialogFragment.this.getDialog().findViewById(R.id.is_human)).isChecked();
+                    boolean isEasyComputer = ((RadioButton) EnterPlayersDialogFragment.this.getDialog().findViewById(R.id.is_easy_computer)).isChecked();
                     boolean isHardComputer = ((RadioButton) EnterPlayersDialogFragment.this.getDialog().findViewById(R.id.is_hard_computer)).isChecked();
                     boolean isExpertComputer = ((RadioButton) EnterPlayersDialogFragment.this.getDialog().findViewById(R.id.is_expert_computer)).isChecked();
-                    //Register the FiveKings activity method as the callback
-                    ((FiveKings) getActivity()).addEditPlayerClicked(playerName, isHuman, isHardComputer, isExpertComputer, isAddingFlag, iPlayer);
+                    //Pass the changed values back to addEditPlayerClicker
+                    Class<? extends Player> playerClass;
+                    if (((RadioButton) EnterPlayersDialogFragment.this.getDialog().findViewById(R.id.is_human)).isChecked()) playerClass = HumanPlayer.class;
+                    else if (((RadioButton) EnterPlayersDialogFragment.this.getDialog().findViewById(R.id.is_easy_computer)).isChecked()) playerClass = EasyComputerPlayer.class;
+                    else if (((RadioButton) EnterPlayersDialogFragment.this.getDialog().findViewById(R.id.is_hard_computer)).isChecked()) playerClass = HardComputerPlayer.class;
+                    else if (((RadioButton) EnterPlayersDialogFragment.this.getDialog().findViewById(R.id.is_expert_computer)).isChecked()) playerClass = ExpertComputerPlayer.class;
+                    else playerClass = null;
+                            ((FiveKings) getActivity()).addEditPlayerClicked(playerName, playerClass, isAddingFlag, iPlayer);
                     dismiss(); //dismiss the dialog on add or edit
                 }
             });

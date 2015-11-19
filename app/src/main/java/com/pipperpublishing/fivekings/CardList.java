@@ -1,3 +1,7 @@
+/*
+ * Copyright Jeffrey Pugh (pipper.publishing@gmail.com) (c) 2015. All rights reserved.
+ */
+
 package com.pipperpublishing.fivekings;
 
 import android.os.Parcel;
@@ -33,7 +37,7 @@ public class CardList extends ArrayList<Card> implements Parcelable {
         super(cards);
     }
 
-    String getString() {
+    public String getString() {
         StringBuilder sCards = new StringBuilder(2 * this.size() + 1);
         if (this.isEmpty()) sCards.append("");
         else {

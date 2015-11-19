@@ -1,3 +1,7 @@
+/*
+ * Copyright Jeffrey Pugh (pipper.publishing@gmail.com) (c) 2015. All rights reserved.
+ */
+
 package com.pipperpublishing.fivekings.view;
 
 import android.content.ClipData;
@@ -8,6 +12,7 @@ import android.view.View;
 import android.widget.RelativeLayout;
 
 import com.pipperpublishing.fivekings.CardList;
+import com.pipperpublishing.fivekings.Meld;
 
 /**
  * Created by Jeffrey on 2/27/2015.
@@ -54,6 +59,9 @@ class CurrentMeldDragListener  implements View.OnDragListener  {
                 ClipData.Item item = event.getClipData().getItemAt(0); //this is the View index to recover which card
                 // Gets the text data from the item.
                 String dragData = item.getText().toString();
+                Meld myMeld = (Meld)rl.getTag();
+                Log.d(FiveKings.APP_TAG, String.format("Card dragdata is %s and receiving meld is %s",
+                        dragData,myMeld.getString()));
 
                 //Handle exception here and return false (drop wasn't handled) if it wasn't found
                 int iView = -1;

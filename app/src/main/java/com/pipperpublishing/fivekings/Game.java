@@ -78,8 +78,8 @@ public class Game implements Parcelable{
 
     public Game(final FiveKings fKActivity) {
         this.players = new PlayerList();
-        this.players.addPlayer(fKActivity.getString(R.string.defaultComputerPlayer), PlayerList.PlayerType.EXPERT_COMPUTER);
-        this.players.addPlayer(fKActivity.getString(R.string.defaultHumanPlayer), PlayerList.PlayerType.HUMAN);
+        this.players.addPlayer(fKActivity.getString(R.string.defaultComputerPlayer), ExpertComputerPlayer.class);
+        this.players.addPlayer(fKActivity.getString(R.string.defaultHumanPlayer), HumanPlayer.class);
         this.gameState = GameState.NEW_GAME;
         roundStartTime = 0;
         roundStopTime = 0;
@@ -141,17 +141,17 @@ public class Game implements Parcelable{
         players.getCurrentPlayer().setHandDiscard(discard);
     }
 
-    final public void addPlayer(final String playerName, final PlayerList.PlayerType playerType, final FiveKings fKActivity) {
+    final public void addPlayer(final String newPlayerName, final Class<? extends Player> newPlayerClass, final FiveKings fKActivity) {
         if ((getRoundOf() != null) && (getRoundOf() != Rank.getLowestRank())) {
             Log.e(FiveKings.APP_TAG, "Can't add players after Round of 3's");
         } else {
-            this.players.addPlayer(playerName, playerType);
+            this.players.addPlayer(newPlayerName, newPlayerClass);
             relayoutPlayerMiniHands(fKActivity);
         }
     }
 
-    final public void updatePlayer(final String playerName, final PlayerList.PlayerType playerType, final int iPlayer) {
-        this.players.updatePlayer(playerName, playerType, iPlayer);
+    final public void updatePlayer(final String newPlayerName, final Class<? extends Player> newPlayerClass, final int iPlayer) {
+        this.players.updatePlayer(newPlayerName, newPlayerClass, iPlayer);
         updatePlayerMiniHands();
     }
 
@@ -211,13 +211,13 @@ public class Game implements Parcelable{
         //starts animation on the appropriate hand and passes back special hint if Human->Human
         this.players.setAnimated(setAnimatedPlayerHand, bounceAnimation);
     }
-    public void clearAllAnimatedMiniHands(){
+    public void clearAnimationOnMiniHands(){
         this.players.clearAllAnimated();
     }
 
     public boolean currentAndNextAreHuman() {
-        return (players.getCurrentPlayer().isPlayerType(PlayerList.PlayerType.HUMAN))
-                && (players.getNextPlayer().isPlayerType(PlayerList.PlayerType.HUMAN));
+        return (players.getCurrentPlayer() instanceof HumanPlayer)
+                && (players.getNextPlayer() instanceof HumanPlayer);
     }
 
     /* Starting and ending turns */
