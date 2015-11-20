@@ -39,9 +39,9 @@
     <string name="congratulationsName">Congratulations!</string>
     <string name="congratulationsDetails">%1$s won with the lowest score of %2$s. Winner cleans up!</string>
     <string name="isHuman">Human</string>
-    <string name="isEasyDroid">Easy Droid</string>
-    <string name="isHardDroid">Hard Droid</string>
-    <string name="isExpertDroid">Expert Droid</string>
+    <string name="isEasyDroid">Easy</string>
+    <string name="isHardDroid">Hard</string>
+    <string name="isExpertDroid">Expert</string>
     <string name="defaultHumanPlayer">You</string>
     <string name="defaultComputerPlayer">Droid</string>
     <string name="addPlayersTitle">Add player</string>

@@ -35,6 +35,7 @@ import com.pipperpublishing.fivekings.view.FiveKings;
  * 11/10/2015   Interrupted thread was not cascading up and rerunning with Heuristics (add a wasInterrupted flag to find this)
  * 11/18/2015   Created from ComputerPlayer
  * 11/19/2015   Constructors must be public to support reflection (used in add/update player)
+ *              isFirstBetterThanSecond must return true if firstHand evaluates to zero (otherwise heuristics code->addWildcards will choke)
  */
 
 public class EasyComputerPlayer extends Player {
@@ -239,8 +240,10 @@ public class EasyComputerPlayer extends Player {
 
     @Override
     public boolean isFirstBetterThanSecond(final MeldedCardList testHand, final MeldedCardList bestHand, final boolean isFinalTurn) {
-        //randomly pick one or the other
-        return Math.random() >0.5;
+        //If testHand evaluates to zero, then we should return true (it's clearly better)
+        //it's also necessary for the addWildCards code to not choke when a partial sequence + wildcard != good meld
+        //otherwise pick randomly
+        return (testHand.calculateValueAndScore(isFinalTurn) == 0) || (Math.random() >0.5);
     }
 
     //Computer has to use this version which loops through possible discards to find the best one

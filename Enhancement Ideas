@@ -414,7 +414,7 @@ DONE    - Auto-generate computer player name based off template
 - Re-named to master
 [Released to Beta 11/17/2015]
 -----------
-v0.8.23
+v0.8.24
 FIXED: SetTint not available in API 19 (Droid RAZR)
 FIXED: On fresh install, Show Computer cards is set
 FIXED: Can interrupt dealing and get ghost hands
@@ -435,7 +435,11 @@ FIXED: [Rob]If you click on "you"  pile while first deal is still going the Droi
 
 [Published to Google Player Alpha]
 ------------------------
-v0.8.24
+v0.8.25
+FIXED: Couldn't switch Human player to Droid and vice versa (because I had split the radio buttons)
+FIXED: Easy Computer sometimes failed during Heuristics phase because it wasn't recognizing a partial sequence + wildcard = 0 full meld
+
+
 Unable to reproduce:
 FIXED?: Tim's problem where it didn't recognize his completed meld
 BUG: On Tim's device, FK is not resuming but rather re-starting (but perhaps he is using Back to exit the game)

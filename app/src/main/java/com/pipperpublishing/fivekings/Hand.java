@@ -1,3 +1,7 @@
+/*
+ * Copyright Jeffrey Pugh (pipper.publishing@gmail.com) (c) 2015. All rights reserved.
+ */
+
 package com.pipperpublishing.fivekings;
 
 import android.os.Parcel;
@@ -276,7 +280,8 @@ class Hand extends MeldedCardList {
                 //also set meldComplete and isCheckedAndValid
                 try {
                     if (test.decomposeAndCheck(handComparator,this.roundOf, isFinalTurn, new MeldedCardList(this.roundOf)) != 0) {
-                        throw new RuntimeException("addWildCardsAndRecord: full meld not evaluating to 0");
+                        Log.e(FiveKings.APP_TAG, String.format("addWildCardsAndRecord: full meld %s not evaluating to 0", test.getString()));
+                        //throw new RuntimeException(String.format("addWildCardsAndRecord: full meld %s not evaluating to 0", test.getString()));
                     }
                 } catch (InterruptedException e) {
                     //continue
