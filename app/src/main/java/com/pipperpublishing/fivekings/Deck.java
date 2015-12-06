@@ -1,3 +1,7 @@
+/*
+ * Copyright Jeffrey Pugh (pipper.publishing@gmail.com) (c) 2015. All rights reserved.
+ */
+
 package com.pipperpublishing.fivekings;
 
 import android.os.Parcel;
@@ -197,7 +201,7 @@ public class Deck extends DealingCardList implements Parcelable {
             //DiscardPile can run out in the middle of a turn (when you draw the last card)
             //but it only affects display (a blank space where the pile was)
             if (this.isEmpty()) {
-                Log.i(FiveKings.APP_TAG, "DiscardPile.peekNext: is empty");
+                Log.v(FiveKings.APP_TAG, "DiscardPile.peekNext: is empty");
                 nextCard = null;
             }
             else nextCard = this.get(this.size() - 1);

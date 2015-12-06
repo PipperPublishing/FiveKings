@@ -221,15 +221,12 @@ abstract public class Player implements HandComparator, Parcelable {
         return combined;
     }
 
-    //TODO:B: Not unrolling these right now (Human doesn't see this)
-    //because otherwise we don't know what to add back to
-    //have to eliminate "combined"
-    final public ArrayList<CardList> getHandUnMelded() {
-        ArrayList<CardList> combined = new ArrayList<>();
-        combined.addAll(hand.getUnMelded());
-        combined.add(hand.getSingles());
-        return combined;
-    }
+    /* getHandUnMelded has to return the actual melds (not just copies) that are in the hand, so that dragging cards into another meld works
+    However, for Humans we don't currently use Partial melds (cards are either Singles or "Full" melds) and for Droid hands we don't allow dragging
+    So for Droid hands we override this to unroll it into just a single set of cards, and for Humans we rely on the fact that nothing is in unmelded
+    (just in case in future we want to add dragging between partial melds)
+     */
+    abstract public ArrayList<CardList> getHandUnMelded();
 
     final public int getCumulativeScore() {
         return cumulativeScore;

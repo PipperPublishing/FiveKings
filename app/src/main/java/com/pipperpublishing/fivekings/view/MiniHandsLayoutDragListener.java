@@ -28,7 +28,6 @@ class MiniHandsLayoutDragListener implements View.OnDragListener {
             case DragEvent.ACTION_DRAG_STARTED:
                 // Determines if this View can accept the dragged data
                 if (event.getClipDescription().hasMimeType(ClipDescription.MIMETYPE_TEXT_PLAIN)) {
-                    // applies a blue color tint to the View to indicate that it can accept data.
                     rl.invalidate();
 
                     // returns true to indicate that the View can accept the dragged data.

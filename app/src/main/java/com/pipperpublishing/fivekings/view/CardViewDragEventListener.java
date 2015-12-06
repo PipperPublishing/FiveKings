@@ -1,3 +1,7 @@
+/*
+ * Copyright Jeffrey Pugh (pipper.publishing@gmail.com) (c) 2015. All rights reserved.
+ */
+
 package com.pipperpublishing.fivekings.view;
 
 import android.util.Log;
@@ -7,6 +11,7 @@ import android.view.View;
 /**
  * Created by Jeffrey on 2/23/2015.
  * 2/26/2015    Currently does nothing, but eventually we'd like to rearrange cards when you drop one on another
+ * 12/2/2015    Need this to listen for DRAG_ENDED so that you know to reset the card Alpha to fully visible
  */
 class CardViewDragEventListener implements View.OnDragListener {
 

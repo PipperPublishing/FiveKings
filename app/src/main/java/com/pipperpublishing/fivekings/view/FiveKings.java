@@ -209,6 +209,7 @@ import java.util.List;
  11/19/2015     Generalize adding players using Class instead of player Type
                 Moved GameState=TURN_END into afterDealing so you can't start clicking hands early
                 Added Game.init() back in checkNewGame, because we need round to be reset to 3 (otherwise you can't add players)
+ 12/5/2015      Removed the draw_and_discard.removeAllViews in explodeHand (was removing the Play button)
 */
 public class FiveKings extends Activity {
     public static final String APP_TAG = BuildConfig.VERSION_NAME;
@@ -798,9 +799,15 @@ public class FiveKings extends Activity {
     //the Event handler for button presses on [Play]
     private void playGameClicked(){
         //If you're dealing then cancel dealing
-        if (dealAnimatorSet != null) dealAnimatorSet.cancel();
+        if (dealAnimatorSet != null) {
+            dealAnimatorSet.cancel();
+            dealAnimatorSet = null;
+        }
         //If you're exploding hands, then cancel and show the final result
-        if (explodeSet != null) explodeSet.cancel();
+        if (explodeSet != null) {
+            explodeSet.cancel();
+            explodeSet = null;
+        }
 
         if (GameState.NEW_GAME == mGame.getGameState()) {
             clearPlayArea();
@@ -1488,11 +1495,15 @@ public class FiveKings extends Activity {
         //get's the location of a point between the Draw and Discard pile (source for dealt cards)
         final RelativeLayout.LayoutParams pileLp = new RelativeLayout.LayoutParams(this.getDrawPileWidth(),this.getDrawPileHeight());
         pileLp.addRule(RelativeLayout.CENTER_HORIZONTAL);
+        final RelativeLayout animatedViewHolder = new RelativeLayout(this);
+        animatedViewHolder.setLayoutParams(pileLp);
+        draw_and_discard.addView(animatedViewHolder);
 
         mCurrentMelds.removeAllViews();
         mCurrentCards.removeAllViews();
         mDrawPile.setVisibility(View.INVISIBLE);
         mDiscardPile.setVisibility(View.INVISIBLE);
+
         final AnimatorSet explodeSet = new AnimatorSet();
         Animator cardAnimator = AnimatorInflater.loadAnimator(this, R.animator.spiral_outwards);
         AnimatorSet lastCardAnimatorSet=null;
@@ -1509,7 +1520,7 @@ public class FiveKings extends Activity {
             Card card = deck2.deal();
             cardAnimator = cardAnimator.clone();
             addExplodeTranslation(explodeSet, cardAnimatorSet, lastCardAnimatorSet, cardAnimator,
-                    card, pileLp, height, draw_and_discard);
+                    card, pileLp, height, animatedViewHolder);
             lastCardAnimatorSet = cardAnimatorSet;
         }
         explodeSet.addListener(new Animator.AnimatorListener() {
@@ -1519,7 +1530,8 @@ public class FiveKings extends Activity {
 
             @Override
             public void onAnimationEnd(Animator animator) {
-
+                animatedViewHolder.removeAllViews();
+                draw_and_discard.removeView(animatedViewHolder);
                 new AlertDialog.Builder(FiveKings.this)
                         .setIcon(android.R.drawable.ic_dialog_alert)
                         .setTitle(R.string.congratulationsName)
@@ -1536,7 +1548,6 @@ public class FiveKings extends Activity {
 
             @Override
             public void onAnimationCancel(Animator animator) {
-                draw_and_discard.removeAllViews();
             }
         });
         explodeSet.start();
@@ -1546,7 +1557,6 @@ public class FiveKings extends Activity {
     private void addExplodeTranslation(final AnimatorSet explodeSet, final AnimatorSet cardAnimatorSet, final AnimatorSet lastCardAnimatorSet, final Animator cardAnimator,
                                        final Card card, RelativeLayout.LayoutParams pileLp, final float height , final RelativeLayout relativeLayout) {
         CardView cardView = new CardView(this, card, -1, null);
-        cardView.setLayoutParams(pileLp);
         relativeLayout.addView(cardView);
         cardAnimator.setTarget(cardView);
         double randomAngle = Math.toRadians(45 + 90 * Math.random());
@@ -1643,7 +1653,7 @@ public class FiveKings extends Activity {
                 cv.bringToFront();
                 cv.setClickable(false); //TODO:B: Allow selection by clicking for multi-drag?
                 if (allowDragging) {//no dragging of computer cards or Human cards after final turn
-                    cv.setOnDragListener(new CardViewDragEventListener());
+                    cv.setOnDragListener(new CardViewDragEventListener()); //needed per-card to reset the dragged card to normal visibility (alpha)
                     cv.setOnTouchListener(new View.OnTouchListener() {
                         @Override
                         public boolean onTouch(View v, MotionEvent event) {
@@ -1681,6 +1691,7 @@ public class FiveKings extends Activity {
             newMeldSpace.setEnabled(false);
             relativeLayout.addView(newMeldSpace, (int) (cardScaleFactor * CardView.INTRINSIC_WIDTH), (int) scaledCardHeight);
         }
+        relativeLayout.clearDisappearingChildren();
         return iView; //used as the starting index for mCurrentMelds
     }//end showCards
 

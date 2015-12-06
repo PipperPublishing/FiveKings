@@ -10,6 +10,8 @@ import android.util.Log;
 
 import com.pipperpublishing.fivekings.view.FiveKings;
 
+import java.util.ArrayList;
+
 /**
  * Created by Jeffrey on 3/12/2015.
  * 3/15/2015    Moved discardFromHand here - actually does discard
@@ -92,6 +94,20 @@ public class HumanPlayer extends Player {
     final public boolean showCards(final boolean isShowComputerCards) {
         return true;
     }
+
+    /* getHandUnMelded has to return the actual melds (not just copies) that are in the hand, so that dragging cards into another meld works
+However, for Humans we don't currently use Partial melds (cards are either Singles or "Full" melds) and for Droid hands we don't allow dragging
+So for Droid hands we override this to unroll it into just a single set of cards, and for Humans we rely on the fact that nothing is in unmelded
+(just in case in future we want to add dragging between partial melds)
+ */
+    @Override
+    final public ArrayList<CardList> getHandUnMelded() {
+        ArrayList<CardList> combined = new ArrayList<>();
+        combined.addAll(hand.getUnMelded());
+        combined.add(hand.getSingles());
+        return combined;
+    }
+
 
     @Override
     //TODO:A Bad smell from all those fKActivity calls

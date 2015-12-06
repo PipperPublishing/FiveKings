@@ -438,12 +438,26 @@ FIXED: [Rob]If you click on "you"  pile while first deal is still going the Droi
 v0.8.25
 FIXED: Couldn't switch Human player to Droid and vice versa (because I had split the radio buttons)
 FIXED: Easy Computer sometimes failed during Heuristics phase because it wasn't recognizing a partial sequence + wildcard = 0 full meld
+[Published to Google Player Alpha]
+[Promoted to Google Play Beta]
+----------------
+v0.8.26
 
+>>> Use released version of ShowcaseView 5.4.0
+
+BUGS:
+FIXED [Tim] Press the [New Game] button and the button disappears
+    - Cancel the animation and remove the associated Views
+FIXED But huge amount of allocated memory is left after the explode animation
+FIXED: Confusing when showing Droid cards why there are multiple melds
+    - Change to showing just a line of cards (singles - full melds)
+FIXED: Computer going out when the sleep gets interrupted
 
 Unable to reproduce:
 FIXED?: Tim's problem where it didn't recognize his completed meld
 BUG: On Tim's device, FK is not resuming but rather re-starting (but perhaps he is using Back to exit the game)
-
+[Tim/Carolyn] Still showing ghost cards sometimes
+    - Move Remove Disappearing Children to the end
 
 
 ----------------------
@@ -455,31 +469,49 @@ BUG: On Tim's device, FK is not resuming but rather re-starting (but perhaps he 
 =====================
 
 v0.9.01 Graphics
+[Dad/Ellen] Hard to drag and drop the cards
+    -  Use full width to display cards, and switch to alternating display when width shrinks to < 1/2 card width
+
+- EasyComputerPlayer should be a little more intelligent (possibly just de-tune the Hard player)
+
 [Tim] Tutorial
 - If you're in Tutorial, then Droid player should be added as Easy or Hard
     - Previous button so you can go back an re-read an item
 - "Your cards" and "Your melds" background text either when screen is blank or all the time
 - When Computer hand is displayed, it starts from center and if there are lots of pairs they go off the screen
-  (unlike Human hand which expands from center in each direction)
+    (unlike Human hand which expands from center in each direction)
+    - may be better now that we're not showing all the possible partial melds
 - Bounce the picked up card once it's in the hand (or highlight it?)
 - Slide out hand animation
 - Animate open hands into view from mini-hands
 - 1. Expect the game to play the compute turn without clicking, while showing your (human) hand still
-- Show score table at end - possibly with round-by-round scores?
+- Final celebration
+    - Allow for a 2- or 3-way tie
     - Try exploding into middle of screen with fade-out
-    - other comments like Phase 10: pick up a discard and say "Thanks! I really needed that" or "Ouch!"
+- other comments like Phase 10: pick up a discard and say "Thanks! I really needed that" or "Ouch!"
 - [Play] button and Scores on cards should scale to card size
 - Hi-res cards have bloated the size of the APK by 4M - can we shrink it?
 
 BUG: - Redisplay red/yellow hand outlines on restart; also white outlines seem inconsistent
 BUG: Droid player on second step of open-faced turn will stop shaking if you turn the screen
 BUG: [Tim]With the new, larger and labeled discard pile, if one draws down the only card on the discard pile, you sometimes get the computer's animated draw as the outline and label of the discard pile...
+>>BUG: If you click ahead while the Droid players are playing, you get very confusing things (repeated cards on the Discard pile etc)
     - Possible solution: fast-forward or cancel the animation
 DONE    - More white space on first screen of tutorial
+--------------------------
+v0.9.40 Memory tracking/leaks?
+- Looks mostly ok
+- Bit of a hang at the start of Round of 8s
+- Reduce amount of memory (mostly 115 CardViews) used in explode animation
+    - recycle the CardViews by animating them back to the start
+    - maybe appear in the middle of the screen
 
-=======================
+
+----------------------
 v0.9.50 Cleanup
 
+- APP TAG should be per method
+- Also change some logging to .v
 - Way too many uses of instanceOf and references to the class
 - Tidy up FiveKings (order of event handlers, follow flow)
 - Player methods use fKActivity and a lot of convoluted logic
@@ -493,14 +525,14 @@ v0.9.50 Cleanup
     - check for non-duplicates
     - automatic ordering
 - investigate using Callback instead of Listener (does it make it easier to find card?)
-
+- Look at Executors/Futures instead of direct thread calls
 =====================
 v1.0.1 Feedback from players
 
 - [Rob] Guided practice round
 - [Play for me] option (just uses Computer logic) - click on your hand again to play iy
    - or just copies cards to the meld area and then melds them using meld.check
-- Memory use and leaks?
+
 ================
 v1.2.01 Scoring and Valuation bugs
 (deemphasize this because computer is good enough)
